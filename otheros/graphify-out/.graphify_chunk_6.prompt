@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/__init__.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_kubernetes.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_boxlite.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_bootstrap.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_islo.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_base.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_comment.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_pagination.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_agent.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/__init__.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_entities.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_conversation_extended.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_conversation.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_file.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_account.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_permission.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/entities/test_policy.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/scripts/dump_openapi.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/scripts/normalize_uv_lock_registry.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/scripts/sync_version_py.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/scripts/gen_cursor_models.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/scripts/update_versions.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/dev/__init__.py

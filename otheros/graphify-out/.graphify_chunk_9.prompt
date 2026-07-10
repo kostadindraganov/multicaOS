@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.HPULLNVR.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.BQNDCXAL.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.5AVTITY5.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.6HCLC3WA.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.5DXTNOIX.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.CBXHF3FA.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.NVJZCKVK.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.JNISCMTO.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.Z73FKN6X.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.GOXEDQWN.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.6SNQOYNK.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.LH72HXK6.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.PX3HMKF7.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.3MSWQ3RG.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.XW6BKGGI.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.S7CPLH5M.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.WGFDW2LC.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.H2YX6YMX.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.JOMQERSQ.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.CWVOQ2RG.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.TICGVQKP.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.ZJRB7VPY.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.K4C5PQDP.js

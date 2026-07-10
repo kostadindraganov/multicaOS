@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/avatar/avatar.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/carousel-item/carousel-item.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/carousel-item/carousel-item.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/switch/switch.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/switch/switch.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/comparison/comparison.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/comparison/comparison.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/radio-group/radio-group.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/radio-group/radio-group.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/tab-panel/tab-panel.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/tab-panel/tab-panel.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/select/select.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/select/select.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/breadcrumb/breadcrumb.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/breadcrumb/breadcrumb.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/icon/icon.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/icon/library.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/icon/icon.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/icon/library.default.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/icon/library.system.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/tree-item/tree-item.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/tree-item/tree-item.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/scroller/scroller.js

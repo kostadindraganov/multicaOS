@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Runtime data (these only exist on the deployed instance under the install dir)
+db.sqlite
+db.sqlite-journal
+sandbox/
+
+# Local config / secrets — never commit. Copy config.example.env and edit.
+.env
+config.env
+config.local.env
+*.local.env
+
+# Junk
+**/.DS_Store
+**/@eaDir/
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo

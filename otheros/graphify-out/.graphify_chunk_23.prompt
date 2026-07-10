@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/events/hide.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/events/after-expand.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/pt.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/kk.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/pl.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/sl.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/nn.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/hr.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/fi.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/ru.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/ja.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/he.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/id.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/nb.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/zh-cn.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/zh-tw.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/de-ch.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/da.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/fa.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/de.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/en.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/sv.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/hi.js

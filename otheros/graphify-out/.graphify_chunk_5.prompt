@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_providers.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_ambient.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_onboarding_agent.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_ucode_setup.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_copilot_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_goose_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/__init__.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_databricks_config.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_harness_readiness.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_extra_install.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_opencode_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_ucode_cleanup.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_provider_selection.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_cursor_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_detected.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_hermes_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_interactive.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_gemini_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_daytona.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_cwsandbox.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_openshell.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_modal.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/sandboxes/test_e2b.py

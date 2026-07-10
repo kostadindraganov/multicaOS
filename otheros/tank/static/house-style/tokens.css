@@ -1,0 +1,107 @@
+/* ============================================================
+   house-style / tokens.css  —  the single source of truth
+   ------------------------------------------------------------
+   Creator Magic system: dark terminal soul, purple leads, orange
+   is the spark. Plain CSS custom properties, no build step.
+   Every consuming app links this file and reads var(--*).
+
+   Fonts (link in <head> of each app):
+     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+   ============================================================ */
+:root {
+  color-scheme: dark;
+
+  /* ---- surfaces ---- */
+  --bg:          #0e1116;
+  --panel:       #161b22;
+  --panel-2:     #1e242c;
+  --panel-3:     #222a35;
+  --border:      #2a313c;
+  --border-soft: #222932;
+
+  /* ---- text ---- */
+  --text:   #e6edf3;
+  --muted:  #8b949e;
+  --faint:  #6b7480;
+
+  /* ---- semantic / spectrum ---- */
+  --blue:   #58a6ff;
+  --green:  #3fb950;
+  --red:    #f85149;
+  --yellow: #d29922;
+  --grey:   #6e7681;
+  --purple: #bc8cff;
+  --cyan:   #56d4dd;
+  --orange: #f0883e;
+
+  /* ---- brand: the spark (reserved for "generate"/magic moments) ---- */
+  --spark-1:    #ff9d2e;
+  --spark-2:    #ffc23d;
+  --spark-grad: linear-gradient(135deg, var(--spark-1), var(--spark-2));
+
+  /* ---- accent (purple leads; overridable via [data-accent]) ---- */
+  --accent:      #bc8cff;
+  --accent-2:    #d6a8ff;
+  --accent-ink:  #1c1230;                       /* text/icon on an --accent fill */
+  --accent-soft: rgba(188,140,255,.14);
+  --accent-line: rgba(188,140,255,.40);
+  --accent-grad: linear-gradient(135deg, #bc8cff, #9d6bff);
+
+  /* ambient glow strength (0..1); see .aura in shell.css */
+  --glow:   1;
+  --glow-a: rgba(188,140,255,.22);
+  --glow-b: rgba(214,120,255,.15);
+
+  /* ---- type ---- */
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-ui:   var(--font-mono);                /* the house voice is mono */
+  --font:      var(--font-ui);                  /* alias */
+
+  --fs-xs:   10px;
+  --fs-sm:   11px;
+  --fs-md:   12px;
+  --fs-base: 13.5px;
+  --fs-lg:   15px;
+  --fs-xl:   17px;
+  --fs-2xl:  23px;
+
+  /* ---- spacing (multiples of 2) ---- */
+  --sp-1: 2px;  --sp-2: 4px;  --sp-3: 6px;  --sp-4: 8px;
+  --sp-5: 10px; --sp-6: 14px; --sp-7: 18px; --sp-8: 24px;
+
+  /* ---- radius ---- */
+  --r:      10px;   /* default house radius */
+  --r-sm:   6px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-xl:   16px;
+  --r-pill: 999px;
+
+  /* ---- layout ---- */
+  --rail-w: 316px;
+  --topbar-h: 52px;
+}
+
+/* ---- accent themes (set data-accent on <html> or a container) ---- */
+[data-accent="purple"] {
+  --accent:#bc8cff; --accent-2:#d6a8ff; --accent-ink:#1c1230;
+  --accent-soft:rgba(188,140,255,.14); --accent-line:rgba(188,140,255,.42);
+  --accent-grad:linear-gradient(135deg,#bc8cff,#9d6bff);
+  --glow-a:rgba(188,140,255,.22); --glow-b:rgba(214,120,255,.15);
+}
+[data-accent="orange"] {
+  --accent:#f0883e; --accent-2:#ffab5c; --accent-ink:#2a1606;
+  --accent-soft:rgba(240,136,62,.15); --accent-line:rgba(240,136,62,.42);
+  --accent-grad:linear-gradient(135deg,#ff9d2e,#ffc23d);
+  --glow-a:rgba(247,147,30,.20); --glow-b:rgba(255,170,60,.12);
+}
+[data-accent="duotone"] {
+  --accent:#c98cff; --accent-2:#ffab5c; --accent-ink:#1c1230;
+  --accent-soft:rgba(188,140,255,.14); --accent-line:rgba(188,140,255,.42);
+  --accent-grad:linear-gradient(120deg,#bc8cff 8%,#d68cff 42%,#ff9d2e 100%);
+  --glow-a:rgba(188,140,255,.22); --glow-b:rgba(247,147,30,.15);
+}
+
+/* font tweak */
+[data-font="sans"] { --font-ui: var(--font-sans); }

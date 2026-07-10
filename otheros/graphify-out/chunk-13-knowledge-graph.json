@@ -1,0 +1,963 @@
+{
+  "metadata": {
+    "chunk_id": "13/30",
+    "source": "webawesome static bundle chunks",
+    "file_pattern": "tank/static/house-style/webawesome/chunks/chunk.*.js",
+    "extraction_method": "javascript_import_export_parser",
+    "extracted_at": "2026-07-11"
+  },
+  "nodes": [
+    {
+      "id": "chunk.76ZI4IYG.js",
+      "type": "module",
+      "label": "LocalizeController Module",
+      "category": "i18n",
+      "properties": {
+        "exports": ["LocalizeController"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.76ZI4IYG.js"
+      }
+    },
+    {
+      "id": "chunk.CZ2YL77F.js",
+      "type": "module",
+      "label": "Localization Utilities",
+      "category": "i18n",
+      "properties": {
+        "exports": ["registerTranslation", "LocalizeController"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.CZ2YL77F.js"
+      }
+    },
+    {
+      "id": "chunk.PBQ4NLHZ.js",
+      "type": "module",
+      "label": "English Translation Defaults",
+      "category": "i18n",
+      "properties": {
+        "exports": ["en_default"],
+        "file_path": "chunk.PBQ4NLHZ.js"
+      }
+    },
+    {
+      "id": "chunk.AH3FNK5L.js",
+      "type": "module",
+      "label": "Option Component Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["option_styles_default"],
+        "components": ["option_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.AH3FNK5L.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.7OBLIRXR.js",
+      "type": "module",
+      "label": "CSS Literal Helper",
+      "category": "styling_utility",
+      "properties": {
+        "exports": ["i"],
+        "file_path": "chunk.7OBLIRXR.js"
+      }
+    },
+    {
+      "id": "chunk.XW6K5DFW.js",
+      "type": "module",
+      "label": "QR Code Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["qr_code_styles_default"],
+        "components": ["qr_code_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.XW6K5DFW.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.JTOY5KP3.js",
+      "type": "module",
+      "label": "Clear Event Definition",
+      "category": "events",
+      "properties": {
+        "exports": ["WaClearEvent"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.JTOY5KP3.js"
+      }
+    },
+    {
+      "id": "chunk.65BOUJDF.js",
+      "type": "module",
+      "label": "WaSelect Component",
+      "category": "ui_component",
+      "properties": {
+        "exports": ["WaSelect"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.65BOUJDF.js",
+        "is_composite": true,
+        "import_count": 24
+      }
+    },
+    {
+      "id": "chunk.2BXLTQVW.js",
+      "type": "module",
+      "label": "DOM Selection Utility",
+      "category": "utility",
+      "properties": {
+        "exports": ["o"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.2BXLTQVW.js"
+      }
+    },
+    {
+      "id": "chunk.VQZ46MYI.js",
+      "type": "module",
+      "label": "Scroll Utility",
+      "category": "utility",
+      "properties": {
+        "exports": ["scrollIntoView"],
+        "file_path": "chunk.VQZ46MYI.js"
+      }
+    },
+    {
+      "id": "chunk.52WA2DJO.js",
+      "type": "module",
+      "label": "Dismissible Management",
+      "category": "behavior",
+      "properties": {
+        "exports": ["isTopDismissible", "registerDismissible", "unregisterDismissible"],
+        "file_path": "chunk.52WA2DJO.js"
+      }
+    },
+    {
+      "id": "chunk.4ZAKP7NY.js",
+      "type": "module",
+      "label": "Show Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaShowEvent"],
+        "file_path": "chunk.4ZAKP7NY.js"
+      }
+    },
+    {
+      "id": "chunk.MQODJ75V.js",
+      "type": "module",
+      "label": "Hide Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaHideEvent"],
+        "file_path": "chunk.MQODJ75V.js"
+      }
+    },
+    {
+      "id": "chunk.3NKIHICW.js",
+      "type": "module",
+      "label": "After Hide Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaAfterHideEvent"],
+        "file_path": "chunk.3NKIHICW.js"
+      }
+    },
+    {
+      "id": "chunk.PX3HMKF7.js",
+      "type": "module",
+      "label": "After Show Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaAfterShowEvent"],
+        "file_path": "chunk.PX3HMKF7.js"
+      }
+    },
+    {
+      "id": "chunk.F25QOBDY.js",
+      "type": "module",
+      "label": "Select Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["select_styles_default"],
+        "file_path": "chunk.F25QOBDY.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.DOFHHKB4.js",
+      "type": "module",
+      "label": "Submit on Enter Behavior",
+      "category": "behavior",
+      "properties": {
+        "exports": ["submitOnEnter"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.DOFHHKB4.js"
+      }
+    },
+    {
+      "id": "chunk.B6ISAEK2.js",
+      "type": "module",
+      "label": "WaMarkdown Component",
+      "category": "ui_component",
+      "properties": {
+        "exports": ["WaMarkdown"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.B6ISAEK2.js"
+      }
+    },
+    {
+      "id": "chunk.VAPVXDMF.js",
+      "type": "module",
+      "label": "Markdown Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["markdown_styles_default"],
+        "components": ["markdown_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.VAPVXDMF.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.K4C5PQDP.js",
+      "type": "module",
+      "label": "Base Utilities",
+      "category": "utility",
+      "properties": {
+        "file_path": "chunk.K4C5PQDP.js"
+      }
+    },
+    {
+      "id": "chunk.BKE5EYM3.js",
+      "type": "module",
+      "label": "Core Utilities",
+      "category": "utility",
+      "properties": {
+        "file_path": "chunk.BKE5EYM3.js"
+      }
+    },
+    {
+      "id": "chunk.JHZRD2LV.js",
+      "type": "module",
+      "label": "Lifecycle Utilities",
+      "category": "utility",
+      "properties": {
+        "file_path": "chunk.JHZRD2LV.js"
+      }
+    },
+    {
+      "id": "chunk.H2FIL5EY.js",
+      "type": "module",
+      "label": "WaBadge Component",
+      "category": "ui_component",
+      "properties": {
+        "exports": ["WaBadge"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.H2FIL5EY.js"
+      }
+    },
+    {
+      "id": "chunk.UOXQXCNX.js",
+      "type": "module",
+      "label": "Badge Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "file_path": "chunk.UOXQXCNX.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.UVLZVEH2.js",
+      "type": "module",
+      "label": "Badge Behavior",
+      "category": "behavior",
+      "properties": {
+        "file_path": "chunk.UVLZVEH2.js"
+      }
+    },
+    {
+      "id": "chunk.FYKN76UA.js",
+      "type": "module",
+      "label": "Expand Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaExpandEvent"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.FYKN76UA.js"
+      }
+    },
+    {
+      "id": "chunk.R7QX4M6R.js",
+      "type": "module",
+      "label": "Mirror Validator",
+      "category": "utility",
+      "properties": {
+        "exports": ["MirrorValidator"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.R7QX4M6R.js"
+      }
+    },
+    {
+      "id": "chunk.LCFSCRUJ.js",
+      "type": "module",
+      "label": "Selection Change Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaSelectionChangeEvent"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.LCFSCRUJ.js"
+      }
+    },
+    {
+      "id": "chunk.UF4WDITO.js",
+      "type": "module",
+      "label": "Split Panel Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["split_panel_styles_default"],
+        "components": ["split_panel_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.UF4WDITO.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.T3OVPJUT.js",
+      "type": "module",
+      "label": "Minified Utilities",
+      "category": "utility",
+      "properties": {
+        "exports": ["i", "e", "l", "f", "m"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.T3OVPJUT.js"
+      }
+    },
+    {
+      "id": "chunk.NJ3BTDSR.js",
+      "type": "module",
+      "label": "Button Group Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["button_group_styles_default"],
+        "components": ["button_group_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.NJ3BTDSR.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.VVYVBQI6.js",
+      "type": "module",
+      "label": "Tree Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["tree_styles_default"],
+        "components": ["tree_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.VVYVBQI6.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.KTSZTCBE.js",
+      "type": "module",
+      "label": "WaResizeObserver Component",
+      "category": "ui_component",
+      "properties": {
+        "exports": ["WaResizeObserver"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.KTSZTCBE.js"
+      }
+    },
+    {
+      "id": "chunk.DP5YIFD7.js",
+      "type": "module",
+      "label": "Resize Observer Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "file_path": "chunk.DP5YIFD7.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.MAHGF7JK.js",
+      "type": "module",
+      "label": "Resize Observer Behavior",
+      "category": "behavior",
+      "properties": {
+        "file_path": "chunk.MAHGF7JK.js"
+      }
+    },
+    {
+      "id": "chunk.PZAN6FPN.js",
+      "type": "module",
+      "label": "Event Emitter Utilities",
+      "category": "utility",
+      "properties": {
+        "file_path": "chunk.PZAN6FPN.js"
+      }
+    },
+    {
+      "id": "chunk.IIHGIRPB.js",
+      "type": "module",
+      "label": "Finish Event",
+      "category": "events",
+      "properties": {
+        "exports": ["WaFinishEvent"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.IIHGIRPB.js"
+      }
+    },
+    {
+      "id": "chunk.KPY3CJ6V.js",
+      "type": "module",
+      "label": "Mutation Observer Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "exports": ["mutation_observer_styles_default"],
+        "components": ["mutation_observer_styles_default"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.KPY3CJ6V.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.2UDUPMFW.js",
+      "type": "module",
+      "label": "Breadcrumb Styles",
+      "category": "ui_component_styles",
+      "properties": {
+        "file_path": "chunk.2UDUPMFW.js",
+        "has_css": true
+      }
+    },
+    {
+      "id": "chunk.NRDENBDY.js",
+      "type": "module",
+      "label": "WaBreadcrumb Component",
+      "category": "ui_component",
+      "properties": {
+        "exports": ["WaBreadcrumb"],
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.NRDENBDY.js"
+      }
+    },
+    {
+      "id": "chunk.KBS6YHTA.js",
+      "type": "module",
+      "label": "Empty Module",
+      "category": "utility",
+      "properties": {
+        "file_path": "/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.KBS6YHTA.js",
+        "note": "Empty or minimal content"
+      }
+    },
+    {
+      "id": "webawesome_library",
+      "type": "library",
+      "label": "WebAwesome Web Components Library",
+      "category": "web_components",
+      "properties": {
+        "description": "Fonticons WebAwesome component library (2026)",
+        "vendor": "Fonticons, Inc.",
+        "url": "https://webawesome.com",
+        "license": "https://webawesome.com/license"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "chunk.76ZI4IYG.js",
+      "target": "chunk.PBQ4NLHZ.js",
+      "type": "imports",
+      "label": "imports en_default",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.76ZI4IYG.js",
+      "target": "chunk.CZ2YL77F.js",
+      "type": "imports",
+      "label": "imports LocalizeController, registerTranslation",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.AH3FNK5L.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.AH3FNK5L.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "option component styling",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.XW6K5DFW.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.XW6K5DFW.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "qr code component styling",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.F25QOBDY.js",
+      "type": "imports",
+      "label": "imports select styles",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.2BXLTQVW.js",
+      "type": "imports",
+      "label": "imports DOM utility",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.VQZ46MYI.js",
+      "type": "imports",
+      "label": "imports scrollIntoView",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.JTOY5KP3.js",
+      "type": "imports",
+      "label": "imports WaClearEvent",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.52WA2DJO.js",
+      "type": "imports",
+      "label": "imports dismissible management",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.4ZAKP7NY.js",
+      "type": "imports",
+      "label": "imports WaShowEvent",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.MQODJ75V.js",
+      "type": "imports",
+      "label": "imports WaHideEvent",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.3NKIHICW.js",
+      "type": "imports",
+      "label": "imports WaAfterHideEvent",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.PX3HMKF7.js",
+      "type": "imports",
+      "label": "imports WaAfterShowEvent",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.76ZI4IYG.js",
+      "type": "imports",
+      "label": "imports LocalizeController",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.K4C5PQDP.js",
+      "type": "imports",
+      "label": "imports base utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "chunk.JHZRD2LV.js",
+      "type": "imports",
+      "label": "imports lifecycle utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.65BOUJDF.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "WaSelect component",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.B6ISAEK2.js",
+      "target": "chunk.VAPVXDMF.js",
+      "type": "imports",
+      "label": "imports markdown styles",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.B6ISAEK2.js",
+      "target": "chunk.K4C5PQDP.js",
+      "type": "imports",
+      "label": "imports base utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.B6ISAEK2.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.B6ISAEK2.js",
+      "target": "chunk.JHZRD2LV.js",
+      "type": "imports",
+      "label": "imports lifecycle utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.B6ISAEK2.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "WaMarkdown component",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.VAPVXDMF.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.H2FIL5EY.js",
+      "target": "chunk.UOXQXCNX.js",
+      "type": "imports",
+      "label": "imports badge styles",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.H2FIL5EY.js",
+      "target": "chunk.UVLZVEH2.js",
+      "type": "imports",
+      "label": "imports badge behavior",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.H2FIL5EY.js",
+      "target": "chunk.K4C5PQDP.js",
+      "type": "imports",
+      "label": "imports base utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.H2FIL5EY.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.H2FIL5EY.js",
+      "target": "chunk.JHZRD2LV.js",
+      "type": "imports",
+      "label": "imports lifecycle utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.H2FIL5EY.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "WaBadge component",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.DP5YIFD7.js",
+      "type": "imports",
+      "label": "imports resize observer styles",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.MAHGF7JK.js",
+      "type": "imports",
+      "label": "imports resize observer behavior",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.PZAN6FPN.js",
+      "type": "imports",
+      "label": "imports event emitter utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.K4C5PQDP.js",
+      "type": "imports",
+      "label": "imports base utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "chunk.JHZRD2LV.js",
+      "type": "imports",
+      "label": "imports lifecycle utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KTSZTCBE.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "WaResizeObserver component",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.2BXLTQVW.js",
+      "target": "chunk.H23DVATU.js",
+      "type": "imports",
+      "label": "imports selector utility",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.2BXLTQVW.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NRDENBDY.js",
+      "target": "chunk.2UDUPMFW.js",
+      "type": "imports",
+      "label": "imports breadcrumb styles",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NRDENBDY.js",
+      "target": "chunk.76ZI4IYG.js",
+      "type": "imports",
+      "label": "imports LocalizeController",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NRDENBDY.js",
+      "target": "chunk.K4C5PQDP.js",
+      "type": "imports",
+      "label": "imports base utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NRDENBDY.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NRDENBDY.js",
+      "target": "chunk.JHZRD2LV.js",
+      "type": "imports",
+      "label": "imports lifecycle utilities",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NRDENBDY.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "WaBreadcrumb component",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.UF4WDITO.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.UF4WDITO.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "split panel component styling",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NJ3BTDSR.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.NJ3BTDSR.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "button group component styling",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.VVYVBQI6.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.VVYVBQI6.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "tree component styling",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KPY3CJ6V.js",
+      "target": "chunk.7OBLIRXR.js",
+      "type": "imports",
+      "label": "imports css literal helper",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.KPY3CJ6V.js",
+      "target": "webawesome_library",
+      "type": "component_of",
+      "label": "mutation observer component styling",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "chunk.T3OVPJUT.js",
+      "target": "chunk.BKE5EYM3.js",
+      "type": "imports",
+      "label": "imports core utilities",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "ui_components",
+      "label": "Web Components",
+      "nodes": [
+        "chunk.65BOUJDF.js",
+        "chunk.B6ISAEK2.js",
+        "chunk.H2FIL5EY.js",
+        "chunk.KTSZTCBE.js",
+        "chunk.NRDENBDY.js"
+      ],
+      "type": "component_group",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "css_styling_components",
+      "label": "CSS Styling Components",
+      "nodes": [
+        "chunk.AH3FNK5L.js",
+        "chunk.XW6K5DFW.js",
+        "chunk.VAPVXDMF.js",
+        "chunk.UF4WDITO.js",
+        "chunk.NJ3BTDSR.js",
+        "chunk.VVYVBQI6.js",
+        "chunk.KPY3CJ6V.js",
+        "chunk.F25QOBDY.js",
+        "chunk.UOXQXCNX.js",
+        "chunk.2UDUPMFW.js",
+        "chunk.DP5YIFD7.js"
+      ],
+      "type": "styling_group",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "event_definitions",
+      "label": "Event Classes and Definitions",
+      "nodes": [
+        "chunk.JTOY5KP3.js",
+        "chunk.4ZAKP7NY.js",
+        "chunk.MQODJ75V.js",
+        "chunk.3NKIHICW.js",
+        "chunk.PX3HMKF7.js",
+        "chunk.FYKN76UA.js",
+        "chunk.LCFSCRUJ.js",
+        "chunk.IIHGIRPB.js"
+      ],
+      "type": "event_group",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "utility_modules",
+      "label": "Shared Utility Modules",
+      "nodes": [
+        "chunk.K4C5PQDP.js",
+        "chunk.BKE5EYM3.js",
+        "chunk.JHZRD2LV.js",
+        "chunk.7OBLIRXR.js",
+        "chunk.VQZ46MYI.js",
+        "chunk.2BXLTQVW.js",
+        "chunk.PZAN6FPN.js",
+        "chunk.R7QX4M6R.js",
+        "chunk.T3OVPJUT.js"
+      ],
+      "type": "utility_group",
+      "confidence_score": 0.9
+    },
+    {
+      "id": "i18n_system",
+      "label": "Internationalization System",
+      "nodes": [
+        "chunk.76ZI4IYG.js",
+        "chunk.CZ2YL77F.js",
+        "chunk.PBQ4NLHZ.js"
+      ],
+      "type": "system_group",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "behavior_modules",
+      "label": "Behavior and DOM Manipulation",
+      "nodes": [
+        "chunk.52WA2DJO.js",
+        "chunk.DOFHHKB4.js",
+        "chunk.MAHGF7JK.js",
+        "chunk.UVLZVEH2.js"
+      ],
+      "type": "behavior_group",
+      "confidence_score": 0.85
+    }
+  ],
+  "summary": {
+    "total_nodes": 42,
+    "total_edges": 49,
+    "total_hyperedges": 6,
+    "node_categories": {
+      "module": 42,
+      "library": 1
+    },
+    "edge_types": {
+      "imports": 40,
+      "component_of": 9
+    },
+    "hyperedge_groups": {
+      "ui_components": 5,
+      "css_styling_components": 11,
+      "event_definitions": 8,
+      "utility_modules": 9,
+      "i18n_system": 3,
+      "behavior_modules": 4
+    }
+  }
+}

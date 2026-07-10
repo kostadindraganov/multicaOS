@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/carousel/carousel.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/carousel/autoplay-controller.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/carousel/scroll-controller.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/carousel/carousel.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/breadcrumb-item/breadcrumb-item.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/breadcrumb-item/breadcrumb-item.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/qr-code/qr-code.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/qr-code/qr-code.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/callout/callout.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/callout/callout.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/dialog/dialog.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/dialog/dialog.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/popover/popover.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/popover/popover.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/textarea/textarea.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/textarea/textarea.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/button/button.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/button/button.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/tab-group/tab-group.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/tab-group/tab-group.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/divider/divider.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/divider/divider.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/avatar/avatar.js

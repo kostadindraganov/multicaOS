@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/kubernetes/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/kubernetes/overlays/sandbox-runners/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/modal/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/e2b/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/hf-spaces/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/cwsandbox/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/boxlite/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/editors/vscode/PUBLISHING.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/editors/vscode/CHANGELOG.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/editors/vscode/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e_ui/COVERAGE_GAPS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e_ui/visual/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/harness_bench/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/integration/AGENTS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/test.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/pi_skills_list/skills/pi-e2e-xyz-count-d2f6e1/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/pi_skills_list/skills/pi-e2e-xyz-greet-c4a8d5/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/pi_skills_none/skills/pi-e2e-xyz-count-d2f6e1/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/pi_skills_none/skills/pi-e2e-xyz-greet-c4a8d5/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/codex_skills_list/skills/codex_e2e_xyz_greet_a3f9c2/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/codex_skills_list/skills/codex_e2e_xyz_count_b8d4e7/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/codex_skills_none/skills/codex_e2e_xyz_greet_a3f9c2/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/codex_skills_none/skills/codex_e2e_xyz_count_b8d4e7/SKILL.md

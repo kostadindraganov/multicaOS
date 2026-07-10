@@ -1,0 +1,58 @@
+PROPRIETARY LICENSE
+
+Copyright (c) 2026 Creator Magic Ltd. All rights reserved.
+
+This software and its associated documentation (the "Software") are the
+proprietary work of Mike Russell (the "Author") and are licensed, not sold.
+By downloading, copying, or using the Software, you ("You") agree to the
+terms below.
+
+1. GRANT OF LICENSE
+   The Author grants You a personal, non-exclusive, non-transferable,
+   non-sublicensable, revocable license to install, run, and modify the
+   Software on systems You own or control, for Your own personal or internal
+   business purposes only.
+
+2. RESTRICTIONS
+   You may NOT, in whole or in part:
+   (a) redistribute, publish, share, sell, rent, lease, or otherwise make the
+       Software (original or modified, source or compiled) available to any
+       third party;
+   (b) sublicense the Software or grant access to it to anyone who has not
+       independently obtained their own license from the Author;
+   (c) use the Software to provide a hosted, multi-user, or commercial service
+       to third parties;
+   (d) remove, obscure, or alter any copyright, license, or attribution
+       notices.
+
+3. THIRD-PARTY AND EXTERNAL SERVICES
+   The Software requires You to supply Your own credentials and access to any
+   third-party services it integrates with (including, without limitation, Your
+   own Claude account and Claude Code installation). You are solely responsible
+   for complying with the terms of those services. The Software does not grant,
+   include, or proxy access to any such service. Third-party components bundled
+   with or installed by the Software remain governed by their own licenses.
+
+4. RESERVATION OF RIGHTS
+   All rights not expressly granted in this license are reserved by the Author.
+   No ownership of the Software transfers to You.
+
+5. AS-IS; NO SUPPORT
+   The Software is provided as a point-in-time snapshot, "AS IS", without any
+   obligation of maintenance, updates, or support.
+
+6. NO WARRANTY
+   THE SOFTWARE IS PROVIDED WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+   A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+7. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+   FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+
+8. TERMINATION
+   This license terminates automatically if You breach any of its terms. On
+   termination You must stop using the Software and destroy all copies in Your
+   possession.

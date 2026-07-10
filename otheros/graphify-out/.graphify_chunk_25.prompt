@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/server/DBSPEC.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/llms/LLMCLIENT.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/onboarding/agent/AGENTS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/onboarding/agent/skills/detect-framework/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/onboarding/agent/skills/omnigent-knowledge/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/onboarding/agent/skills/build-omnigent/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/ci-external-contributors-proposal.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/SESSION_PROJECTS_SIDEBAR.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/harness-capabilities-bench-seam.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/CLI_CONTRACT.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/opencode-native-gaps.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/CUJ-MAP.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/CUJ-ANALYSIS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/OBSERVABILITY.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/contributor-review-merge-proposal.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/harness-plugin-interface.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/opencode-native-gaps-qa.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/designs/issue-triage-proposal.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/sdks/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/sdks/ui/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/sdks/python-client/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/TIPTAP_MIGRATION_NOTES.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/README.md

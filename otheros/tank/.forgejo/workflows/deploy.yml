@@ -1,0 +1,55 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+# Configure these in the repo's Actions settings:
+#   secrets.TANK_SSH_TARGET   SSH target for deploy.sh, e.g. root@192.0.2.10
+#   secrets.TANK_DEPLOY_KEY   private SSH key authorised on that target
+#   vars.TANK_PORT            (optional) port tank listens on, defaults to 7878
+#   vars.TANK_HOUSE_STYLE_URL (optional) refresh vendored design assets from
+#                             this URL at deploy time; unset → ship committed copy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TANK_DEPLOY_HOST: ${{ secrets.TANK_SSH_TARGET }}
+      TANK_PORT: ${{ vars.TANK_PORT || '7878' }}
+      TANK_HOUSE_STYLE_URL: ${{ vars.TANK_HOUSE_STYLE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deploy SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.TANK_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          HOST="${TANK_DEPLOY_HOST#*@}"
+          ssh-keyscan -t ed25519 -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Verify SSH to tank
+        run: |
+          ssh "$TANK_DEPLOY_HOST" 'echo "tank reachable, hostname=$(hostname)"'
+
+      - name: Deploy
+        run: |
+          chmod +x deploy.sh
+          ./deploy.sh
+
+      - name: Smoke test /health
+        run: |
+          HOST="${TANK_DEPLOY_HOST#*@}"
+          for i in 1 2 3 4 5; do
+            if curl -sf "http://$HOST:$TANK_PORT/health" >/dev/null; then
+              echo "✅ tank /health OK"
+              exit 0
+            fi
+            echo "retry $i..."
+            sleep 2
+          done
+          echo "❌ /health did not respond after deploy"
+          exit 1

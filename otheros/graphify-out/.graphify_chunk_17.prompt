@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/radio/radio.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/radio/radio.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/card/card.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/card/card.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/copy-button/copy-button.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/copy-button/copy-button.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/format-date/format-date.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/split-panel/split-panel.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/split-panel/split-panel.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/mutation-observer/mutation-observer.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/mutation-observer/mutation-observer.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/input/input.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/input/input.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/format-number/format-number.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/markdown/markdown.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/markdown/markdown.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/skeleton/skeleton.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/skeleton/skeleton.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/include/request.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/include/include.styles.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/include/include.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/progress-bar/progress-bar.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/components/progress-bar/progress-bar.styles.js

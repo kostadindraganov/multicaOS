@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_sandbox_dependencies.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/helpers.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_host_opencode_native_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_chat_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_kiro_native_cli_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_polly_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_cursor_native_cli_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_local_server_lifecycle_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_subagent_elicitation_forwarding_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_kimi_executor_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_dispatch_fork_repl_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_sessions_fork_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_comment_tools.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/test_claude_coder_sandbox.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/_example_helpers.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_harness_without_agent_e2e.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_omnigent_url_linkify.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/conftest.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_example_polly.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_omnigent_omnigent_model_env.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_repl_history_recall.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_host_ctrl_c_stop_server.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_omnigent_coding_supervisor.py

@@ -1,0 +1,35 @@
+# systemd unit template for tank. The __PLACEHOLDER__ tokens are rendered by
+# deploy.sh from TANK_SERVICE_USER / TANK_INSTALL_DIR / TANK_SERVICE_HOME /
+# TANK_PORT (defaults: tank / /opt/tank / /home/tank / 7878). To install by
+# hand, substitute the tokens yourself before copying to
+# /etc/systemd/system/tank.service.
+[Unit]
+Description=tank — Claude Code mission control
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__SERVICE_USER__
+Group=__SERVICE_USER__
+WorkingDirectory=__INSTALL_DIR__
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=__SERVICE_HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=TANK_PORT=__PORT__
+# Optional host-local overrides (gitignored, never committed). Used to seed
+# runtime config — git provider, AI endpoint, project roots — into a fresh DB
+# without baking private values into the repo. The leading "-" means "ignore
+# if absent". Redundant once the DB is seeded (DB values win).
+EnvironmentFile=-__INSTALL_DIR__/tank.local.env
+ExecStart=__INSTALL_DIR__/venv/bin/uvicorn api:app --host 0.0.0.0 --port __PORT__
+Restart=on-failure
+RestartSec=3
+# Only signal the main uvicorn process on stop/restart — leave tmux + claude
+# children alone so in-flight tasks survive a deploy. Reboots still kill
+# everything; reconcile_orphan_tasks() picks up the pieces on next startup.
+KillMode=process
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

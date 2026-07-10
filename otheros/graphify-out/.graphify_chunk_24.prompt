@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/uk.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/cs.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/fr.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/nl.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/en-gb.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/hu.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/ar.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/it.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/es.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/translations/tr.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/RELEASING.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/CHANGELOG.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/CONTRIBUTING.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/AGENTS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/CLAUDE.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/SECURITY.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/runtime/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/spec/AGENTSPEC.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/spec/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/server/API.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/server/codex-API.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/omnigent/server/README.md

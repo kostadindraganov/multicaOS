@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/codex_skills_all/skills/codex_e2e_xyz_greet_a3f9c2/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/codex_skills_all/skills/codex_e2e_xyz_count_b8d4e7/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/pi_skills_all/skills/pi-e2e-xyz-count-d2f6e1/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/agents/pi_skills_all/skills/pi-e2e-xyz-greet-c4a8d5/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/examples/archer/skills/deep-research/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/resources/examples/archer/skills/deep-research/references/research-checklist.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/codex_parity/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/AGENTS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/TODO_omnigent_coverage.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/QWEN_NATIVE_DESIGN.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/OMNIGENT_BOT_SETUP.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/cursor-native-tui-mirror-plan.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/POLICIES.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/AGENT_YAML_SPEC.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/antigravity-native-rpc-core-design.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/databricks.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/cursor-native-elicitation.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/omni-upgrade-design.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/cursor-native-cost-tracking.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/kiro-native-elicitation.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/QWEN_FOLLOWUPS.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/antigravity-native-rpc-core-plan.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/docs/QUEUE_STEER_DESIGN.md

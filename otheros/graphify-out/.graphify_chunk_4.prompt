@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_example_debby.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_repl_ctrl_c_interrupt.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_serve_omnigent_routes.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_omnigent_stdio_mcp.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_example_sentinel.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_repl_overview_terminal_visibility.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_example_agent_with_uc_tools.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/_pexpect_harness.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_repl_ctrl_r_search.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_per_harness_antigravity.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_per_harness_openai_agents_sdk.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_omnigent_policy_enforcement.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_repl_inline_tool_streaming.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_per_harness_qwen.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/omnigent/test_run_omnigent_example_agents.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/integrations/deploy/e2b/e2b_smoke_test.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/integrations/deploy/cwsandbox/smoke_test.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/e2e/integrations/deploy/cwsandbox/e2e_managed.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_harness_install.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_setup.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_antigravity_auth.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_provider_config.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/tests/onboarding/test_ucode_state.py

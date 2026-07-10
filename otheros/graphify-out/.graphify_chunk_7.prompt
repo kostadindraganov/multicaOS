@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/dev/lint/lint_no_skipped_tests.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/dev/lint/__init__.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/dev/lint/lint_no_global_asyncio_patch.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/api.py
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/shell.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/webawesome.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/webawesome.loader.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/utilities/autoloader.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/utilities/defined.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/utilities/base-path.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/utilities/form.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/utilities/animation.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/utilities/localize.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/styles/component/size.styles.ts
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/styles/component/visually-hidden.styles.ts
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/styles/component/variants.styles.ts
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/styles/component/form-control.styles.ts
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/styles/component/host.styles.ts
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.SMTG4BAQ.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.CNH6RYYS.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.MXHGJIUP.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.IXJ5NNJZ.js
+/Users/cyberkoko/Desktop/multicaOS/otheros/tank/static/house-style/webawesome/chunks/chunk.VXHLGFYA.js

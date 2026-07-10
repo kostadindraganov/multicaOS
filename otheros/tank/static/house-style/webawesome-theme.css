@@ -1,0 +1,137 @@
+/* ============================================================
+   house-style / webawesome-theme.css  —  the Creator Magic theme
+   for Web Awesome (the Shoelace successor, self-hosted in ./webawesome).
+   ------------------------------------------------------------
+   Web Awesome ships a layered default theme inside @layer wa-theme.
+   This file is intentionally UNLAYERED, so its rules win over that
+   layer without a specificity arms race. It maps Web Awesome's
+   role-based custom properties (--wa-*) onto our own tokens.css
+   variables, so a <wa-button>, <wa-checkbox>, <wa-switch>, <wa-input>,
+   <wa-select>, <wa-dialog>, <wa-tab-group>, <wa-card> and <wa-tooltip>
+   read as the same family as the rest of the shell: purple leads,
+   dark surfaces, mono voice. Orange stays the spark, reserved for our
+   bespoke .btn-spark (see shell.css) which is NOT a Web Awesome button.
+
+   Load order in an app's <head>:
+     1. tokens.css                        (our variables)
+     2. webawesome/styles/themes/default.css   (Web Awesome's tokens)
+     3. webawesome-theme.css              (this file: the mapping)
+     4. shell.css                         (our primitives)
+     5. <script type="module" src="webawesome/webawesome.loader.js">
+
+   Because every value below resolves to a token, switching
+   data-accent="orange|duotone" on <html> re-tints the Web Awesome
+   components too, for free.
+   ============================================================ */
+
+:where(:root) {
+  /* Web Awesome's surfaces default to light; our world is dark. Drive its
+     scheme + surface/text tokens from our panels so components sit on the
+     same background as the shell. */
+  color-scheme: dark;
+
+  /* ---- surfaces + text ---- */
+  --wa-color-surface-default: var(--panel);
+  --wa-color-surface-raised:  var(--panel-2);
+  --wa-color-surface-lowered: var(--bg);
+  --wa-color-surface-border:  var(--border);
+
+  --wa-color-text-normal: var(--text);
+  --wa-color-text-quiet:  var(--muted);
+  --wa-color-text-link:   var(--accent-2);
+
+  --wa-color-overlay-modal:  rgba(6, 8, 12, .66);
+  --wa-color-overlay-inline: rgba(110, 118, 129, .12);
+
+  --wa-color-focus: var(--accent);
+
+  /* ---- brand ramp = our purple (anything reading a raw stop, e.g.
+     focus rings / links, follows the house accent) ---- */
+  --wa-color-brand-95: #f4ecff;
+  --wa-color-brand-90: #e7d9ff;
+  --wa-color-brand-80: #d6bbff;
+  --wa-color-brand-70: var(--accent-2);   /* #d6a8ff */
+  --wa-color-brand-60: var(--accent);     /* #bc8cff */
+  --wa-color-brand-50: #9d6bff;
+  --wa-color-brand-40: #8453e0;
+  --wa-color-brand-30: #663cb0;
+  --wa-color-brand-20: #3a2466;
+  --wa-color-brand-10: #241540;
+  --wa-color-brand-05: #180d2c;
+  --wa-color-brand: var(--accent);
+
+  /* ---- brand role tokens (fills/borders/ink the components actually use) ---- */
+  --wa-color-brand-fill-quiet:    var(--accent-soft);
+  --wa-color-brand-fill-normal:   rgba(188, 140, 255, .24);
+  --wa-color-brand-fill-loud:     var(--accent);
+  --wa-color-brand-border-quiet:  var(--accent-line);
+  --wa-color-brand-border-normal: var(--accent-line);
+  --wa-color-brand-border-loud:   var(--accent);
+  --wa-color-brand-on-quiet:      var(--accent-2);
+  --wa-color-brand-on-normal:     var(--accent-2);
+  --wa-color-brand-on-loud:       var(--accent-ink);
+
+  /* ---- neutral role tokens (secondary buttons, inputs, switch track) ----
+     Keep neutral dark to match our panels, rather than Web Awesome's
+     light-in-dark "loud" neutral. */
+  --wa-color-neutral-fill-quiet:    var(--panel);
+  --wa-color-neutral-fill-normal:   var(--panel-2);
+  --wa-color-neutral-fill-loud:     var(--panel-3);
+  --wa-color-neutral-border-quiet:  var(--border-soft);
+  --wa-color-neutral-border-normal: var(--border);
+  --wa-color-neutral-border-loud:   #3a4250;
+  --wa-color-neutral-on-quiet:      var(--muted);
+  --wa-color-neutral-on-normal:     var(--text);
+  --wa-color-neutral-on-loud:       var(--text);
+
+  /* ---- semantic colours = our spectrum (tints follow the -50 stop) ---- */
+  --wa-color-success-50: var(--green);
+  --wa-color-success-fill-loud:   var(--green);
+  --wa-color-success-border-loud: var(--green);
+  --wa-color-success-on-loud:     #06210d;
+
+  --wa-color-warning-50: var(--yellow);
+  --wa-color-warning-fill-loud:   var(--yellow);
+  --wa-color-warning-border-loud: var(--yellow);
+  --wa-color-warning-on-loud:     #2a1d02;
+
+  --wa-color-danger-50: var(--red);
+  --wa-color-danger-fill-loud:   var(--red);
+  --wa-color-danger-border-loud: var(--red);
+  --wa-color-danger-on-loud:     #2a0606;
+
+  /* ---- type: the house voice is mono ---- */
+  --wa-font-family-body:    var(--font-ui);
+  --wa-font-family-heading: var(--font-ui);
+  --wa-font-family-code:    var(--font-mono);
+  /* our UI is denser than Web Awesome's 16px base; scale it to ~13.5px */
+  --wa-font-size-scale: .86;
+  --wa-font-weight-action: 600;
+
+  /* ---- radius: join the house radius family ---- */
+  --wa-border-radius-s: var(--r-sm);   /*  6px */
+  --wa-border-radius-m: var(--r-md);   /*  8px  — buttons, inputs, switches */
+  --wa-border-radius-l: var(--r-lg);   /* 12px  — cards, dialogs */
+}
+
+/* The focus ring colour also keys off the accent so keyboard focus
+   matches the rest of the shell. */
+:where(:root) {
+  --wa-focus-ring-color: var(--accent);
+  --wa-focus-ring: var(--wa-focus-ring-style, solid)
+                   var(--wa-focus-ring-width, 3px)
+                   var(--accent-soft);
+}
+
+/* A dialog should feel like our .modal: soft purple edge + deep shadow. */
+wa-dialog::part(dialog) {
+  border: 1px solid var(--border);
+  box-shadow: 0 30px 90px -30px rgba(0, 0, 0, .8),
+              0 0 0 1px rgba(188, 140, 255, .08);
+}
+
+/* Tooltips: match our small mono chips rather than the default sans. */
+wa-tooltip::part(body) {
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+}

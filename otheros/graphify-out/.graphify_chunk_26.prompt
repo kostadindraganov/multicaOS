@@ -1,0 +1,30 @@
+Extract a knowledge graph from these files. Output ONLY valid JSON.
+
+Rules: Mark edges EXTRACTED/INFERRED/AMBIGUOUS. Code: focus on calls/data flow not in imports. Docs: extract concepts & rationale. Always include confidence_score on every edge (1.0 for EXTRACTED, 0.6-0.9 for INFERRED, 0.1-0.3 for AMBIGUOUS).
+
+Output: {"nodes":[{"id":"file_symbol","label":"Name","file_type":"code|doc|paper|image","source_file":"path"}],"edges":[{"source":"id1","target":"id2","relation":"calls|references|cites|semantically_similar_to","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":0.8}],"hyperedges":[],"input_tokens":0,"output_tokens":0}
+
+Files:
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/RELEASE.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/fastlane/metadata/copyright.txt
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/fastlane/metadata/en-US/support_url.txt
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/fastlane/metadata/en-US/keywords.txt
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/fastlane/metadata/en-US/promotional_text.txt
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/ios/fastlane/metadata/en-US/description.txt
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/android/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/electron/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/electron/icons/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/web/platform-assets/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/docker/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/docker/SKILL.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/fly/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/cloudflare/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/databricks/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/railway/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/render/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/islo/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/openshell/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/tailscale/README.md
+/Users/cyberkoko/Desktop/multicaOS/otheros/omnigent/deploy/daytona/README.md

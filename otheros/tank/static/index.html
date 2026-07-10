@@ -1,0 +1,3878 @@
+<!DOCTYPE html>
+<html lang="en" data-accent="purple">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+<title>tank</title>
+<link rel="icon" type="image/png" href="/static/house-style/logo.png" id="favicon-link" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- house-style design system (Creator Magic). {{HOUSE_STYLE_BASE}} is templated by
+     root_index() from the house_style_url runtime config: blank → the committed copy
+     under /static/house-style/ (the default — no private hostname in the repo, offline-
+     safe); set it to a design-system URL (e.g. a live /latest/ channel) to track the kit
+     live, which is how the operator runs tank as the fleet CANARY so a bad kit edit
+     surfaces here first. Each file still falls back to the vendored copy via onerror if
+     the base is unreachable; when the base IS the vendored copy, primary == fallback and
+     onerror never fires. deploy.sh refreshes the vendored copy at deploy time from the
+     same URL (TANK_HOUSE_STYLE_URL). Load order is the kit's contract (see llms.txt): tokens FIRST, then
+     Web Awesome's own theme, then our webawesome-theme mapping, then shell.css, then
+     shell.js, and finally the Web Awesome autoloader (module) which registers <wa-*> on
+     first use. The wa-* lines drive tank's buttons / inputs / checkboxes / switches; the
+     loader resolves its component chunks relative to its own URL, so the vendored fallback
+     pulls the whole self-contained /static/house-style/webawesome/ runtime. -->
+<link rel="stylesheet" href="{{HOUSE_STYLE_BASE}}/tokens.css"
+      onerror="this.onerror=null;this.href='/static/house-style/tokens.css'" />
+<link rel="stylesheet" href="{{HOUSE_STYLE_BASE}}/webawesome/styles/themes/default.css"
+      onerror="this.onerror=null;this.href='/static/house-style/webawesome/styles/themes/default.css'" />
+<link rel="stylesheet" href="{{HOUSE_STYLE_BASE}}/webawesome-theme.css"
+      onerror="this.onerror=null;this.href='/static/house-style/webawesome-theme.css'" />
+<link rel="stylesheet" href="{{HOUSE_STYLE_BASE}}/shell.css"
+      onerror="this.onerror=null;this.href='/static/house-style/shell.css'" />
+<script defer src="{{HOUSE_STYLE_BASE}}/shell.js"
+        onerror="this.onerror=null;var s=document.createElement('script');s.defer=true;s.src='/static/house-style/shell.js';document.head.appendChild(s)"></script>
+<!-- On fallback, REMOVE the failed live <script> before appending the vendored
+     one: Web Awesome derives its component base path from the first script whose
+     src ends with webawesome.loader.js, so a leftover dead live tag would make it
+     autoload <wa-*> definitions from the unreachable CDN. data-webawesome pins the
+     base path to the vendored tree as belt-and-braces. -->
+<script type="module" src="{{HOUSE_STYLE_BASE}}/webawesome/webawesome.loader.js"
+        onerror="this.onerror=null;this.remove();var s=document.createElement('script');s.type='module';s.src='/static/house-style/webawesome/webawesome.loader.js';s.setAttribute('data-webawesome','/static/house-style/webawesome');document.head.appendChild(s)"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+<style>
+/* Palette, fonts, spark + accent themes now come from house-style
+   tokens.css (linked in <head>) — the single source of truth. Change
+   tokens.css and every consumer, tank included, updates. Kept here:
+   only tank-local additions the shared system doesn't own. */
+:root {
+  color-scheme: dark;
+  --header-h: 49px;
+}
+* { box-sizing: border-box; }
+/* Subtle dark scrollbars — track blends into the panel, thumb sits on the border colour */
+* { scrollbar-width: thin; scrollbar-color: var(--border) var(--panel); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--panel); }
+::-webkit-scrollbar-thumb {
+  background: var(--border); border-radius: 5px;
+  border: 2px solid var(--panel);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--grey); }
+::-webkit-scrollbar-corner { background: var(--panel); }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: var(--font-ui); font-size: 13.5px;
+  -webkit-font-smoothing: antialiased;
+  display: grid; grid-template-rows: auto 1fr;
+  height: 100vh; height: 100dvh; overflow: hidden;
+}
+/* The .aura + .grain ambient layers are now provided verbatim by the shared
+   kit (shell.css) — the <div class="aura"> / <div class="grain"> nodes stay in
+   the markup; their styling lives in house-style, so tank no longer duplicates it.
+   tank-specific: lift the chrome above those z-0/z-1 ambient layers. */
+body > header, body > main { position: relative; z-index: 2; }
+header {
+  background: var(--panel); border-bottom: 1px solid var(--border);
+  padding: 10px 18px; display: flex; align-items: center; gap: 16px;
+}
+header h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+header .sub { color: var(--muted); font-size: 12px; }
+header .grow { flex: 1; }
+header button {
+  background: var(--accent); color: var(--accent-ink); border: none;
+  padding: 7px 14px; border-radius: 4px; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+}
+header button:hover { filter: brightness(1.1); }
+#settings-btn {
+  background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+  padding: 5px 8px; display: inline-flex; align-items: center;
+}
+#settings-btn:hover { color: var(--text); filter: none; }
+#settings-btn svg { width: 15px; height: 15px; }
+
+main { display: grid; grid-template-columns: var(--rail-w) 1fr; overflow: hidden;
+       position: relative; }
+
+#sidebar {
+  background: var(--panel); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+/* The search box itself is the kit's .rail-search pill (shell.css). tank only
+   keeps the clear (×) button it adds — a flex child of the pill, shown via
+   .rail-search.has-text — plus the search-result extras (snippet, field tag,
+   match highlight) the kit doesn't own. */
+.search-clear {
+  display: none; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 18px; height: 18px; padding: 0; margin-left: 2px;
+  background: transparent; color: var(--muted);
+  border: none; border-radius: 50%;
+  font-size: 16px; line-height: 1; cursor: pointer;
+}
+.rail-search.has-text .search-clear { display: flex; }
+.search-clear:hover { color: var(--text); }
+.search-snippet {
+  color: var(--muted); font-size: 11px; margin-top: 4px; line-height: 1.4;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.match-field { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); opacity: .85; }
+.search-snippet mark, .list-row .row-title mark {
+  background: rgba(255,210,80,.25); color: var(--text); border-radius: 2px; padding: 0 1px;
+}
+/* Tab strip (.tabs/.tab/.tab.active) is the kit primitive in shell.css. */
+#project-picker {
+  padding: 6px; border-bottom: 1px solid var(--border);
+  max-height: 30vh; overflow-y: auto;
+  background: var(--panel);
+}
+#project-picker.hidden { display: none; }
+/* Project + task rows are the kit's .list-row primitive (shell.css): it owns
+   the padding, radius, hover, active bar, the .row-title/.nm/.row-ct layout and
+   the .row-del. tank keeps .project-row/.task-row purely as JS selector hooks
+   (no styling of their own) and the genuinely tank-specific bits below
+   (the Lucide .picon mask + the per-project live .pdot). The "+ new" row is the
+   kit's .add-row. */
+/* Lucide icons are stroke-only SVGs; render them via a CSS mask so they tint
+   to the row's current text colour (mask alpha = the stroke shape). */
+.picon {
+  flex: 0 0 auto; display: inline-block; width: 14px; height: 14px;
+  background: currentColor;
+  -webkit-mask: var(--picon) center / contain no-repeat;
+          mask: var(--picon) center / contain no-repeat;
+}
+.picon.picon-lg { width: 20px; height: 20px; vertical-align: -3px; margin-right: 6px; }
+/* Per-project live dot: a smaller sibling of the task .dot, reusing its colours. */
+.list-row .pdot { width: 7px; height: 7px; margin-right: 0; }
+/* Icon picker */
+.icon-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 4px; max-height: 46vh; overflow-y: auto; margin-top: 4px;
+  padding: 2px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--panel-2);
+}
+.icon-grid button {
+  aspect-ratio: 1; display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: 4px;
+  color: var(--text); cursor: pointer; padding: 0;
+}
+.icon-grid button:hover { border-color: var(--accent); background: var(--panel); }
+.icon-grid button.selected { border-color: var(--accent); background: var(--panel); }
+.icon-grid .picon { width: 18px; height: 18px; }
+.icon-edit {
+  font-size: 10px; font-weight: 500; color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;
+  cursor: pointer; vertical-align: 3px; margin-left: 8px;
+}
+.icon-edit:hover { color: var(--accent); border-color: var(--accent); }
+.modal .field-label {
+  display: block; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.modal .field-hint {
+  font-size: 11px; color: var(--muted); margin: -8px 0 12px 0;
+}
+#tasklist {
+  flex: 1; overflow-y: auto; padding: 6px;
+}
+
+.project-home { padding: 20px 28px; overflow-y: auto; height: 100%; }
+.project-home h2 { margin: 0 0 4px 0; font-size: 20px; }
+.project-home .ph-meta {
+  color: var(--muted); font-size: 12px; margin-bottom: 24px;
+}
+.project-home .ph-meta code {
+  background: var(--panel); padding: 1px 6px; border-radius: 3px; font-size: 11px;
+}
+.project-home h3 {
+  font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.5px; margin: 22px 0 8px 0;
+}
+.todo-panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 8px 0 14px 0;
+}
+.todo-panel .empty {
+  padding: 14px; color: var(--muted); font-size: 12px; text-align: center;
+}
+/* Build-queue board: same panel chrome as todos, reusing the .dot status palette
+   and .todo-actions/.todo-drag/.empty primitives. */
+.queue-panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 8px 0 14px 0;
+}
+.queue-panel .empty {
+  padding: 14px; color: var(--muted); font-size: 12px; text-align: center;
+}
+.queue-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 6px 14px 10px 14px; flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.queue-bar-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.queue-status { font-size: 12px; color: var(--muted); text-transform: none; }
+.queue-status.running { color: var(--yellow); }
+.queue-status.paused { color: var(--orange); }
+.queue-status.done { color: var(--accent); }
+.queue-item { border-bottom: 1px solid rgba(255,255,255,0.03); }
+.queue-item:last-child { border-bottom: none; }
+.queue-item.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
+.queue-row {
+  display: grid; grid-template-columns: 14px 14px 24px 1fr auto;
+  gap: 10px; padding: 6px 14px; align-items: center; font-size: 13px;
+}
+.queue-seq { color: var(--muted); font-size: 11px; text-align: right; }
+.queue-title { overflow: hidden; text-overflow: ellipsis; }
+.queue-item:hover .todo-drag { opacity: 0.55; }
+.queue-item:hover .todo-actions { opacity: 1; }
+.queue-result {
+  padding: 0 14px 8px 52px; color: var(--muted); font-size: 11px;
+  white-space: pre-wrap; max-height: 4.5em; overflow: hidden;
+}
+.queue-details { padding: 0 14px 8px 52px; }
+.queue-details-text {
+  cursor: text; white-space: pre-wrap; word-break: break-word; font-size: 12px;
+  color: var(--muted); border-left: 2px solid var(--border); padding: 2px 0 2px 10px;
+}
+.queue-details textarea {
+  width: 100%; box-sizing: border-box; background: var(--bg); color: var(--text);
+  border: 1px solid var(--accent); border-radius: 4px; padding: 6px 8px;
+  font-family: inherit; font-size: 12px; resize: vertical; min-height: 52px;
+}
+.todo-item { border-bottom: 1px solid rgba(255,255,255,0.03); }
+.todo-item:last-child { border-bottom: none; }
+.todo-item.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
+.todo-item.dragging { opacity: 0.4; }
+.todo-row {
+  display: grid; grid-template-columns: 14px 24px 1fr auto auto;
+  gap: 10px; padding: 6px 14px; align-items: center;
+  font-size: 13px;
+}
+.todo-row.done .todo-text { color: var(--muted); text-decoration: line-through; }
+.todo-row input[type=checkbox] {
+  width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);
+}
+.todo-drag {
+  cursor: grab; color: var(--muted); opacity: 0; transition: opacity 0.1s;
+  user-select: none; font-size: 13px; line-height: 1; text-align: center;
+}
+.todo-item:hover .todo-drag { opacity: 0.55; }
+.todo-drag:active { cursor: grabbing; }
+.todo-text {
+  cursor: text; word-break: break-word; padding: 2px 0;
+}
+.todo-detail-toggle {
+  background: transparent; border: 1px solid var(--border); border-radius: 3px;
+  color: var(--muted); cursor: pointer; padding: 1px 6px; font-family: inherit;
+  font-size: 11px; line-height: 1.4; opacity: 0; transition: opacity 0.1s;
+}
+.todo-item:hover .todo-detail-toggle, .todo-detail-toggle.has { opacity: 1; }
+.todo-detail-toggle.has { color: var(--accent); border-color: var(--accent); }
+.todo-detail-toggle:hover { color: var(--text); border-color: var(--accent); }
+.todo-details {
+  padding: 0 14px 8px 62px; font-size: 12px; color: var(--muted);
+}
+.todo-details-text {
+  cursor: text; white-space: pre-wrap; word-break: break-word;
+  border-left: 2px solid var(--border); padding: 2px 0 2px 10px;
+}
+.todo-details-text.placeholder { font-style: italic; opacity: 0.7; }
+.todo-details textarea {
+  width: 100%; box-sizing: border-box; background: var(--bg); color: var(--text);
+  border: 1px solid var(--accent); border-radius: 4px; padding: 6px 8px;
+  font-family: inherit; font-size: 12px; resize: vertical; min-height: 52px;
+}
+.todo-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.1s; }
+.todo-item:hover .todo-actions { opacity: 1; }
+.todo-actions button {
+  background: transparent; border: 1px solid var(--border); border-radius: 3px;
+  color: var(--muted); cursor: pointer; padding: 2px 6px;
+  font-family: inherit; font-size: 10px;
+}
+.todo-actions button:hover { color: var(--text); border-color: var(--accent); }
+.todo-actions button.del:hover { color: var(--red); border-color: var(--red); }
+.todo-add {
+  display: flex; gap: 6px; padding: 10px 14px 0 14px;
+}
+/* The add field is a kit wa-input + wa-button; tank only stretches the input. */
+.todo-add wa-input { flex: 1; }
+.recent-task {
+  display: grid; grid-template-columns: 12px 1fr auto;
+  gap: 10px; padding: 6px 14px; align-items: center;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 4px; margin-bottom: 4px; cursor: pointer;
+  font-size: 12px;
+}
+.recent-task:hover { border-color: var(--accent); }
+.recent-task .rt-time { color: var(--muted); font-size: 10px; }
+
+.settings-panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 6px 0;
+}
+.settings-row {
+  display: flex; gap: 12px; padding: 10px 14px; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 12px;
+}
+.settings-row:last-child { border-bottom: none; }
+/* The row's checkbox / text field are kit wa-checkbox / wa-input now. The
+   direct-child input (e.g. base branch) keeps its fixed width; a nested,
+   full-width input (e.g. dev command) keeps its own inline width. */
+.settings-row > wa-input { flex: 0 0 200px; }
+.settings-label { font-size: 12px; color: var(--text); font-weight: 500; }
+.settings-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pr-link {
+  color: var(--green); font-size: 11px; padding: 4px 10px;
+  border: 1px solid rgba(63,185,80,0.4); border-radius: 4px;
+  text-decoration: none; margin-left: 8px;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; cursor: pointer; font-family: inherit;
+}
+.pr-link:hover { background: rgba(63,185,80,0.1); }
+.pr-link svg { width: 12px; height: 12px; }
+.pr-link.merged {
+  color: var(--accent); border-color: rgba(88,166,255,0.4);
+}
+.pr-link.merged:hover { background: rgba(88,166,255,0.1); }
+.pr-link.merge {
+  color: var(--orange); border-color: rgba(240,136,62,0.4);
+}
+.pr-link.merge:hover { background: rgba(240,136,62,0.1); }
+.pr-link.done {
+  color: var(--accent); border-color: rgba(88,166,255,0.4);
+}
+.pr-link.done:hover { background: rgba(88,166,255,0.1); }
+.pr-link.preview-live {
+  color: #a371f7; border-color: rgba(163,113,247,0.5);
+  background: rgba(163,113,247,0.08);
+}
+.pr-link.preview-live:hover { background: rgba(163,113,247,0.18); }
+.pr-link.preview-stop {
+  color: var(--muted); border-color: rgba(139,148,158,0.35);
+}
+.pr-link.preview-stop:hover { background: rgba(139,148,158,0.12); }
+.pr-link:disabled {
+  cursor: not-allowed; opacity: 0.45;
+}
+/* Pulse only while a PR/merge is genuinely in flight — a plain turn just
+   greys the button out (static), it shouldn't flash. */
+.pr-link:disabled.working { opacity: 1; animation: pulse 1.4s infinite; }
+.pr-link:disabled:hover { background: transparent; }
+
+.header-term-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; padding: 4px 10px;
+  border-radius: 4px; font-family: inherit; font-size: 11px;
+  margin-left: 8px;
+}
+.header-term-btn:hover { color: var(--accent); border-color: var(--accent); }
+.header-term-btn svg { width: 12px; height: 12px; }
+
+.hamburger {
+  display: none; background: transparent; border: none; cursor: pointer;
+  color: var(--text); padding: 4px 8px; margin-right: 4px;
+}
+.hamburger svg { width: 20px; height: 20px; }
+
+.sidebar-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 40;
+}
+
+@media (max-width: 768px) {
+  header { padding: 8px 12px; gap: 8px; }
+  header h1 { font-size: 14px; }
+  header .sub { display: none; }
+  header button { padding: 6px 10px; font-size: 11px; }
+  .auth-pill { font-size: 10px; padding: 4px 8px; }
+
+  .hamburger { display: inline-flex; align-items: center; }
+
+  main { grid-template-columns: 1fr; }
+
+  #sidebar {
+    /* Anchor to the real header, not a magic 49px — the header wraps to two
+       lines on narrow phones and the old constant left a gap / overlap. */
+    position: fixed; top: var(--header-h, 49px); bottom: 0; left: 0;
+    width: 280px; max-width: 85vw; z-index: 50;
+    transform: translateX(-100%); transition: transform 0.2s ease;
+    border-right: 1px solid var(--border);
+  }
+  body.sidebar-open #sidebar { transform: translateX(0); }
+  body.sidebar-open .sidebar-backdrop { display: block; }
+
+  /* No hover on touch — reveal the kit row's delete at low opacity so it stays
+     reachable, and give it a bigger tap target. */
+  .list-row .row-del { opacity: 0.45; padding: 6px 8px; }
+  .list-row .row-del svg { width: 14px; height: 14px; }
+
+  #detail { padding: 0; }
+  /* #detail (ID) outranks .project-home (class), so the desktop 20px/28px
+     padding collapses to 0 here unless we re-assert it at ID specificity. */
+  #detail.project-home { padding: 16px 16px; }
+  .detail-header { padding: 14px 16px 0 16px; }
+  .detail-head-actions { top: 12px; right: 16px; }
+  .detail-info-pop { top: 44px; right: 16px; left: 16px;
+                     min-width: 0; max-width: none; }
+  .detail-scroll { padding: 12px 16px 0 16px; }
+  .detail-footer { padding: 0 12px 12px 12px; margin-top: 6px; }
+  #detail.empty { padding: 20px; text-align: center; }
+
+  .continue-form { padding: 10px; margin-top: 8px; }
+  .continue-form textarea { min-height: 56px; font-size: 16px; }
+  .continue-form .row { flex-wrap: wrap; margin-top: 8px; gap: 6px; }
+  .continue-form button { padding: 7px 12px; }
+
+  .modal { width: 92vw; padding: 16px; }
+  .term-modal .term-window { width: 100vw; height: 100vh;
+                              height: 100dvh; border-radius: 0; }
+}
+/* The row itself + its hover/active bar/.row-title/.row-meta/.row-del all come
+   from the kit's .list-row (shell.css). tank keeps only the armed-delete state
+   (a two-tap confirm the kit doesn't model) and its own status .dot palette. */
+.row-del.armed { opacity: 1 !important; color: #fff; background: var(--red); }
+button.danger.armed { background: var(--red); color: #fff; border-color: var(--red); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+       margin-right: 6px; vertical-align: middle; }
+.dot.queued    { background: var(--grey); }
+.dot.running   { background: var(--yellow); animation: pulse 1.4s infinite; }
+.dot.awaiting_input { background: var(--purple); animation: pulse 0.9s infinite;
+                      box-shadow: 0 0 6px var(--purple); }
+.dot.background_waiting { background: var(--cyan); animation: pulse 1.4s infinite;
+                          box-shadow: 0 0 6px var(--cyan); }
+.dot.completed { background: var(--green); }
+.dot.failed    { background: var(--red); }
+.dot.killed    { background: var(--red); }
+.dot.interrupted { background: var(--orange); }
+.dot.errored   { background: var(--red); }
+.dot.merged    { background: var(--accent); }
+.dot.done      { background: var(--accent); }
+.list-row .error-reason { font-size: 11px; color: var(--red);
+                          white-space: nowrap; overflow: hidden;
+                          text-overflow: ellipsis; margin-top: 2px; }
+#detail .error-banner { color: var(--red); margin-top: 4px;
+                        font-size: 12px; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.4 } }
+
+.project-chip {
+  background: var(--panel); color: var(--muted);
+  padding: 1px 6px; border-radius: 3px;
+  border: 1px solid var(--border);
+  max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kind-badge {
+  display: inline-block; font-size: 9px; line-height: 1;
+  padding: 2px 5px; border-radius: 3px;
+  background: var(--panel); color: var(--muted);
+  border: 1px solid var(--border);
+  margin-right: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+
+#detail { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+#detail.empty { display: flex; align-items: center; justify-content: center;
+                color: var(--muted); }
+.detail-header { padding: 20px 28px 0 28px; flex: 0 0 auto; position: relative; }
+.detail-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; overflow-y: auto; padding: 14px 28px 0 28px; }
+.detail-footer { flex: 0 0 auto; padding: 0 28px 20px 28px;
+                  border-top: 1px solid var(--border); background: var(--bg);
+                  margin-top: 8px; }
+/* Cap the reading column on wide screens — full-width prose is hard to scan.
+   Chrome (the footer divider) still spans the pane; only the content centres.
+   The 880px cap is wider than any phone viewport, so it's a no-op on mobile. */
+.detail-header, .detail-footer .continue-form {
+  width: 100%; max-width: 880px; margin-left: auto; margin-right: auto;
+}
+/* The scroll container spans the full pane so its scrollbar rides the far-right
+   edge; the turns inside stay capped + centred to match the header/footer. */
+.detail-scroll > .turn {
+  width: 100%; max-width: 880px; margin-left: auto; margin-right: auto;
+}
+/* Anchor "where am I" in a long task list without shifting layout (the active
+   border is already accounted for; this paints over the left edge). */
+.live-bar {
+  height: 2px; margin-top: 10px; border-radius: 2px; overflow: hidden;
+  background: var(--border); position: relative; display: none;
+}
+.live-bar.on { display: block; }
+.live-bar::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%;
+  background: var(--yellow); border-radius: 2px;
+  animation: liveslide 1.2s ease-in-out infinite;
+}
+.live-bar.background_waiting::after { background: var(--cyan); }
+/* awaiting_input is the agent parked on YOU, not working — a travelling bar
+   would imply activity, so show a steady attention-pulse instead. */
+.live-bar.awaiting_input::after {
+  background: var(--purple); left: 0; width: 100%; animation: pulse 0.9s infinite;
+}
+@keyframes liveslide { 0% { left: -40%; } 100% { left: 100%; } }
+/* The header's top-right control cluster: the ⓘ details toggle and the
+   destructive delete, grouped in one flex row so they stay aligned regardless
+   of the delete label width ("delete" vs "delete chat"). Delete lives here, not
+   the footer action row — a destructive button next to "send & continue" is a
+   fat-finger hazard, especially on mobile. */
+.detail-head-actions {
+  position: absolute; top: 18px; right: 28px; z-index: 31;
+  display: flex; align-items: center; gap: 8px;
+}
+.detail-del {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--muted); cursor: pointer; padding: 4px 10px;
+  font-family: inherit; font-size: 11px;
+}
+.detail-del:hover { color: var(--red); border-color: rgba(248,81,73,0.4);
+                    background: rgba(248,81,73,0.1); }
+.detail-del.armed { color: #fff; background: var(--red); border-color: var(--red); }
+.detail-del svg { width: 12px; height: 12px; }
+/* ⓘ toggle — opens the reference-metadata popover. Icon-only to stay compact. */
+.detail-info {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--muted); cursor: pointer; padding: 5px 7px;
+}
+.detail-info:hover { color: var(--accent); border-color: var(--accent); }
+.detail-info.open { color: var(--accent); border-color: var(--accent);
+                    background: rgba(88,166,255,0.08); }
+.detail-info svg { width: 14px; height: 14px; }
+/* Reference metadata (status, session id, cwd, branch) — verbose and rarely
+   needed, so it's collapsed behind the ⓘ toggle instead of always-on. Anchored
+   to the header (position: relative) so it drops below the control cluster. */
+.detail-info-pop {
+  position: absolute; top: 50px; right: 28px; z-index: 30;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 12px 14px;
+  min-width: 260px; max-width: min(440px, calc(100vw - 56px));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+}
+.detail-info-pop[hidden] { display: none; }
+.info-line { display: flex; align-items: center; gap: 8px; min-width: 0;
+             margin-bottom: 8px; }
+.info-line:last-child { margin-bottom: 0; }
+.info-key { flex: 0 0 auto; width: 50px; color: var(--muted);
+            font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.info-line code { min-width: 0; overflow: hidden; text-overflow: ellipsis;
+                  white-space: nowrap; background: var(--panel);
+                  padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+.info-line .info-val { min-width: 0; overflow: hidden; text-overflow: ellipsis;
+                       white-space: nowrap; font-size: 12px; color: var(--text); }
+/* Compact header line: status dot + title on one row (the verbose detail moved
+   to the popover); padding-right reserves room for the absolute control
+   cluster so the title ellipsizes rather than colliding with it. */
+.detail-head { display: flex; align-items: center; gap: 8px;
+               min-width: 0; padding-right: 140px; margin-bottom: 8px; }
+.detail-head .dot { width: 9px; height: 9px; margin-right: 0; flex: 0 0 auto; }
+#detail h2 { margin: 0; font-size: 18px; min-width: 0;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#detail .task-meta { color: var(--muted); font-size: 12px; }
+/* The action-button row: flex so every button aligns on its centre line
+   regardless of whether it carries an icon or is an <a> vs <button>. Without
+   this they lay out on the text baseline and drift out of line (and the
+   "working" state would jump as its label/icon changed). gap replaces the
+   per-button margin-left, neutralised below. */
+#dh-pr-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+#dh-pr-row .pr-link, #dh-pr-row .header-term-btn { margin-left: 0; }
+#detail .task-meta code { background: var(--panel); padding: 1px 6px;
+                          border-radius: 3px; font-size: 11px; }
+
+.turn {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 14px 18px; margin-bottom: 14px;
+}
+.turn .label { font-size: 11px; color: var(--muted); margin-bottom: 6px;
+               text-transform: uppercase; letter-spacing: 0.5px; }
+.turn .prompt { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px;
+                margin-bottom: 12px; color: var(--accent);
+                border-left: 2px solid var(--accent); padding-left: 10px; }
+.turn .result {
+  font-size: 13px; line-height: 1.55;
+  position: relative; padding-bottom: 28px;
+  overflow-wrap: anywhere;
+}
+.turn .result.pending {
+  color: var(--muted); font-style: italic; white-space: pre-wrap;
+  padding-bottom: 0;
+}
+.turn .result p { margin: 0 0 10px 0; }
+.turn .result p:last-child { margin-bottom: 0; }
+.turn .result h1, .turn .result h2, .turn .result h3,
+.turn .result h4, .turn .result h5, .turn .result h6 {
+  margin: 14px 0 8px 0; line-height: 1.3;
+}
+.turn .result h1 { font-size: 18px; }
+.turn .result h2 { font-size: 16px; }
+.turn .result h3 { font-size: 14px; }
+.turn .result ul, .turn .result ol { margin: 6px 0 10px 0; padding-left: 22px; }
+.turn .result li { margin: 2px 0; }
+.turn .result code {
+  background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px;
+  font-size: 12px; font-family: var(--font-mono);
+}
+.turn .result pre {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 10px 12px; overflow-x: auto; margin: 8px 0;
+}
+.turn .result pre code { background: none; padding: 0; font-size: 12px; }
+.turn .result blockquote {
+  margin: 8px 0; padding: 4px 12px; border-left: 3px solid var(--border);
+  color: var(--muted);
+}
+.turn .result a { color: var(--accent); text-decoration: none; }
+.turn .result a:hover { text-decoration: underline; }
+.turn .result table { border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+.turn .result th, .turn .result td {
+  border: 1px solid var(--border); padding: 4px 8px; text-align: left;
+}
+.turn .result th { background: var(--panel-2); }
+.turn .result hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+.copy-btn {
+  position: absolute; bottom: 0; left: 0;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--muted); padding: 4px 6px; border-radius: 3px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: inherit; font-size: 10px; opacity: 0.6;
+  transition: opacity 0.15s, color 0.15s;
+}
+.copy-btn:hover { opacity: 1; color: var(--accent); background: var(--panel-2); }
+.copy-btn svg { width: 12px; height: 12px; }
+.copy-btn.copied { color: var(--green); opacity: 1; }
+
+.copy-id-btn {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--muted); padding: 0 2px; margin-left: 2px;
+  display: inline-flex; align-items: center; vertical-align: middle;
+  opacity: 0.6; transition: opacity 0.15s, color 0.15s;
+}
+.copy-id-btn:hover { opacity: 1; color: var(--accent); }
+.copy-id-btn svg { width: 11px; height: 11px; }
+.copy-id-btn.copied { color: var(--green); opacity: 1; }
+
+.turn-events {
+  margin: 8px 0 4px 0;
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+}
+.turn-events .row {
+  display: grid; grid-template-columns: 16px 1fr;
+  gap: 8px; padding: 2px 0; font-size: 12px; align-items: baseline;
+}
+.turn-events .icon {
+  font-size: 11px; line-height: 1; text-align: center;
+  font-family: var(--font-mono);
+}
+.turn-events .icon.session   { color: var(--yellow); }
+.turn-events .icon.prompt    { color: var(--accent); }
+.turn-events .icon.pre-tool  { color: var(--muted); }
+.turn-events .icon.post-tool { color: var(--accent); }
+.turn-events .icon.stop      { color: var(--green); }
+.turn-events .icon.end       { color: var(--muted); }
+.turn-events .summary {
+  color: var(--text); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+/* The in-flight event is what you watch on a live turn — let it breathe
+   (full text, no ellipsis) and pulse its glyph so the eye lands on it. */
+.turn-events .row.live .summary { white-space: normal; color: var(--accent); }
+.turn-events .row.live .icon { animation: pulse 1.2s infinite; }
+.turn .running-pill {
+  display: inline-block; font-size: 10px; color: var(--yellow);
+  margin-left: 8px; vertical-align: middle;
+}
+.turn .running-pill::before {
+  content: '●'; margin-right: 4px; animation: pulse 1.4s infinite;
+}
+.turn .awaiting-pill {
+  display: inline-block; font-size: 10px; color: var(--purple);
+  margin-left: 8px; vertical-align: middle; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.turn .awaiting-pill::before {
+  content: '●'; margin-right: 4px; animation: pulse 0.9s infinite;
+}
+.turn .bg-waiting-pill {
+  display: inline-block; font-size: 10px; color: var(--cyan);
+  margin-left: 8px; vertical-align: middle; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.turn .bg-waiting-pill::before {
+  content: '●'; margin-right: 4px; animation: pulse 1.4s infinite;
+}
+.term-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+}
+.term-modal.open { display: flex; }
+.term-modal .term-window {
+  background: #000; border: 1px solid var(--border);
+  border-radius: var(--r-md); width: 92vw; height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.term-modal .term-bar {
+  background: var(--panel); padding: 8px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--muted);
+}
+.term-modal .term-bar .left { display: flex; align-items: center; gap: 8px;
+                              min-width: 0; }
+.term-modal .term-bar #term-title { white-space: nowrap; overflow: hidden;
+                                     text-overflow: ellipsis; }
+.term-modal .term-bar .right { display: flex; gap: 6px; align-items: center; }
+/* xterm WebSocket drops silently — a dot makes the connection state legible. */
+.term-conn { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+             background: var(--grey); }
+.term-conn.live { background: var(--green); }
+.term-conn.dead { background: var(--red); }
+.term-conn.pending { background: var(--yellow); animation: pulse 1.2s infinite; }
+.term-modal .term-bar .zoom { letter-spacing: 0; min-width: 26px; text-align: center; }
+.term-modal .term-bar button {
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+  padding: 3px 10px; border-radius: 3px; cursor: pointer;
+  font-family: inherit; font-size: 11px;
+}
+.term-modal .term-bar button:hover { color: var(--text); }
+.term-modal .term-bar button.danger:hover { color: var(--red); border-color: var(--red); }
+.term-modal .term-body { flex: 1; padding: 6px; background: #000; }
+.term-modal .term-body .xterm { height: 100%; }
+
+.continue-form {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 14px; margin-top: 14px;
+}
+.continue-form textarea {
+  width: 100%; min-height: 80px; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px; padding: 8px;
+  font-family: inherit; font-size: 13px; resize: vertical;
+}
+.continue-form .row { display: flex; justify-content: space-between;
+                       margin-top: 10px; gap: 10px; }
+/* The action row is kit wa-buttons (stop / send & continue) + the kit spark
+   button (resume) — no tank button CSS of its own. */
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center; z-index: 50;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 24px; width: 520px; max-width: 90vw;
+}
+.modal h3 { margin: 0 0 14px 0; }
+/* The prompt box is still a native <textarea> (drag/paste/auto-grow handlers);
+   inputs / selects / checkboxes / buttons are kit wa-* components. tank only
+   lays them out: full-width block fields with the form's 12px vertical rhythm
+   so the kit components keep the same spacing the old controls had. */
+.modal textarea {
+  width: 100%; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px; padding: 8px;
+  font-family: inherit; font-size: 13px; margin-bottom: 12px;
+  min-height: 120px; resize: vertical;
+}
+.modal wa-input, .modal wa-select { display: block; margin-bottom: 12px; }
+.modal wa-switch { display: block; margin-bottom: 4px; }
+.modal .row { display: flex; gap: 10px; justify-content: flex-end; }
+
+.auth-pill {
+  background: var(--panel-2); border: 1px solid var(--border);
+  padding: 5px 8px; display: inline-flex; align-items: center;
+  cursor: pointer; color: var(--muted);
+}
+.auth-pill:hover { color: var(--text); filter: none; }
+.auth-icon {
+  display: inline-block; width: 15px; height: 15px;
+  background: currentColor;
+  -webkit-mask: url(/static/claude-code.png) center / contain no-repeat;
+          mask: url(/static/claude-code.png) center / contain no-repeat;
+}
+.auth-pill.ok  { color: var(--green); border-color: rgba(63,185,80,0.7); }
+.auth-pill.bad { color: var(--red);   border-color: rgba(248,81,73,0.7); }
+
+.usage-strip { display: flex; gap: 12px; align-items: center; }
+.usage-strip.error { opacity: 0.5; }
+.usage-bar {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted); cursor: default;
+}
+.usage-bar .ub-label { text-transform: uppercase; letter-spacing: 0.5px; }
+.usage-bar .ub-track {
+  display: inline-block; width: 60px; height: 6px;
+  background: var(--panel-2); border-radius: 3px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.usage-bar .ub-fill {
+  display: block; height: 100%; width: 0%;
+  background: var(--green); transition: width 0.4s ease;
+}
+.usage-bar.warn .ub-fill { background: var(--yellow); }
+.usage-bar.warn          { color: var(--yellow); }
+.usage-bar.crit .ub-fill { background: var(--red); }
+.usage-bar.crit          { color: var(--red); }
+.usage-bar .ub-pct { font-variant-numeric: tabular-nums; min-width: 28px; text-align: right; }
+@media (max-width: 700px) { .usage-strip { display: none; } }
+
+#auth-modal .url-box {
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 10px; border-radius: 4px; margin: 8px 0 16px 0;
+  font-size: 11px; word-break: break-all; user-select: all;
+}
+#auth-modal .url-box a { color: var(--accent); text-decoration: none; }
+#auth-modal .step { font-size: 12px; color: var(--muted); margin: 6px 0; }
+#auth-modal pre { font-size: 11px; background: var(--bg); padding: 8px;
+                  border-radius: 4px; max-height: 200px; overflow: auto;
+                  border: 1px solid var(--border); white-space: pre-wrap; }
+
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+  vertical-align: middle; margin-right: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#auth-stage-loading { padding: 14px 4px; }
+#auth-stage-loading .loading-row {
+  display: flex; align-items: center; font-size: 13px; color: var(--text);
+}
+#auth-stage-loading .dots::after {
+  content: ''; display: inline-block; width: 1em; text-align: left;
+  animation: dots 1.4s steps(4) infinite;
+}
+@keyframes dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}
+.btn-disabled { opacity: 0.5; pointer-events: none; }
+
+.prompt-wrap { position: relative; }
+.prompt-wrap.drag-hover textarea {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(88,166,255,0.18);
+}
+.attachments {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 6px;
+}
+.attachments:empty { display: none; }
+.attachment {
+  position: relative; width: 64px; height: 64px;
+  border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  background: var(--bg);
+}
+.attachment img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.attachment.uploading::after {
+  content: ''; position: absolute; inset: 0;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; width: 18px; height: 18px;
+  margin: auto; animation: spin 0.7s linear infinite;
+}
+.attachment .att-remove {
+  position: absolute; top: 2px; right: 2px;
+  width: 18px; height: 18px; padding: 0; line-height: 16px;
+  background: rgba(13,17,23,0.85); color: var(--text);
+  border: 1px solid var(--border); border-radius: 50%;
+  font-size: 12px; cursor: pointer;
+}
+.attachment .att-remove:hover { color: var(--red); border-color: var(--red); }
+.attachment.failed { border-color: var(--red); }
+.attachment.failed::after {
+  content: '!'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--red); font-weight: bold;
+}
+/* ====================================================================
+   Creator Magic skin — purple leads, orange is the spark.
+   Layered last so it wins over the base rules above without touching
+   tank's DOM or JS hooks. Tokens come from house-style tokens.css.
+   ==================================================================== */
+header h1, #detail h2, .modal h3, .project-home h2 { font-family: var(--font-sans); letter-spacing: -.3px; }
+
+/* topbar: translucent blur + brand spark logo */
+header { background: rgba(13,16,22,.72); backdrop-filter: blur(10px); }
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.brand-logo { width: 21px; height: 21px; flex: none; filter: drop-shadow(0 0 9px rgba(255,160,60,.45)); }
+
+/* rail: translucent panel. The rows + their active state are the kit's
+   .list-row (shell.css) now, so tank no longer paints its own radius/active. */
+#sidebar { background: rgba(18,22,29,.5); backdrop-filter: blur(10px); }
+/* On mobile the rail is a fixed overlay sliding over the task content, so a
+   translucent background lets the content bleed through and read as an
+   unclickable, see-through menu. Give the overlay a solid backing there. */
+@media (max-width: 768px) { #sidebar { background: var(--panel); backdrop-filter: none; } }
+
+/* the "+ new" button and the continue-form "resume" button are generate/magic
+   moments -> the orange spark, the shared kit primitive <button class="btn
+   btn-spark"> (shell.css). No tank CSS needed for them. */
+
+/* rounder surfaces + richer modal */
+.modal { border-radius: var(--r-xl);
+  box-shadow: 0 30px 90px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(188,140,255,.08); }
+.modal-backdrop { backdrop-filter: blur(6px); background: rgba(6,8,12,.66); }
+/* tank's remaining bespoke buttons (the stateful PR/ship row, the preview +
+   terminal chips) keep the house --r-md radius; wa-* buttons get theirs from the kit. */
+.header-term-btn, .pr-link { border-radius: var(--r-md); }
+.continue-form, .turn, .todo-panel, .settings-panel { border-radius: var(--r-lg); }
+.continue-form { background: rgba(13,16,22,.55); }
+
+/* accent glow focus rings — the native textareas tank keeps (prompt + continue);
+   wa-* controls carry their own focus ring from webawesome-theme.css. */
+.continue-form:focus-within { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-soft); }
+.continue-form textarea:focus, .modal textarea:focus {
+  outline: none; border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ====================================================================
+   shell.css interop shims — TEMPORARY (removed in Phase 2)
+   --------------------------------------------------------------------
+   tank links the shared shell.css but still uses its own bespoke
+   modal / tabs / turn / empty primitives. A few of tank's class names
+   overlap the kit's, so shell.css leaks in properties tank doesn't
+   itself declare (and a ::before glow). These shims re-assert tank's
+   current look so adoption is ZERO visual change. They disappear once
+   the kit is made to match tank and tank drops its bespoke versions.
+   (Scrollbars need no shim: the kit's `*::` selector adds no specificity,
+   so tank's later inline rule already wins.)
+   ==================================================================== */
+/* shell.css sets body line-height:1.5; tank had none (normal) -> restore. */
+body { line-height: normal; }
+/* tank modals are plain boxes: suppress the kit's entrance animation,
+   max-height/scroll and the radial ::before glow (Phase 2 may adopt them). */
+.modal { position: static; animation: none; max-height: none; overflow: visible; }
+.modal::before { content: none; }
+/* tank's sidebar tab bar now uses the kit's .tabs/.tab styling verbatim. */
+/* tank turns sit flush (margin-bottom only) and don't clip. */
+.turn { margin-top: 0; overflow: visible; }
+/* tank's empty states (#detail.empty, .todo-panel .empty) are normal blocks,
+   not the kit's full-height centred grid. */
+.empty { height: auto; display: block; }
+</style>
+</head>
+<body>
+
+<div class="aura"></div>
+<div class="grain"></div>
+
+<header>
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="menu">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75zM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5z"/></svg>
+  </button>
+  <span class="brand">
+    <img class="brand-logo" src="/static/house-style/logo.png" alt="" />
+    <h1>tank</h1>
+  </span>
+  <span class="sub" id="health">●</span>
+  <span class="grow"></span>
+  <div class="usage-strip" id="usage-strip" title="claude plan usage">
+    <span class="usage-bar" id="usage-5h">
+      <span class="ub-label">5h</span>
+      <span class="ub-track"><span class="ub-fill"></span></span>
+      <span class="ub-pct">—</span>
+    </span>
+    <span class="usage-bar" id="usage-wk">
+      <span class="ub-label">wk</span>
+      <span class="ub-track"><span class="ub-fill"></span></span>
+      <span class="ub-pct">—</span>
+    </span>
+    <span class="usage-bar" id="usage-son" style="display:none">
+      <span class="ub-label">son</span>
+      <span class="ub-track"><span class="ub-fill"></span></span>
+      <span class="ub-pct">—</span>
+    </span>
+  </div>
+  <button id="auth-pill" class="auth-pill" onclick="openAuthModal()" title="claude code auth — checking…" aria-label="claude code auth status"><span class="auth-icon"></span></button>
+  <button id="settings-btn" onclick="openSettingsModal()" title="settings" aria-label="settings">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.018.066.079.158.212.224.231.114.454.243.668.386.123.082.233.09.299.071l1.103-.303c.644-.176 1.392.021 1.82.63.27.385.506.792.704 1.218.315.675.111 1.422-.364 1.891l-.814.806c-.049.048-.098.147-.088.294.016.257.016.515 0 .772-.01.147.038.246.088.294l.814.806c.475.469.679 1.216.364 1.891a7.977 7.977 0 0 1-.704 1.217c-.428.61-1.176.807-1.82.63l-1.102-.302c-.067-.019-.177-.011-.3.071a5.909 5.909 0 0 1-.668.386c-.133.066-.194.158-.211.224l-.29 1.106c-.168.646-.715 1.196-1.458 1.26a8.006 8.006 0 0 1-1.402 0c-.743-.064-1.289-.614-1.458-1.26l-.289-1.106c-.018-.066-.079-.158-.212-.224a5.738 5.738 0 0 1-.668-.386c-.123-.082-.233-.09-.299-.071l-1.103.303c-.644.176-1.392-.021-1.82-.63a8.12 8.12 0 0 1-.704-1.218c-.315-.675-.111-1.422.363-1.891l.815-.806c.05-.048.098-.147.088-.294a6.214 6.214 0 0 1 0-.772c.01-.147-.038-.246-.088-.294l-.815-.806C.635 6.045.431 5.298.746 4.623a7.92 7.92 0 0 1 .704-1.217c.428-.61 1.176-.807 1.82-.63l1.102.302c.067.019.177.011.3-.071.214-.143.437-.272.668-.386.133-.066.194-.158.211-.224l.29-1.106C6.009.645 6.556.095 7.299.03 7.53.01 7.764 0 8 0Zm-.571 1.525c-.036.003-.108.036-.137.146l-.289 1.105c-.147.561-.549.967-.998 1.189-.173.086-.34.183-.5.29-.417.278-.97.423-1.529.27l-1.103-.303c-.109-.03-.175.016-.195.045-.22.312-.412.644-.573.99-.014.031-.021.11.059.19l.815.806c.411.406.562.957.53 1.456a4.709 4.709 0 0 0 0 .582c.032.499-.119 1.05-.53 1.456l-.815.806c-.081.08-.073.159-.059.19.162.346.353.677.573.989.02.03.085.076.195.046l1.102-.303c.56-.153 1.113-.008 1.53.27.161.107.328.204.501.29.447.222.85.629.997 1.189l.289 1.105c.029.109.101.143.137.146a6.6 6.6 0 0 0 1.142 0c.036-.003.108-.036.137-.146l.289-1.105c.147-.561.549-.967.998-1.189.173-.086.34-.183.5-.29.417-.278.97-.423 1.529-.27l1.103.303c.109.029.175-.016.195-.045.22-.313.411-.644.573-.99.014-.031.021-.11-.059-.19l-.815-.806c-.411-.406-.562-.957-.53-1.456a4.709 4.709 0 0 0 0-.582c-.032-.499.119-1.05.53-1.456l.815-.806c.081-.08.073-.159.059-.19a6.464 6.464 0 0 0-.573-.989c-.02-.03-.085-.076-.195-.046l-1.102.303c-.56.153-1.113.008-1.53-.27a4.44 4.44 0 0 0-.501-.29c-.447-.222-.85-.629-.997-1.189l-.289-1.105c-.029-.11-.101-.143-.137-.146a6.6 6.6 0 0 0-1.142 0ZM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9.5 8a1.5 1.5 0 1 0-3.001.001A1.5 1.5 0 0 0 9.5 8Z"/></svg>
+  </button>
+  <button id="api-btn" onclick="openApiModal()" title="API — how to drive tank from another app or AI agent" aria-label="API docs" style="background:var(--panel-2);color:var(--muted);border:1px solid var(--border);padding:5px 8px;display:inline-flex;align-items:center;">
+    <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15" xmlns="http://www.w3.org/2000/svg"><path d="M5.28 4.22a.75.75 0 0 1 0 1.06L2.56 8l2.72 2.72a.75.75 0 0 1-1.06 1.06L.97 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Zm5.44 0a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L13.44 8l-2.72-2.72a.75.75 0 0 1 0-1.06ZM9.32 1.51a.75.75 0 0 1 .57.9l-2.5 11a.75.75 0 0 1-1.46-.33l2.5-11a.75.75 0 0 1 .89-.57Z"/></svg>
+  </button>
+  <button id="flatten-btn" onclick="openFlattenModal()" title="flatten a Forgejo repo into one text file" aria-label="flatten repo" style="background:var(--panel-2);color:var(--muted);border:1px solid var(--border);padding:5px 8px;display:inline-flex;align-items:center;">
+    <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15" xmlns="http://www.w3.org/2000/svg"><path d="M2 2.75A.75.75 0 0 1 2.75 2h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 2.75Zm0 3.5A.75.75 0 0 1 2.75 5.5h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 6.25Zm0 3.5A.75.75 0 0 1 2.75 9h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 2 9.75Zm0 3.5a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z"/></svg>
+  </button>
+  <button id="new-btn" class="btn btn-spark" onclick="openNewModal()">+ new</button>
+</header>
+
+<main>
+  <!-- Backdrop lives inside <main> so it shares the sidebar's stacking context:
+       the reskin's `body > main { z-index: 2 }` makes <main> a stacking context,
+       so a body-level backdrop (z-index 40) would otherwise paint over the whole
+       in-main sidebar (z-index 50) and swallow every tap. -->
+  <div class="sidebar-backdrop" onclick="closeSidebar()"></div>
+  <aside id="sidebar">
+    <label class="rail-search">
+      <span class="ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.74 10.68a6 6 0 1 0-1.06 1.06l3.04 3.05a.75.75 0 1 0 1.06-1.06l-3.04-3.05ZM7 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Z"/></svg></span>
+      <input id="sidebar-search" placeholder="search all chats &amp; tasks…" autocomplete="off"
+             oninput="onSearchInput(this.value)"
+             onkeydown="if(event.key==='Escape') clearSearch();" />
+      <button type="button" class="search-clear" title="clear search" aria-label="clear search" onclick="clearSearch()">&times;</button>
+    </label>
+    <div class="tabs">
+      <button class="tab active" data-tab="projects" onclick="switchTab('projects')">Projects</button>
+      <button class="tab" data-tab="all" onclick="switchTab('all')">All</button>
+      <button class="tab" data-tab="chats" onclick="switchTab('chats')">Chats</button>
+    </div>
+    <div id="project-picker"></div>
+    <div id="tasklist"></div>
+  </aside>
+  <div id="detail" class="empty">select a task or create a new one</div>
+</main>
+
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <h3 id="m-heading">new</h3>
+    <div id="m-context" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
+    <div class="prompt-wrap" data-att-target="m">
+      <div class="attachments" id="m-attachments"></div>
+      <textarea id="m-prompt" placeholder="prompt to send to claude (Enter to send, Shift+Enter for newline). Drop or paste images to attach." onkeydown="handlePromptKey(event, submitNewModal)"></textarea>
+    </div>
+    <div class="row">
+      <wa-button appearance="outlined" variant="neutral" onclick="closeModal()">cancel</wa-button>
+      <wa-button variant="brand" onclick="submitNewModal()">create &amp; run</wa-button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="project-modal" onclick="if(event.target===this) closeProjectModal()">
+  <div class="modal">
+    <h3>new project</h3>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+      Created under <code id="pm-root-hint">the projects root</code><span>/&lt;name&gt;</span>.
+    </div>
+    <label class="field-label" for="pm-name">name</label>
+    <wa-input id="pm-name" placeholder="my-project" autocomplete="off" onkeydown="if(event.key==='Enter') submitNewProjectModal()"></wa-input>
+    <label class="field-label" for="pm-desc">description (optional)</label>
+    <wa-input id="pm-desc" placeholder="one-line description" autocomplete="off" onkeydown="if(event.key==='Enter') submitNewProjectModal()"></wa-input>
+    <label class="field-label" for="pm-clone">clone URL (optional)</label>
+    <wa-input id="pm-clone" placeholder="https://git.example.com/you/my-project.git" autocomplete="off" onkeydown="if(event.key==='Enter') submitNewProjectModal()"></wa-input>
+    <div class="field-hint">Leave blank to initialise an empty git repo.</div>
+    <wa-checkbox id="pm-scaffold" style="margin:14px 0 4px">
+      Scaffold with tank UI
+      <span style="display:block;font-size:11px;color:var(--muted)">Drop a runnable Creator Magic starter app (FastAPI + the shared house-style shell, chat box & slide-out) into a fresh project. Only for empty new projects.</span>
+    </wa-checkbox>
+    <div id="pm-error" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
+    <div class="row">
+      <wa-button appearance="outlined" variant="neutral" onclick="closeProjectModal()">cancel</wa-button>
+      <wa-button variant="brand" id="pm-submit" onclick="submitNewProjectModal()">create</wa-button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="remove-project-modal" onclick="if(event.target===this) closeRemoveProjectModal()">
+  <div class="modal">
+    <h3>remove project</h3>
+    <div style="font-size:12px;color:var(--muted);margin:6px 0">Remove <strong id="rp-name" style="color:var(--fg,#fff)"></strong> from tank. This deletes the project and all its tasks from the dashboard.</div>
+    <wa-checkbox id="rp-remove-dir" style="margin:14px 0 4px">
+      Also delete the working directory from disk
+      <span style="display:block;font-size:11px;color:var(--muted)">Permanently removes <code id="rp-path"></code> and everything in it, including any uncommitted work. Leave unticked to keep the repo on disk.</span>
+    </wa-checkbox>
+    <div id="rp-error" style="display:none;color:var(--red);font-size:12px;margin:10px 0"></div>
+    <div class="row">
+      <wa-button appearance="outlined" variant="neutral" onclick="closeRemoveProjectModal()">cancel</wa-button>
+      <wa-button variant="danger" id="rp-submit" onclick="submitRemoveProject()">remove</wa-button>
+    </div>
+  </div>
+</div>
+
+<div class="term-modal" id="term-modal" onclick="if(event.target===this) closeTerminal()">
+  <div class="term-window">
+    <div class="term-bar">
+      <div class="left">
+        <span class="term-conn" id="term-conn" title="connection"></span>
+        <span id="term-title">terminal</span>
+      </div>
+      <div class="right">
+        <wa-button class="zoom" size="small" appearance="outlined" variant="neutral" onclick="termZoom(-1)" title="smaller text">A-</wa-button>
+        <wa-button class="zoom" size="small" appearance="outlined" variant="neutral" onclick="termZoom(1)" title="larger text">A+</wa-button>
+        <wa-button size="small" appearance="outlined" variant="neutral" onclick="termSendCtrlC()">Ctrl-C</wa-button>
+        <wa-button size="small" appearance="outlined" variant="danger" onclick="closeTerminal()">close</wa-button>
+      </div>
+    </div>
+    <div class="term-body" id="term-body"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="auth-modal" onclick="if(event.target===this) closeAuthModal()">
+  <div class="modal">
+    <h3 id="auth-modal-title">claude code login</h3>
+    <div id="auth-stage-idle">
+      <div class="step">Sign in once on this server so tasks can spawn Claude on your behalf.</div>
+      <div class="row">
+        <wa-button appearance="outlined" variant="neutral" onclick="closeAuthModal()">cancel</wa-button>
+        <wa-button variant="brand" onclick="startAuth()">sign in</wa-button>
+      </div>
+    </div>
+    <div id="auth-stage-signedin" style="display:none">
+      <div class="step" id="auth-signedin-msg">Signed in.</div>
+      <div class="step" style="color:var(--muted)">Logging out may interrupt any running tasks.</div>
+      <div class="row">
+        <wa-button appearance="outlined" variant="neutral" onclick="closeAuthModal()">cancel</wa-button>
+        <wa-button appearance="outlined" variant="danger" onclick="logout()">log out</wa-button>
+      </div>
+    </div>
+    <div id="auth-stage-loading" style="display:none">
+      <div class="loading-row">
+        <span class="spinner"></span>
+        <span id="auth-loading-msg">spinning up claude<span class="dots"></span></span>
+      </div>
+      <div class="step" id="auth-loading-sub" style="margin-top:14px">grabbing the OAuth URL, usually 5-10s on first run</div>
+      <div class="row" id="auth-loading-actions">
+        <wa-button appearance="outlined" variant="neutral" onclick="cancelAuth()">cancel</wa-button>
+      </div>
+    </div>
+    <div id="auth-stage-url" style="display:none">
+      <div class="step">1 &middot; Open this URL in your browser, complete sign-in, copy the code:</div>
+      <div class="url-box"><a id="auth-url" href="" target="_blank" rel="noopener">…</a></div>
+      <div class="step">2 &middot; Paste the code here:</div>
+      <wa-input id="auth-code" placeholder="paste code" autocomplete="off"></wa-input>
+      <div class="row">
+        <wa-button appearance="outlined" variant="neutral" onclick="cancelAuth()">cancel</wa-button>
+        <wa-button variant="brand" onclick="submitCode()">submit</wa-button>
+      </div>
+    </div>
+    <div id="auth-stage-result" style="display:none">
+      <div class="step" id="auth-result-msg"></div>
+      <pre id="auth-result-raw"></pre>
+      <div class="row">
+        <wa-button variant="brand" onclick="closeAuthModal(); refreshAuth();">close</wa-button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="settings-modal" onclick="if(event.target===this) closeSettingsModal()">
+  <div class="modal">
+    <h3>settings</h3>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+      Stored on the server and applied live. <code>max concurrent</code> takes
+      effect on the next restart.
+    </div>
+
+    <label class="field-label" for="set-title">dashboard title</label>
+    <wa-input id="set-title" autocomplete="off"></wa-input>
+
+    <label class="field-label" for="set-house-style">house-style URL</label>
+    <wa-input id="set-house-style" placeholder="blank = bundled copy" autocomplete="off"></wa-input>
+    <div class="field-hint">Where the design-system assets (tokens/shell/Web Awesome) load from. Leave blank to serve the bundled copy under <code>/static/house-style/</code> (offline-safe). Set a URL (e.g. <code>https://design.example.com/latest</code>) to track a live channel — each asset still falls back to the bundled copy if that host is unreachable.</div>
+
+    <label class="field-label" for="set-provider">git provider (ship / PR buttons)</label>
+    <wa-select id="set-provider">
+      <wa-option value="none">none — hide ship/PR</wa-option>
+      <wa-option value="forgejo">forgejo</wa-option>
+    </wa-select>
+    <div class="field-hint">Enables the per-task "ship it" button (commit + open PR + merge in one turn) plus the open PR / merge fallbacks. Forgejo expects the repo's <code>origin</code> remote to embed an API token.</div>
+
+    <label class="field-label" for="set-projects-root">projects root</label>
+    <wa-input id="set-projects-root" autocomplete="off"></wa-input>
+    <div class="field-hint">Parent dir for projects created from the dashboard.</div>
+
+    <label class="field-label" for="set-worktrees-root">worktrees root</label>
+    <wa-input id="set-worktrees-root" autocomplete="off"></wa-input>
+
+    <label class="field-label" for="set-chats-root">chats root</label>
+    <wa-input id="set-chats-root" autocomplete="off"></wa-input>
+
+    <label class="field-label" for="set-concurrent">max concurrent tasks</label>
+    <wa-input id="set-concurrent" type="number" min="1" autocomplete="off"></wa-input>
+
+    <label class="field-label" for="set-preview-ports">preview port range</label>
+    <wa-input id="set-preview-ports" placeholder="7900-7950" autocomplete="off"></wa-input>
+    <div class="field-hint">Ports tank draws from for a task's live dev preview. Must be reachable on the box.</div>
+
+    <wa-switch id="set-ai" style="margin-top:14px">AI title &amp; todo tidy-up</wa-switch>
+    <div class="field-hint">Needs an OpenAI-compatible chat-completions endpoint. Off → tasks keep placeholder titles.</div>
+
+    <label class="field-label" for="set-model-url">model endpoint URL</label>
+    <wa-input id="set-model-url" placeholder="http://host:port/v1/chat/completions" autocomplete="off"></wa-input>
+
+    <label class="field-label" for="set-model">model name</label>
+    <wa-input id="set-model" placeholder="e.g. gpt-4o-mini" autocomplete="off"></wa-input>
+    <label class="field-label" style="margin-top:14px">Forgejo URL</label>
+    <wa-input id="set-forgejo-url" placeholder="https://forgejo.example.com" autocomplete="off"></wa-input>
+    <div class="field-hint">Base URL of your Forgejo, used by the “flatten repo” button in the header.</div>
+    <label class="field-label">Forgejo API token</label>
+    <wa-input id="set-forgejo-token" type="password" placeholder="paste a Forgejo API token" autocomplete="off"></wa-input>
+    <div class="field-hint">Token with read access to the repos you want to flatten.</div>
+
+    <label class="field-label" style="margin-top:14px">API token</label>
+    <wa-input id="set-api-token" type="password" placeholder="leave blank to keep the API open on your LAN" autocomplete="off"></wa-input>
+    <div class="field-hint">Shared bearer token for the HTTP API (the <code>{ }</code> API button). Blank = open (anyone who can reach this server can drive it). When set, external callers send <code>Authorization: Bearer &lt;token&gt;</code>; this browser unlocks via the API button. See <code>/llms.txt</code>.</div>
+
+    <div id="set-error" style="display:none;color:var(--red);font-size:12px;margin:10px 0"></div>
+    <div class="row">
+      <wa-button appearance="outlined" variant="neutral" onclick="closeSettingsModal()">cancel</wa-button>
+      <wa-button variant="brand" id="set-submit" onclick="saveSettings()">save</wa-button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="flatten-modal" onclick="if(event.target===this) closeFlattenModal()">
+  <div class="modal">
+    <h3>flatten a repo</h3>
+    <div class="field-hint">Pick a repo from your Forgejo and download every text file concatenated into one file.</div>
+    <label class="field-label">Repository</label>
+    <wa-select id="flatten-repo" style="margin-bottom:10px"></wa-select>
+    <div id="flatten-status" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
+    <div id="flatten-error" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
+    <div class="row" style="display:flex;gap:8px;justify-content:flex-end">
+      <wa-button appearance="outlined" variant="neutral" onclick="closeFlattenModal()">cancel</wa-button>
+      <wa-button variant="brand" id="flatten-submit" onclick="submitFlatten()">flatten &amp; download</wa-button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="api-modal" onclick="if(event.target===this) closeApiModal()">
+  <div class="modal" style="max-width:640px">
+    <h3>API</h3>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+      tank is an HTTP API for running Claude Code agents. Point any app at it, or
+      paste the guide below into an AI agent so it knows how to drive tank.
+      <span style="display:block;margin-top:6px">
+        <a href="/docs" target="_blank" rel="noopener">interactive reference (/docs)</a>
+        &nbsp;·&nbsp;
+        <a href="/llms.txt" target="_blank" rel="noopener">raw /llms.txt</a>
+        &nbsp;·&nbsp;
+        <a href="/openapi.json" target="_blank" rel="noopener">openapi.json</a>
+      </span>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span class="field-label" style="margin:0">paste-into-an-agent guide</span>
+      <wa-button size="small" appearance="outlined" variant="neutral" id="api-copy" onclick="copyLlms()">copy</wa-button>
+    </div>
+    <pre id="api-llms" style="background:var(--panel-2);border:1px solid var(--border);border-radius:4px;padding:10px;max-height:300px;overflow:auto;font-size:11px;white-space:pre-wrap;margin:0 0 14px">loading…</pre>
+
+    <label class="field-label" for="api-token">browser API token</label>
+    <wa-input id="api-token" type="password" autocomplete="off" placeholder="paste the server's api_token to unlock this browser"></wa-input>
+    <div class="field-hint">Only needed if this tank has an API token set (settings → API token). Stored in this browser and sent automatically. Leave blank and Save to clear it.</div>
+    <div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">
+      <wa-button appearance="outlined" variant="neutral" onclick="closeApiModal()">close</wa-button>
+      <wa-button variant="brand" onclick="saveBrowserToken()">save token</wa-button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="icon-modal" onclick="if(event.target===this) closeIconPicker()">
+  <div class="modal">
+    <h3>choose project icon</h3>
+    <div class="field-hint">Pick a <a href="https://lucide.dev/icons/" target="_blank" rel="noopener">Lucide</a> icon. It shows in the sidebar and becomes the browser-tab favicon when this project is open.</div>
+    <wa-input id="icon-search" autocomplete="off" placeholder="search icons…" style="margin:8px 0" oninput="renderIconGrid(this.value)"></wa-input>
+    <div id="icon-status" style="font-size:11px;color:var(--muted)"></div>
+    <div class="icon-grid" id="icon-grid"></div>
+    <div class="row" style="display:flex;gap:8px;justify-content:space-between;margin-top:12px">
+      <div style="display:flex;gap:8px">
+        <wa-button appearance="outlined" variant="neutral" id="icon-suggest-btn" onclick="suggestProjectIcon()" style="display:none">✨ suggest with AI</wa-button>
+        <wa-button appearance="outlined" variant="neutral" onclick="clearProjectIcon()">remove icon</wa-button>
+      </div>
+      <wa-button appearance="outlined" variant="neutral" onclick="closeIconPicker()">cancel</wa-button>
+    </div>
+  </div>
+</div>
+<script>
+// ── API token (browser side) ─────────────────────────────────────────────
+// When the server has an api_token set, every request must carry it. The
+// browser rides a same-origin cookie, so fetch + EventSource + WebSocket all
+// authenticate automatically. We mirror the token from localStorage into the
+// cookie before the first request, and prompt for it once if a same-origin
+// call comes back 401.
+const TANK_TOKEN_KEY = 'tankApiToken';
+function setTankToken(t) {
+  t = (t || '').trim();
+  if (t) {
+    localStorage.setItem(TANK_TOKEN_KEY, t);
+    document.cookie = 'tank_token=' + encodeURIComponent(t) +
+      '; path=/; max-age=31536000; SameSite=Strict';
+  } else {
+    localStorage.removeItem(TANK_TOKEN_KEY);
+    document.cookie = 'tank_token=; path=/; max-age=0; SameSite=Strict';
+  }
+}
+(function(){ const t = localStorage.getItem(TANK_TOKEN_KEY); if (t) setTankToken(t); })();
+
+let _tokenPrompting = false;
+function promptForToken() {
+  if (_tokenPrompting) return;
+  _tokenPrompting = true;
+  const t = window.prompt('This tank requires an API token. Paste it to continue:');
+  if (t && t.trim()) { setTankToken(t); location.reload(); }
+  else { _tokenPrompting = false; }
+}
+
+// Wrap fetch so a 401 on a same-origin request triggers the token prompt once.
+const _origFetch = window.fetch.bind(window);
+window.fetch = async function(input, init) {
+  const r = await _origFetch(input, init);
+  try {
+    const ref = (typeof input === 'string') ? input : input.url;
+    if (r.status === 401 && new URL(ref, location.href).origin === location.origin) {
+      promptForToken();
+    }
+  } catch {}
+  return r;
+};
+
+// ── API modal (docs + paste-into-an-agent guide + browser token) ──────────
+async function openApiModal() {
+  document.getElementById('api-token').value = localStorage.getItem(TANK_TOKEN_KEY) || '';
+  const pre = document.getElementById('api-llms');
+  pre.textContent = 'loading…';
+  document.getElementById('api-modal').classList.add('open');
+  try {
+    const r = await fetch('/llms.txt');
+    pre.textContent = r.ok ? await r.text() : 'could not load /llms.txt';
+  } catch (e) {
+    pre.textContent = 'could not load /llms.txt: ' + e;
+  }
+}
+function closeApiModal() {
+  document.getElementById('api-modal').classList.remove('open');
+}
+async function copyLlms() {
+  const btn = document.getElementById('api-copy');
+  try {
+    await navigator.clipboard.writeText(document.getElementById('api-llms').textContent);
+    btn.textContent = 'copied';
+  } catch {
+    btn.textContent = 'copy failed';
+  }
+  setTimeout(() => { btn.textContent = 'copy'; }, 1500);
+}
+function saveBrowserToken() {
+  setTankToken(document.getElementById('api-token').value);
+  closeApiModal();
+  location.reload();  // re-fire every request with (or without) the new cookie
+}
+
+// ── Lucide icons (per-project icon + favicon) ────────────────────────────
+const LUCIDE_VER = '1.17.0';
+const lucideUrl = (name) => `https://cdn.jsdelivr.net/npm/lucide-static@${LUCIDE_VER}/icons/${name}.svg`;
+let lucideNames = null;     // [name, ...] once tags.json loads
+let lucideTags = null;      // { name: "tag tag tag" } for search
+let iconPickerProjectId = null;
+let lastFaviconProjectId = undefined;
+
+async function loadLucideIcons() {
+  if (lucideNames) return true;
+  const r = await fetch(`https://cdn.jsdelivr.net/npm/lucide-static@${LUCIDE_VER}/tags.json`);
+  if (!r.ok) throw new Error('could not load icon list');
+  const tags = await r.json();
+  lucideNames = Object.keys(tags).sort();
+  lucideTags = Object.fromEntries(lucideNames.map(n => [n, (tags[n] || []).join(' ')]));
+  return true;
+}
+
+function openIconPicker(projectId) {
+  iconPickerProjectId = projectId;
+  document.getElementById('icon-modal').classList.add('open');
+  document.getElementById('icon-suggest-btn').style.display = aiEnabled() ? '' : 'none';
+  const search = document.getElementById('icon-search');
+  search.value = '';
+  const status = document.getElementById('icon-status');
+  document.getElementById('icon-grid').innerHTML = '';
+  status.textContent = 'loading icons…';
+  loadLucideIcons()
+    .then(() => { status.textContent = ''; renderIconGrid(''); search.focus(); })
+    .catch(e => { status.textContent = String(e.message || e); });
+}
+
+function closeIconPicker() {
+  document.getElementById('icon-modal').classList.remove('open');
+  iconPickerProjectId = null;
+}
+
+function renderIconGrid(query) {
+  if (!lucideNames) return;
+  const q = (query || '').trim().toLowerCase();
+  const LIMIT = 300;
+  const current = projectsCache[iconPickerProjectId]?.icon;
+  let matches = q
+    ? lucideNames.filter(n => n.includes(q) || lucideTags[n].includes(q))
+    : lucideNames;
+  const status = document.getElementById('icon-status');
+  status.textContent = matches.length > LIMIT
+    ? `${matches.length} icons — showing first ${LIMIT}, keep typing to narrow`
+    : `${matches.length} icon${matches.length === 1 ? '' : 's'}`;
+  document.getElementById('icon-grid').innerHTML = matches.slice(0, LIMIT).map(n => `
+    <button title="${n}" onclick="chooseIcon('${n}')" class="${n === current ? 'selected' : ''}">
+      <span class="picon" style="--picon:url('${lucideUrl(n)}')"></span>
+    </button>
+  `).join('');
+}
+
+async function chooseIcon(name) { await saveProjectIcon(name); }
+async function clearProjectIcon() { await saveProjectIcon(''); }
+
+function aiEnabled() {
+  const on = String(SETTINGS.ai_features_enabled || '').toLowerCase();
+  return ['1', 'true', 'yes', 'on'].includes(on) && !!(SETTINGS.title_model_url || '').trim();
+}
+
+// Ask the backend (local model) to pick an icon from the project name + desc.
+async function suggestProjectIcon() {
+  const pid = iconPickerProjectId;
+  if (!pid) return;
+  const btn = document.getElementById('icon-suggest-btn');
+  const status = document.getElementById('icon-status');
+  const prev = btn.textContent;
+  btn.disabled = true; btn.textContent = 'thinking…';
+  status.textContent = 'asking local AI for an icon…';
+  try {
+    const r = await fetch(`/projects/${pid}/suggest-icon`, { method: 'POST' });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || ('error ' + r.status));
+    const updated = await r.json();
+    projectsCache[pid] = { ...projectsCache[pid], ...updated };
+    // Filter the grid to the chosen icon so it's shown + highlighted.
+    document.getElementById('icon-search').value = updated.icon || '';
+    renderIconGrid(updated.icon || '');
+    status.textContent = `chose “${updated.icon}” — pick another or close`;
+    mountedProjectHomeId = null;
+    await refreshSidebar();
+    if (pid === activeProjectId) applyProjectFavicon(projectsCache[pid]);
+  } catch (e) {
+    status.textContent = String(e.message || e);
+  } finally {
+    btn.disabled = false; btn.textContent = prev;
+  }
+}
+
+async function saveProjectIcon(name) {
+  const pid = iconPickerProjectId;
+  if (!pid) return;
+  const r = await fetch(`/projects/${pid}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ icon: name }),
+  });
+  if (!r.ok) { alert('could not save icon: ' + (await r.text())); return; }
+  const updated = await r.json();
+  projectsCache[pid] = { ...projectsCache[pid], ...updated };
+  closeIconPicker();
+  // Re-render so the sidebar + project-home heading pick up the new icon.
+  mountedProjectHomeId = null;
+  await refreshSidebar();
+  if (pid === activeProjectId) applyProjectFavicon(projectsCache[pid]);
+}
+
+// Swap the browser-tab favicon to the active project's icon. Lucide SVGs are
+// stroke=currentColor (invisible on a tab), so we fetch + recolour to the
+// accent green; on any failure we fall back to the raw URL, then the default.
+async function applyProjectFavicon(project) {
+  const link = document.getElementById('favicon-link');
+  if (!link) return;
+  const icon = project && project.icon;
+  if (lastFaviconProjectId === (project?.id || null) && link.dataset.icon === (icon || '')) return;
+  lastFaviconProjectId = project?.id || null;
+  link.dataset.icon = icon || '';
+  if (!icon) { link.href = '/static/favicon.svg'; return; }
+  try {
+    const r = await fetch(lucideUrl(icon));
+    if (!r.ok) throw new Error('fetch failed');
+    let svg = await r.text();
+    svg = svg.replace(/stroke="currentColor"/g, 'stroke="#3fb950"');
+    link.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+  } catch {
+    link.href = lucideUrl(icon);
+  }
+}
+
+function renderMarkdown(src) {
+  const html = marked.parse(src, { gfm: true, breaks: true });
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('a[href]').forEach(a => {
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+  });
+  return tmp.innerHTML;
+}
+
+let activeTaskId = null;
+let activeTab = 'projects';      // 'projects' | 'all' | 'chats'
+let activeProjectId = null;      // currently-focused project (projects tab only)
+let activeChatPid = null;        // currently-open chat's project id (chats tab)
+let detailEvents = null;
+let projectsCache = {};          // id → project
+// Which task / project-home skeleton is currently mounted in #detail.
+// SSE updates patch the dynamic regions in-place rather than re-rendering
+// the whole pane, so the cont-prompt textarea / todo-new input keep focus.
+let mountedTaskId = null;
+let mountedProjectHomeId = null;
+let mountedDetailProjectId = null;  // project_id of the task shown in the detail pane
+
+const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75A1.75 1.75 0 0 1 6.75 0h2.5A1.75 1.75 0 0 1 11 1.75zM4.496 6.675a.75.75 0 1 0-1.492.15l.66 6.6A1.75 1.75 0 0 0 5.405 15h5.19c.9 0 1.652-.681 1.741-1.576l.66-6.6a.75.75 0 0 0-1.492-.149l-.66 6.6a.25.25 0 0 1-.249.225h-5.19a.25.25 0 0 1-.249-.225l-.66-6.6zM6.5 1.75a.25.25 0 0 1 .25-.25h2.5a.25.25 0 0 1 .25.25V3h-3V1.75z"/></svg>';
+const INFO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm6.5-.25A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75zM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>';
+const COPY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M5 1.75A1.75 1.75 0 0 1 6.75 0h6.5A1.75 1.75 0 0 1 15 1.75v8.5A1.75 1.75 0 0 1 13.25 12H11v2.25A1.75 1.75 0 0 1 9.25 16h-6.5A1.75 1.75 0 0 1 1 14.25v-8.5A1.75 1.75 0 0 1 2.75 4H5V1.75zm1.75-.25a.25.25 0 0 0-.25.25V4h2.75A1.75 1.75 0 0 1 11 5.75V10.5h2.25a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25h-6.5zM2.75 5.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h6.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25h-6.5z"/></svg>';
+
+function switchTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === name);
+  });
+  document.getElementById('project-picker').classList.toggle('hidden', name !== 'projects');
+  // Reset activeTaskId so the right pane goes empty until a task is picked
+  activeTaskId = null;
+  mountedTaskId = null;
+  mountedProjectHomeId = null;
+  if (detailEvents) { detailEvents.close(); detailEvents = null; }
+  const d = document.getElementById('detail');
+  d.className = 'empty';
+  if (name === 'projects') {
+    d.textContent = 'select a project from the list, then pick or create a task';
+  } else if (name === 'chats') {
+    d.textContent = 'select a chat or create a new one';
+  } else {
+    d.textContent = 'select a task or chat from the list';
+  }
+  refreshSidebar();
+  updateNewBtnLabel();
+}
+
+function updateNewBtnLabel() {
+  const btn = document.getElementById('new-btn');
+  btn.disabled = activeTab === 'all';
+  btn.title = activeTab === 'all' ? 'pick a project or chat tab to create' : '';
+  btn.textContent = '+ new';
+}
+
+// Ids (project or task) whose server-side delete is in flight. Filtered out of
+// every render so the slow delete (which emits SSE events while the DB row
+// still exists) can't re-add a row the user just deleted.
+const pendingDeletes = new Set();
+
+async function loadProjects() {
+  const r = await fetch('/projects');
+  const all = (await r.json()).filter(p => !pendingDeletes.has(p.id));
+  projectsCache = Object.fromEntries(all.map(p => [p.id, p]));
+  return all;
+}
+
+// Sidebar search: a non-empty query takes over the list (across all tabs)
+// until cleared. SSE-driven refreshes re-run the search, so results stay live.
+let searchQuery = '';
+let searchTimer = null;
+
+function onSearchInput(v) {
+  searchQuery = (v || '').trim();
+  // Show the clear (×) button whenever the field holds text.
+  document.querySelector('.rail-search')?.classList.toggle('has-text', !!searchQuery);
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(refreshSidebar, 180);
+}
+
+// Empty the search field, restore the normal sidebar, and refocus the input.
+function clearSearch() {
+  const input = document.getElementById('sidebar-search');
+  if (input) input.value = '';
+  onSearchInput('');
+  input?.focus();
+}
+
+function highlightMatch(text, q) {
+  const esc = escapeHtml(text);
+  if (!q) return esc;
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return esc.replace(re, '<mark>$1</mark>');
+}
+
+async function renderSearch() {
+  document.getElementById('project-picker').innerHTML = '';
+  const list = document.getElementById('tasklist');
+  let results;
+  try {
+    const r = await fetch('/search?q=' + encodeURIComponent(searchQuery));
+    if (!r.ok) throw new Error(await r.text());
+    results = await r.json();
+  } catch (e) {
+    list.innerHTML = '<div style="color:var(--red);padding:14px;font-size:12px">search failed</div>';
+    return;
+  }
+  // A query may have changed while the request was in flight; bail if stale.
+  if (!searchQuery) { refreshSidebar(); return; }
+  if (results.length === 0) {
+    list.innerHTML = `<div style="color:var(--muted);padding:14px;font-size:12px">no matches for “${escapeHtml(searchQuery)}”</div>`;
+    return;
+  }
+  list.innerHTML = results.map(renderSearchRow).join('');
+}
+
+function renderSearchRow(row) {
+  const isChat = row.project_kind === 'chat';
+  // Chats are surfaced by their project name (what the Chats tab shows).
+  const displayTitle = isChat ? row.project_name : row.title;
+  const kindBadge = isChat ? '<span class="kind-badge">chat</span>' : '';
+  return `
+    <div class="list-row task-row ${row.task_id === activeTaskId ? 'active' : ''}" data-id="${row.task_id}" onclick="openTask('${row.task_id}')">
+      <div class="row-title"><span class="dot ${row.status}"></span>${kindBadge}<span class="nm">${highlightMatch(displayTitle, searchQuery)}</span></div>
+      <div class="row-meta">
+        <span class="project-chip">${escapeHtml(row.project_name)}</span>
+        <span class="match-field">${row.match_in}</span>
+        <span class="rel-time" data-iso="${row.updated_at}" title="${escapeHtml(new Date(row.updated_at).toLocaleString())}">${relTime(row.updated_at)}</span>
+      </div>
+      ${row.match_in !== 'title' ? `<div class="search-snippet">${highlightMatch(row.snippet, searchQuery)}</div>` : ''}
+    </div>
+  `;
+}
+
+async function refreshSidebar() {
+  if (searchQuery) { await renderSearch(); updateNewBtnLabel(); return; }
+  const projects = await loadProjects();
+  const picker = document.getElementById('project-picker');
+  const list = document.getElementById('tasklist');
+
+  if (activeTab === 'projects') {
+    const real = projects.filter(p => p.kind === 'project');
+    const addRow = `
+      <div class="add-row" onclick="openNewProjectModal()" title="create a new project">
+        <span class="ico">+</span><span>new project</span>
+      </div>
+    `;
+    const list = real.map(p => `
+      <div class="list-row project-row ${p.id === activeProjectId ? 'active' : ''}" onclick="selectProject('${p.id}')">
+        <div class="row-title">
+          ${p.icon ? `<span class="picon" style="--picon:url('${lucideUrl(p.icon)}')"></span>` : ''}
+          <span class="nm">${escapeHtml(p.name)}</span>
+          ${p.live_count ? `<span class="dot pdot ${p.live_status}" title="${p.live_count} live task${p.live_count === 1 ? '' : 's'}"></span>` : ''}
+          <span class="row-ct">${p.task_count}</span>
+        </div>
+      </div>
+    `).join('');
+    picker.innerHTML = addRow + (list || '<div style="padding:10px;color:var(--muted);font-size:11px">no projects yet</div>');
+
+    if (!activeProjectId && real.length > 0) {
+      // Default-select the first project (skip the "+ new project" row).
+      activeProjectId = real[0].id;
+      picker.querySelector('.project-row:not(.add)')?.classList.add('active');
+    }
+    if (activeProjectId) applyProjectFavicon(projectsCache[activeProjectId]);
+    await renderTaskList(activeProjectId);
+    // When no task is open, show project home (TODO + recent tasks).
+    if (activeProjectId && !activeTaskId) {
+      await renderProjectHome(activeProjectId);
+    }
+  } else if (activeTab === 'all') {
+    picker.innerHTML = '';
+    const r = await fetch('/tasks');
+    const tasks = (await r.json()).filter(t => !pendingDeletes.has(t.id));
+    // If the active task belongs to a chat, that chat's row is the active one.
+    let activeChatPid = null;
+    if (activeTaskId) {
+      const at = tasks.find(t => t.id === activeTaskId);
+      if (at && projectsCache[at.project_id]?.kind === 'chat') {
+        activeChatPid = at.project_id;
+      }
+    }
+    const rows = sortByPriority(buildAllRows(tasks, projectsCache));
+    list.innerHTML = rows.length === 0
+      ? '<div style="color:var(--muted);padding:14px;font-size:12px">nothing yet — switch to Projects or Chats to create something</div>'
+      : rows.map(row => renderAllRow(row, activeChatPid)).join('');
+  } else {
+    picker.innerHTML = '';
+    // Chats tab: show all chat-kind projects as rows (each chat has a first task)
+    const chats = projects.filter(p => p.kind === 'chat');
+    list.innerHTML = chats.length === 0
+      ? '<div style="color:var(--muted);padding:14px;font-size:12px">no chats yet — hit "+ new chat"</div>'
+      : chats.map(p => {
+          const status = p.live_status || p.last_status;
+          return `
+          <div class="list-row task-row ${p.id === activeChatPid ? 'active' : ''}" data-pid="${p.id}" onclick="openChat('${p.id}')">
+            <button class="row-del" data-pid="${p.id}" data-title="${escapeHtml(p.name)}" onclick="event.stopPropagation(); deleteChatFromBtn(this)" title="delete chat">${TRASH_SVG}</button>
+            <div class="row-title">${status ? `<span class="dot ${status}"></span>` : ''}<span class="nm">${escapeHtml(p.name)}</span></div>
+            <div class="row-meta">
+              ${status ? `<span>${status}</span>` : ''}
+              <span>${p.task_count} turn${p.task_count === 1 ? '' : 's'}</span>
+              <span class="rel-time" data-iso="${p.updated_at}" title="${escapeHtml(new Date(p.updated_at).toLocaleString())}">${relTime(p.updated_at)}</span>
+            </div>
+          </div>
+        `;}).join('');
+  }
+  updateNewBtnLabel();
+  reflectArmed();  // keep an armed delete button red across SSE re-renders
+}
+
+// All-tab helpers. Builds a unified row list from /tasks: project-kind
+// tasks expand 1:1, chat-kind projects collapse to one row (their most
+// recently updated task supplies status + timestamp).
+const ALL_ORDER = { awaiting_input: 0, background_waiting: 1, running: 2,
+                    queued: 3, failed: 4, killed: 5, completed: 6 };
+
+function buildAllRows(tasks, projectsById) {
+  const chatLatest = new Map();
+  const rows = [];
+  for (const t of tasks) {
+    const p = projectsById[t.project_id];
+    if (!p) continue;
+    if (p.kind === 'chat') {
+      const cur = chatLatest.get(p.id);
+      if (!cur || new Date(t.updated_at) > new Date(cur.updated_at)) {
+        chatLatest.set(p.id, t);
+      }
+    } else {
+      rows.push({
+        kind: 'task', id: t.id, title: t.title,
+        status: t.status, updated_at: t.updated_at,
+        project_name: p.name,
+      });
+    }
+  }
+  for (const [pid, t] of chatLatest) {
+    const p = projectsById[pid];
+    rows.push({
+      kind: 'chat', id: pid, title: p.name,
+      status: t.status, updated_at: t.updated_at,
+      project_name: p.name,
+    });
+  }
+  return rows;
+}
+
+function sortByPriority(rows) {
+  rows.sort((a, b) => {
+    const d = (ALL_ORDER[a.status] ?? 9) - (ALL_ORDER[b.status] ?? 9);
+    return d !== 0 ? d : (new Date(b.updated_at) - new Date(a.updated_at));
+  });
+  return rows;
+}
+
+function renderAllRow(row, activeChatPid) {
+  const isChat = row.kind === 'chat';
+  const clickAttr = isChat
+    ? `onclick="openChat('${row.id}')"`
+    : `onclick="openTask('${row.id}')"`;
+  const delBtn = isChat
+    ? `<button class="row-del" data-pid="${row.id}" data-title="${escapeHtml(row.title)}" onclick="event.stopPropagation(); deleteChatFromBtn(this)" title="delete chat">${TRASH_SVG}</button>`
+    : `<button class="row-del" data-id="${row.id}" data-title="${escapeHtml(row.title)}" onclick="event.stopPropagation(); deleteFromBtn(this)" title="delete task">${TRASH_SVG}</button>`;
+  const isActive = (isChat && row.id === activeChatPid)
+                || (!isChat && row.id === activeTaskId);
+  const kindBadge = isChat ? '<span class="kind-badge">chat</span>' : '';
+  const dataAttr = isChat ? `data-pid="${row.id}"` : `data-id="${row.id}"`;
+  return `
+    <div class="list-row task-row ${isActive ? 'active' : ''}" ${dataAttr} ${clickAttr}>
+      ${delBtn}
+      <div class="row-title"><span class="dot ${row.status}"></span>${kindBadge}<span class="nm">${escapeHtml(row.title)}</span></div>
+      <div class="row-meta">
+        <span class="project-chip">${escapeHtml(row.project_name)}</span>
+        <span>${row.status}</span>
+        <span class="rel-time" data-iso="${row.updated_at}" title="${escapeHtml(new Date(row.updated_at).toLocaleString())}">${relTime(row.updated_at)}</span>
+      </div>
+    </div>
+  `;
+}
+
+async function renderTaskList(projectId) {
+  const list = document.getElementById('tasklist');
+  if (!projectId) {
+    list.innerHTML = '<div style="color:var(--muted);padding:14px;font-size:12px">select a project</div>';
+    return;
+  }
+  const r = await fetch(`/tasks?project_id=${projectId}`);
+  const tasks = (await r.json()).filter(t => !pendingDeletes.has(t.id));
+  list.innerHTML = tasks.length === 0
+    ? '<div style="color:var(--muted);padding:14px;font-size:12px">no tasks in this project yet</div>'
+    : tasks.map(t => `
+        <div class="list-row task-row ${t.id === activeTaskId ? 'active' : ''}" data-id="${t.id}" onclick="openTask('${t.id}')">
+          <button class="row-del" data-id="${t.id}" data-title="${escapeHtml(t.title)}" onclick="event.stopPropagation(); deleteFromBtn(this)" title="delete task">${TRASH_SVG}</button>
+          <div class="row-title"><span class="dot ${t.status}"></span><span class="nm">${escapeHtml(t.title)}</span></div>
+          <div class="row-meta">
+            <span>${t.status}</span>
+            <span class="rel-time" data-iso="${t.updated_at}" title="${escapeHtml(new Date(t.updated_at).toLocaleString())}">${relTime(t.updated_at)}</span>
+          </div>
+          ${t.error_reason ? `<div class="error-reason" title="${escapeHtml(t.error_reason)}">${escapeHtml(t.error_reason)}</div>` : ''}
+        </div>
+      `).join('');
+}
+
+async function selectProject(id) {
+  activeProjectId = id;
+  applyProjectFavicon(projectsCache[id]);
+  activeTaskId = null;
+  if (detailEvents) { detailEvents.close(); detailEvents = null; }
+  document.querySelectorAll('.project-row').forEach(r => r.classList.remove('active'));
+  document.querySelector(`.project-row[onclick*="${id}"]`)?.classList.add('active');
+  await renderTaskList(id);
+  await renderProjectHome(id);
+  updateNewBtnLabel();
+}
+
+async function renderProjectHome(projectId) {
+  const project = projectsCache[projectId];
+  if (!project) return;
+  if (mountedProjectHomeId !== projectId) mountProjectHome(project);
+  const [todos, tasks] = await Promise.all([
+    fetch(`/projects/${projectId}/todos`).then(r => r.json()),
+    fetch(`/tasks?project_id=${projectId}`).then(r => r.json()),
+  ]);
+  updateProjectHomeDynamic(projectId, todos, tasks);
+  loadQueue(projectId);
+}
+
+function mountProjectHome(project) {
+  const d = document.getElementById('detail');
+  d.className = 'project-home';
+  const iso = project.isolate_tasks ? 'checked' : '';
+  const baseBranch = escapeHtml(project.base_branch || 'main');
+  const devCommand = escapeHtml(project.dev_command || '');
+  d.innerHTML = `
+    <h2>
+      ${project.icon ? `<span class="picon picon-lg" style="--picon:url('${lucideUrl(project.icon)}')"></span>` : ''}
+      ${escapeHtml(project.name)}
+      <button class="icon-edit" onclick="openIconPicker('${project.id}')">${project.icon ? 'change icon' : 'set icon'}</button>
+    </h2>
+    <div class="ph-meta">
+      ${escapeHtml(project.description || '')}
+      ${project.description ? ' &middot; ' : ''}
+      <code>${escapeHtml(project.path)}</code>
+    </div>
+    <h3 id="ph-todo-heading">TODO</h3>
+    <div class="todo-panel">
+      <div id="ph-todo-rows"></div>
+      <div class="todo-add">
+        <wa-input id="todo-new" placeholder="add a todo and press enter" onkeydown="if(event.key==='Enter') addTodo('${project.id}', this)"></wa-input>
+        <wa-button variant="brand" onclick="addTodo('${project.id}', this.previousElementSibling)">add</wa-button>
+      </div>
+    </div>
+    <h3 id="ph-queue-heading">Build queue</h3>
+    <div class="queue-panel">
+      <div class="queue-bar">
+        <span id="ph-queue-status" class="queue-status">idle</span>
+        <span class="queue-bar-actions">
+          <wa-button id="ph-queue-go" size="small" variant="brand" onclick="startQueue('${project.id}')">▶ Go</wa-button>
+          <wa-button id="ph-queue-pause" size="small" onclick="pauseQueue('${project.id}')">⏸ Pause</wa-button>
+          <wa-button size="small" appearance="plain" onclick="importTodosToQueue('${project.id}')">import from TODO.md</wa-button>
+          <wa-button size="small" appearance="plain" onclick="clearQueue('${project.id}')">clear</wa-button>
+        </span>
+      </div>
+      <div id="ph-queue-rows"></div>
+      <div class="todo-add">
+        <wa-input id="queue-new" placeholder="add a build-queue item and press enter" onkeydown="if(event.key==='Enter') addQueueItem('${project.id}', this)"></wa-input>
+        <wa-button variant="brand" onclick="addQueueItem('${project.id}', this.previousElementSibling)">add</wa-button>
+      </div>
+    </div>
+    <h3>Recent tasks</h3>
+    <div id="ph-recent-tasks"></div>
+    <h3>Settings</h3>
+    <div class="settings-panel">
+      <div class="settings-row">
+        <wa-checkbox id="ph-isolate" ${iso}
+               onchange="saveProjectSettings('${project.id}')">
+          <span class="settings-label">Isolate each task in its own git worktree + branch</span>
+          <span class="settings-hint" style="display:block">When on, every new task in this project gets a fresh worktree off the base branch, so concurrent tasks don't stomp each other. You can open a PR from the task pane when ready.</span>
+        </wa-checkbox>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Base branch</span>
+        <wa-input id="ph-base-branch" value="${baseBranch}"
+               onchange="saveProjectSettings('${project.id}')"
+               onkeydown="if(event.key==='Enter') this.blur()"></wa-input>
+      </div>
+      <div class="settings-row" style="align-items:flex-start">
+        <div style="flex:1">
+          <div class="settings-label">Dev / preview command</div>
+          <div class="settings-hint">Command tank runs from a task's worktree to launch a live preview of the change before you merge. Use <code>$PORT</code> for the port tank assigns. Leave blank to hide the preview button. e.g. <code>uvicorn api:app --host 0.0.0.0 --port $PORT</code> or <code>npm run dev -- --port $PORT</code></div>
+          <wa-input id="ph-dev-command" value="${devCommand}"
+                 placeholder="leave blank to disable previews"
+                 style="width:100%;margin-top:6px"
+                 onchange="saveProjectSettings('${project.id}')"
+                 onkeydown="if(event.key==='Enter') this.blur()"></wa-input>
+        </div>
+      </div>
+    </div>
+    <h3>Danger zone</h3>
+    <div class="settings-panel">
+      <div class="settings-row" style="align-items:center">
+        <div style="flex:1">
+          <div class="settings-label">Remove this project</div>
+          <div class="settings-hint">Removes the project and all its tasks from tank. You can optionally delete the working directory from disk too.</div>
+        </div>
+        <wa-button appearance="outlined" variant="danger" onclick="openRemoveProjectModal('${project.id}')">remove project</wa-button>
+      </div>
+    </div>
+  `;
+  mountedProjectHomeId = project.id;
+  mountedTaskId = null;
+}
+
+async function saveProjectSettings(projectId) {
+  const iso = document.getElementById('ph-isolate')?.checked;
+  const base = document.getElementById('ph-base-branch')?.value?.trim() || 'main';
+  const dev = document.getElementById('ph-dev-command')?.value?.trim() ?? '';
+  const r = await fetch(`/projects/${projectId}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({isolate_tasks: iso, base_branch: base, dev_command: dev}),
+  });
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  const updated = await r.json();
+  projectsCache[projectId] = {...projectsCache[projectId], ...updated};
+}
+
+// Latest details body per todo, keyed projectId -> line_idx, stashed at render
+// so the details editor opens prefilled without a round-trip.
+let todoDetailsCache = {};
+// line_idx of the todo currently being dragged (null when not dragging).
+let todoDragLine = null;
+
+function updateProjectHomeDynamic(projectId, todos, tasks) {
+  const heading = document.getElementById('ph-todo-heading');
+  if (heading) {
+    heading.innerHTML = 'TODO ' + (todos.exists
+      ? ''
+      : '<span style="text-transform:none;font-size:10px">(no file — adding will create one)</span>');
+  }
+
+  // Don't blow away an inline-edit field (todo text or details) the user is
+  // mid-typing in.
+  const rowsEl = document.getElementById('ph-todo-rows');
+  if (rowsEl) {
+    const ae = document.activeElement;
+    const inlineEditActive = rowsEl.contains(ae)
+      && (ae.tagName === 'TEXTAREA'
+          || (ae.tagName === 'INPUT' && ae.type === 'text'));
+    if (!inlineEditActive) {
+      todoDetailsCache[projectId] = {};
+      rowsEl.innerHTML = todos.todos.length === 0
+        ? '<div class="empty">no todos yet — add one below</div>'
+        : todos.todos.map(t => {
+            todoDetailsCache[projectId][t.line_idx] = t.details || '';
+            const hasDetails = !!(t.details && t.details.trim());
+            return `
+            <div class="todo-item ${t.done ? 'done' : ''}" data-line="${t.line_idx}"
+                 ondragover="todoDragOver(event)" ondrop="todoDrop(event, '${projectId}', ${t.line_idx})">
+              <div class="todo-row ${t.done ? 'done' : ''}" data-line="${t.line_idx}">
+                <span class="todo-drag" draggable="true" title="drag to reorder"
+                      ondragstart="todoDragStart(event, ${t.line_idx})" ondragend="todoDragEnd(event)">⠿</span>
+                <wa-checkbox ${t.done ? 'checked' : ''} onchange="toggleTodo('${projectId}', ${t.line_idx}, this.checked)"></wa-checkbox>
+                <div class="todo-text" onclick="editTodoInline(this, '${projectId}', ${t.line_idx})">${escapeHtml(t.text)}</div>
+                <button class="todo-detail-toggle ${hasDetails ? 'has' : ''}"
+                        title="${hasDetails ? 'edit details' : 'add details'}"
+                        onclick="openTodoDetailsEditor('${projectId}', ${t.line_idx})">${hasDetails ? '≡' : '+'}</button>
+                <div class="todo-actions">
+                  <button onclick="todoToTask('${projectId}', ${t.line_idx})" title="open as task">→ task</button>
+                  <button class="del" onclick="deleteTodo('${projectId}', ${t.line_idx})" title="delete">✕</button>
+                </div>
+              </div>
+              ${hasDetails ? `<div class="todo-details">
+                <div class="todo-details-text" onclick="openTodoDetailsEditor('${projectId}', ${t.line_idx})">${escapeHtml(t.details)}</div>
+              </div>` : ''}
+            </div>`;
+          }).join('');
+    }
+  }
+
+  const recent = document.getElementById('ph-recent-tasks');
+  if (recent) {
+    recent.innerHTML = tasks.slice(0, 8).map(t => `
+      <div class="recent-task" onclick="openTask('${t.id}')">
+        <span class="dot ${t.status}"></span>
+        <span class="rt-title">${escapeHtml(t.title)}</span>
+        <span class="rt-time rel-time" data-iso="${t.updated_at}" title="${escapeHtml(new Date(t.updated_at).toLocaleString())}">${relTime(t.updated_at)}</span>
+      </div>
+    `).join('') || '<div style="color:var(--muted);font-size:12px">no tasks yet — hit + new task</div>';
+  }
+}
+
+async function toggleTodo(projectId, lineIdx, done) {
+  await fetch(`/projects/${projectId}/todos/${lineIdx}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({done}),
+  });
+  // Don't re-render the whole panel; CSS class toggle handles visual.
+  const row = document.querySelector(`.todo-row[data-line="${lineIdx}"]`);
+  if (row) row.classList.toggle('done', done);
+}
+
+async function deleteTodo(projectId, lineIdx) {
+  if (!confirm('delete this todo?')) return;
+  await fetch(`/projects/${projectId}/todos/${lineIdx}`, {method: 'DELETE'});
+  await renderProjectHome(projectId);
+}
+
+async function addTodo(projectId, inputEl) {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  inputEl.value = '';
+  const r = await fetch(`/projects/${projectId}/todos`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text}),
+  });
+  const d = r.ok ? await r.json() : null;
+  await renderProjectHome(projectId);
+  document.getElementById('todo-new')?.focus();
+  // Fire-and-forget: ask the model to tidy this line, then swap it in place.
+  if (d && d.line_idx !== undefined) {
+    tidyTodoRow(projectId, d.line_idx, text);
+  }
+}
+
+async function tidyTodoRow(projectId, lineIdx, originalText) {
+  try {
+    const r = await fetch(`/projects/${projectId}/todos/${lineIdx}/tidy`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({original_text: originalText}),
+    });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.improved) return;
+    // Only update if the row is still the one we tidied (user hasn't edited
+    // it in the interim).
+    const span = document.querySelector(
+      `.todo-row[data-line="${lineIdx}"] .todo-text`
+    );
+    if (span && span.textContent === originalText) {
+      span.textContent = d.text;
+    }
+  } catch (e) {}
+}
+
+function editTodoInline(span, projectId, lineIdx) {
+  const current = span.textContent;
+  const input = document.createElement('input');
+  input.value = current;
+  input.style.cssText = 'width:100%;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:3px;padding:2px 6px;font-family:inherit;font-size:13px';
+  span.replaceWith(input);
+  input.focus();
+  input.select();
+  let cancelled = false;
+  const commit = async () => {
+    if (cancelled) { renderProjectHome(projectId); return; }
+    const next = input.value.trim();
+    if (next && next !== current) {
+      await fetch(`/projects/${projectId}/todos/${lineIdx}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: next}),
+      });
+    }
+    renderProjectHome(projectId);
+  };
+  input.addEventListener('blur', commit, {once: true});
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { cancelled = true; input.blur(); }
+  });
+}
+
+// ── Todo details (the body beyond the headline) ──────────────────────────────
+
+function openTodoDetailsEditor(projectId, lineIdx) {
+  const item = document.querySelector(`#ph-todo-rows .todo-item[data-line="${lineIdx}"]`);
+  if (!item) return;
+  let panel = item.querySelector('.todo-details');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.className = 'todo-details';
+    item.appendChild(panel);
+  }
+  const current = (todoDetailsCache[projectId] || {})[lineIdx] || '';
+  const ta = document.createElement('textarea');
+  ta.value = current;
+  ta.placeholder = 'details — notes, acceptance criteria, links…';
+  panel.replaceChildren(ta);
+  ta.focus();
+  const len = ta.value.length;
+  ta.setSelectionRange(len, len);
+  let cancelled = false;
+  const commit = async () => {
+    if (cancelled) { renderProjectHome(projectId); return; }
+    const next = ta.value.trim();
+    if (next !== current) {
+      await fetch(`/projects/${projectId}/todos/${lineIdx}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({details: next}),
+      });
+    }
+    renderProjectHome(projectId);
+  };
+  ta.addEventListener('blur', commit, {once: true});
+  ta.addEventListener('keydown', (e) => {
+    // Cmd/Ctrl+Enter saves; Escape cancels. Plain Enter inserts a newline.
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ta.blur(); }
+    if (e.key === 'Escape') { cancelled = true; ta.blur(); }
+  });
+}
+
+// ── Drag-to-reorder ──────────────────────────────────────────────────────────
+
+function todoDragStart(e, lineIdx) {
+  todoDragLine = lineIdx;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(lineIdx)); } catch (_) {}
+  e.target.closest('.todo-item')?.classList.add('dragging');
+}
+
+function todoDragEnd() {
+  document.querySelectorAll('.todo-item.dragging, .todo-item.drag-over')
+    .forEach(el => el.classList.remove('dragging', 'drag-over'));
+  todoDragLine = null;
+}
+
+function todoDragOver(e) {
+  if (todoDragLine === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const item = e.target.closest('.todo-item');
+  document.querySelectorAll('.todo-item.drag-over')
+    .forEach(el => { if (el !== item) el.classList.remove('drag-over'); });
+  item?.classList.add('drag-over');
+}
+
+async function todoDrop(e, projectId, targetLine) {
+  e.preventDefault();
+  const src = todoDragLine;
+  todoDragEnd();
+  if (src === null || src === targetLine) return;
+  const order = [...document.querySelectorAll('#ph-todo-rows .todo-item')]
+    .map(el => parseInt(el.dataset.line, 10));
+  const from = order.indexOf(src);
+  const to = order.indexOf(targetLine);
+  if (from < 0 || to < 0) return;
+  order.splice(from, 1);
+  order.splice(to, 0, src);
+  await fetch(`/projects/${projectId}/todos/reorder`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({order}),
+  });
+  await renderProjectHome(projectId);
+}
+
+async function todoToTask(projectId, lineIdx) {
+  // Fetch the todo text + details, then create a task with them as the prompt.
+  const r = await fetch(`/projects/${projectId}/todos`);
+  const d = await r.json();
+  const todo = d.todos.find(t => t.line_idx === lineIdx);
+  if (!todo) return;
+  const details = (todo.details || '').trim();
+  const prompt = details ? `${todo.text}\n\n${details}` : todo.text;
+  const result = await fetch('/tasks', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      project_id: projectId,
+      title: todo.text.slice(0, 80),
+      prompt,
+    }),
+  });
+  if (!result.ok) { alert('failed: ' + (await result.text())); return; }
+  const j = await result.json();
+  await openTask(j.task_id);
+}
+
+// ── Build queue ─────────────────────────────────────────────────────────────
+// Maps a queue item's status onto the shared .dot palette (shell.css + tank's
+// own status colours) so chips read consistently with task rows.
+const QUEUE_DOT = {pending: 'queued', running: 'running',
+                   blocked: 'awaiting_input', done: 'done', failed: 'failed'};
+let queueDragId = null;
+let queuePollTimer = null;
+// Latest detail body per queue item, keyed projectId -> itemId, stashed at
+// render so the detail editor opens prefilled without a round-trip.
+const queueDetailCache = {};
+
+async function loadQueue(projectId) {
+  let snap;
+  try {
+    snap = await fetch(`/projects/${projectId}/queue`).then(r => r.json());
+  } catch { return; }
+  // Bail if the user navigated away while the fetch was in flight.
+  if (mountedProjectHomeId !== projectId) return;
+  renderQueue(projectId, snap);
+  // Poll while a run is live so the board reflects the runner without a reload.
+  const live = snap.run && snap.run.status === 'running';
+  clearTimeout(queuePollTimer);
+  if (live) queuePollTimer = setTimeout(() => loadQueue(projectId), 4000);
+}
+
+function renderQueue(projectId, snap) {
+  const run = snap.run || {status: 'idle'};
+  const items = snap.items || [];
+  const statusEl = document.getElementById('ph-queue-status');
+  if (statusEl) {
+    const counts = items.reduce((a, i) => (a[i.status] = (a[i.status] || 0) + 1, a), {});
+    const parts = ['done', 'running', 'pending', 'blocked', 'failed']
+      .filter(k => counts[k]).map(k => `${counts[k]} ${k}`);
+    statusEl.textContent = `${run.status}${parts.length ? ' · ' + parts.join(', ') : ''}`;
+    statusEl.className = 'queue-status ' + run.status;
+  }
+  const go = document.getElementById('ph-queue-go');
+  const pause = document.getElementById('ph-queue-pause');
+  if (go) go.textContent = run.status === 'paused' ? '▶ Resume' : '▶ Go';
+  if (go) go.style.display = run.status === 'running' ? 'none' : '';
+  if (pause) pause.style.display = run.status === 'running' ? '' : 'none';
+
+  const rowsEl = document.getElementById('ph-queue-rows');
+  if (!rowsEl) return;
+  const ae = document.activeElement;
+  if (rowsEl.contains(ae) && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT')) return;
+  rowsEl.innerHTML = items.length === 0
+    ? '<div class="empty">no queue items yet — add one below, or import from TODO.md</div>'
+    : items.map(it => {
+        const dot = QUEUE_DOT[it.status] || 'queued';
+        const editable = it.status === 'pending';
+        const detail = it.detail || '';
+        (queueDetailCache[projectId] = queueDetailCache[projectId] || {})[it.id] = detail;
+        const hasDetail = !!detail.trim();
+        const open = it.agent_task_id
+          ? `<button onclick="openTask('${it.agent_task_id}')" title="open agent task">stream →</button>` : '';
+        const del = editable
+          ? `<button class="del" onclick="deleteQueueItem('${projectId}','${it.id}')" title="delete">✕</button>` : '';
+        // The ¶ toggle opens the inline detail editor on pending items; on
+        // started items it's a read-only marker (the body still renders below).
+        const detailToggle = (editable || hasDetail)
+          ? `<button class="todo-detail-toggle ${hasDetail ? 'has' : ''}"
+                  title="${editable ? (hasDetail ? 'edit detail' : 'add detail') : 'view detail'}"
+                  onclick="${editable ? `openQueueDetailEditor('${projectId}','${it.id}')` : ''}">¶</button>` : '';
+        const detailBody = hasDetail
+          ? `<div class="queue-details"><div class="queue-details-text"
+                  ${editable ? `onclick="openQueueDetailEditor('${projectId}','${it.id}')"` : ''}
+                  >${escapeHtml(detail)}</div></div>` : '';
+        const result = (it.result && it.result.trim())
+          ? `<div class="queue-result">${escapeHtml(it.result.slice(0, 240))}</div>` : '';
+        return `
+        <div class="queue-item" data-id="${it.id}"
+             ondragover="queueDragOver(event)" ondrop="queueDrop(event,'${projectId}','${it.id}')">
+          <div class="queue-row">
+            ${editable ? `<span class="todo-drag" draggable="true" title="drag to reorder"
+                  ondragstart="queueDragStart(event,'${it.id}')" ondragend="queueDragEnd(event)">⠿</span>`
+                       : '<span class="todo-drag" style="visibility:hidden">⠿</span>'}
+            <span class="dot ${dot}" title="${it.status}"></span>
+            <span class="queue-seq">${it.seq}</span>
+            <div class="queue-title">${escapeHtml(it.title)}</div>
+            <div class="todo-actions">${detailToggle}${open}${del}</div>
+          </div>
+          ${detailBody}
+          ${result}
+        </div>`;
+      }).join('');
+}
+
+// Inline detail editor for a pending queue item. Mirrors the todo details
+// editor: Cmd/Ctrl+Enter saves, Escape cancels, plain Enter is a newline. The
+// render guard in renderQueue skips polling re-renders while this is focused.
+function openQueueDetailEditor(projectId, itemId) {
+  const item = document.querySelector(`#ph-queue-rows .queue-item[data-id="${itemId}"]`);
+  if (!item) return;
+  let panel = item.querySelector('.queue-details');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.className = 'queue-details';
+    // Insert above any result block so the editor sits right under the row.
+    const result = item.querySelector('.queue-result');
+    item.insertBefore(panel, result || null);
+  }
+  const current = (queueDetailCache[projectId] || {})[itemId] || '';
+  const ta = document.createElement('textarea');
+  ta.value = current;
+  ta.placeholder = 'detail — what this build-queue item should do…';
+  panel.replaceChildren(ta);
+  ta.focus();
+  const len = ta.value.length;
+  ta.setSelectionRange(len, len);
+  let cancelled = false;
+  const commit = async () => {
+    if (cancelled) { loadQueue(projectId); return; }
+    const next = ta.value.trim();
+    if (next !== current) {
+      const r = await fetch(`/projects/${projectId}/queue/${itemId}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({detail: next}),
+      });
+      if (!r.ok) { alert('failed: ' + (await r.text())); }
+    }
+    loadQueue(projectId);
+  };
+  ta.addEventListener('blur', commit, {once: true});
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ta.blur(); }
+    if (e.key === 'Escape') { cancelled = true; ta.blur(); }
+  });
+}
+
+async function addQueueItem(projectId, inputEl) {
+  const title = (inputEl.value || '').trim();
+  if (!title) return;
+  inputEl.value = '';
+  const r = await fetch(`/projects/${projectId}/queue`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({items: [{title}]}),
+  });
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  renderQueue(projectId, await r.json());
+}
+
+async function deleteQueueItem(projectId, itemId) {
+  const r = await fetch(`/projects/${projectId}/queue/${itemId}`, {method: 'DELETE'});
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  renderQueue(projectId, await r.json());
+}
+
+async function startQueue(projectId) {
+  const r = await fetch(`/projects/${projectId}/queue/start`, {method: 'POST'});
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  loadQueue(projectId);
+}
+
+async function pauseQueue(projectId) {
+  const r = await fetch(`/projects/${projectId}/queue/pause`, {method: 'POST'});
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  renderQueue(projectId, await r.json());
+}
+
+async function importTodosToQueue(projectId) {
+  const r = await fetch(`/projects/${projectId}/queue/import-todos`, {method: 'POST'});
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  renderQueue(projectId, await r.json());
+}
+
+async function clearQueue(projectId) {
+  if (!confirm('Clear the whole queue and remove its worktree? Auto-committed work on the queue branch is kept.')) return;
+  const r = await fetch(`/projects/${projectId}/queue`, {method: 'DELETE'});
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  renderQueue(projectId, await r.json());
+}
+
+function queueDragStart(e, itemId) { queueDragId = itemId; e.dataTransfer.effectAllowed = 'move'; }
+function queueDragEnd(e) { queueDragId = null; }
+function queueDragOver(e) { if (queueDragId) e.preventDefault(); }
+async function queueDrop(e, projectId, targetId) {
+  e.preventDefault();
+  if (!queueDragId || queueDragId === targetId) return;
+  const ids = [...document.querySelectorAll('#ph-queue-rows .queue-item')].map(el => el.dataset.id);
+  const from = ids.indexOf(queueDragId), to = ids.indexOf(targetId);
+  if (from < 0 || to < 0) return;
+  ids.splice(to, 0, ids.splice(from, 1)[0]);
+  queueDragId = null;
+  const r = await fetch(`/projects/${projectId}/queue/reorder`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({order: ids}),
+  });
+  if (r.ok) renderQueue(projectId, await r.json());
+}
+
+async function openChat(projectId) {
+  // For chats: open the first task of the chat-kind project as the active task.
+  const r = await fetch(`/tasks?project_id=${projectId}`);
+  const tasks = await r.json();
+  if (tasks.length === 0) return;
+  // Tasks are ordered DESC; pick the earliest (the original chat task).
+  await openTask(tasks[tasks.length - 1].id);
+}
+
+function deleteChatFromBtn(btn) {
+  armDelete(btn, async () => {
+    const pid = btn.dataset.pid;
+    // The server delete is slow (tears down each task's tmux + sandbox) and
+    // emits SSE events meanwhile that re-render the sidebar while the DB row
+    // still exists. Mark it pending so renders hide it until the delete lands.
+    pendingDeletes.add(pid);
+    refreshSidebar();
+    try {
+      const r = await fetch(`/projects/${pid}`, { method: 'DELETE' });
+      if (!r.ok) alert('failed: ' + (await r.text()));
+    } catch (e) {
+      alert('failed: ' + e);
+    }
+    // Drop the filter (delete done, or failed and the row should return).
+    pendingDeletes.delete(pid);
+    // If the detail pane was showing a task from this chat, empty it.
+    if (mountedDetailProjectId === pid) clearActiveDetail();
+    if (activeChatPid === pid) activeChatPid = null;
+    refreshSidebar();
+  });
+}
+
+// ── Remove project (project-kind) ────────────────────────────────────────────
+// Chat-kind projects delete from the sidebar trash button (deleteChatFromBtn,
+// which always removes the sandbox cwd). Project-kind projects are real repos,
+// so removal goes through a confirm modal that offers an optional "delete the
+// working directory too" — off by default, so the repo survives on disk.
+let removeProjectId = null;
+
+function openRemoveProjectModal(projectId) {
+  removeProjectId = projectId;
+  const p = projectsCache[projectId] || {};
+  document.getElementById('rp-name').textContent = p.name || 'this project';
+  document.getElementById('rp-path').textContent = p.path || '';
+  document.getElementById('rp-remove-dir').checked = false;
+  const err = document.getElementById('rp-error');
+  err.style.display = 'none'; err.textContent = '';
+  document.getElementById('remove-project-modal').classList.add('open');
+}
+
+function closeRemoveProjectModal() {
+  document.getElementById('remove-project-modal').classList.remove('open');
+  removeProjectId = null;
+}
+
+async function submitRemoveProject() {
+  const pid = removeProjectId;
+  if (!pid) return;
+  const removeDir = document.getElementById('rp-remove-dir').checked;
+  const btn = document.getElementById('rp-submit');
+  const err = document.getElementById('rp-error');
+  err.style.display = 'none'; err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = removeDir ? 'removing + deleting dir…' : 'removing…';
+  // Hide the row immediately; the server delete is slow (tears down each task's
+  // tmux + sandbox) and emits SSE meanwhile that would re-render the row.
+  pendingDeletes.add(pid);
+  refreshSidebar();
+  try {
+    const r = await fetch(`/projects/${pid}?remove_dir=${removeDir}`, { method: 'DELETE' });
+    if (!r.ok) {
+      pendingDeletes.delete(pid);
+      refreshSidebar();
+      err.textContent = 'failed: ' + (await r.text());
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'remove';
+      return;
+    }
+  } catch (e) {
+    pendingDeletes.delete(pid);
+    refreshSidebar();
+    err.textContent = 'failed: ' + e;
+    err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'remove';
+    return;
+  }
+  btn.disabled = false; btn.textContent = 'remove';
+  pendingDeletes.delete(pid);
+  closeRemoveProjectModal();
+  // If this project's home / a task of it was showing, empty the detail pane.
+  if (activeProjectId === pid) { activeProjectId = null; clearActiveDetail(); }
+  refreshSidebar();
+}
+
+// Backwards-compat: refreshList still exists as an alias to keep old callers
+// (SSE handlers, etc.) working.
+const refreshList = refreshSidebar;
+
+async function openTask(id) {
+  activeTaskId = id;
+  // Sync sidebar context to this task's project so the sidebar stays oriented.
+  try {
+    const r = await fetch(`/tasks/${id}`);
+    if (r.ok) {
+      const data = await r.json();
+      const pid = data.task.project_id;
+      const proj = projectsCache[pid] || (Object.keys(projectsCache).length === 0
+        ? null
+        : projectsCache[pid]);
+      if (proj) {
+        // Stay on the All tab if that's where the user is; only auto-switch
+        // when opening from a different orientation.
+        if (activeTab !== 'all') {
+          const targetTab = proj.kind === 'chat' ? 'chats' : 'projects';
+          if (activeTab !== targetTab) {
+            activeTab = targetTab;
+            document.querySelectorAll('.tab').forEach(t =>
+              t.classList.toggle('active', t.dataset.tab === targetTab));
+            document.getElementById('project-picker').classList.toggle('hidden', targetTab !== 'projects');
+          }
+        }
+        if (proj.kind === 'project') activeProjectId = pid;
+        else if (proj.kind === 'chat') activeChatPid = pid;
+      }
+    }
+  } catch {}
+  document.querySelectorAll('.task-row').forEach(r => r.classList.remove('active'));
+  await refreshSidebar();
+  await renderDetail();
+  if (detailEvents) detailEvents.close();
+  detailEvents = new EventSource(`/tasks/${id}/stream`);
+  detailEvents.onmessage = () => renderDetail();
+  // On mobile, auto-close the sidebar after selecting a task.
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-open');
+}
+function closeSidebar() {
+  document.body.classList.remove('sidebar-open');
+}
+
+async function renderDetail() {
+  if (!activeTaskId) return;
+  const r = await fetch(`/tasks/${activeTaskId}`);
+  if (!r.ok) {
+    mountedTaskId = null;
+    document.getElementById('detail').textContent = 'task not found';
+    return;
+  }
+  const data = await r.json();
+  if (mountedTaskId !== data.task.id) {
+    mountDetail(data);
+  } else {
+    updateDetailDynamic(data);
+  }
+}
+
+function mountDetail(data) {
+  const d = document.getElementById('detail');
+  d.classList.remove('empty');
+  d.className = '';
+  // For chat-kind projects the detail pane represents the whole chat, so its
+  // delete button removes the chat (project) — matching the left-bar trash and
+  // actually clearing the row. For project tasks it deletes just the task.
+  const isChat = projectsCache[data.task.project_id]?.kind === 'chat';
+  const delBtn = isChat
+    ? `<button class="detail-del" data-pid="${data.task.project_id}" data-title="${escapeHtml(data.task.title)}" onclick="deleteChatFromBtn(this)" title="delete this chat">${TRASH_SVG}delete chat</button>`
+    : `<button class="detail-del" data-id="${data.task.id}" data-title="${escapeHtml(data.task.title)}" onclick="deleteFromBtn(this)" title="delete this task">${TRASH_SVG}delete</button>`;
+  d.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-head-actions">
+        <button class="detail-info" id="dh-info-btn" onclick="toggleDetailInfo(event)" title="session details" aria-label="session details">${INFO_SVG}</button>
+        ${delBtn}
+      </div>
+      <div class="detail-head">
+        <span class="dot" id="dh-dot"></span>
+        <h2 id="dh-title"></h2>
+      </div>
+      <div class="detail-info-pop" id="dh-info-pop" hidden></div>
+      <div class="task-meta" id="dh-pr-row" style="margin-top:4px"></div>
+      <div class="error-banner" id="dh-error" style="display:none"></div>
+      <div class="live-bar" id="dh-livebar"></div>
+    </div>
+    <div class="detail-scroll" id="dh-scroll"></div>
+    <div class="detail-footer">
+      <div class="continue-form">
+        <div class="prompt-wrap" data-att-target="cont">
+          <div class="attachments" id="cont-attachments"></div>
+          <textarea id="cont-prompt" placeholder="continue this conversation (Enter to send, Shift+Enter for newline). Drop or paste images to attach." onkeydown="handlePromptKey(event, () => continueTask('${data.task.id}'))"></textarea>
+        </div>
+        <div class="row">
+          <wa-button appearance="outlined" variant="neutral" onclick="stopTask('${data.task.id}')">stop</wa-button>
+          <button id="resume-btn" class="btn btn-spark" style="display:none" onclick="resumeTask('${data.task.id}')">resume</button>
+          <wa-button variant="brand" onclick="continueTask('${data.task.id}')">send &amp; continue</wa-button>
+        </div>
+      </div>
+    </div>
+  `;
+  mountedTaskId = data.task.id;
+  mountedProjectHomeId = null;
+  mountedDetailProjectId = data.task.project_id;
+  clearAttachments('cont');
+  bindPromptDropzone('cont');
+  updateDetailDynamic(data);
+  reflectArmed();  // keep the danger delete button armed across a re-mount
+}
+
+function updateDetailDynamic(data) {
+  const titleEl = document.getElementById('dh-title');
+  if (titleEl) titleEl.textContent = data.task.title;
+  const dotEl = document.getElementById('dh-dot');
+  if (dotEl) dotEl.className = `dot ${data.task.status}`;
+  // The verbose reference metadata — status, session id, cwd, branch — lives in
+  // the ⓘ popover, not the always-on header. Guard the rewrite against the
+  // per-SSE-tick churn so an open popover (and its copy buttons) don't reset.
+  const infoPop = document.getElementById('dh-info-pop');
+  if (infoPop) {
+    const copyBtn = (raw, title) =>
+      `<button class="copy-id-btn" data-raw="${encodeURIComponent(raw)}" onclick="copyId(this)" title="${title}">${COPY_SVG}</button>`;
+    let infoHtml =
+      `<div class="info-line"><span class="info-key">status</span><span class="dot ${data.task.status}"></span><span class="info-val">${data.task.status}</span></div>` +
+      `<div class="info-line"><span class="info-key">session</span><code>${data.task.id}</code>${copyBtn(data.task.id, 'copy session id')}</div>` +
+      `<div class="info-line"><span class="info-key">cwd</span><code>${escapeHtml(data.task.cwd)}</code>${copyBtn(data.task.cwd, 'copy path')}</div>`;
+    if (data.task.branch) {
+      infoHtml += `<div class="info-line"><span class="info-key">branch</span><code>${escapeHtml(data.task.branch)}</code>${copyBtn(data.task.branch, 'copy branch')}</div>`;
+    }
+    if (infoPop._lastHtml !== infoHtml) {
+      infoPop.innerHTML = infoHtml;
+      infoPop._lastHtml = infoHtml;
+    }
+  }
+  const resumeBtn = document.getElementById('resume-btn');
+  if (resumeBtn) {
+    const resumable = data.task.status === 'interrupted'
+                    || data.task.status === 'errored';
+    resumeBtn.style.display = resumable ? '' : 'none';
+  }
+  const errorEl = document.getElementById('dh-error');
+  if (errorEl) {
+    if (data.task.error_reason) {
+      errorEl.textContent = data.task.error_reason;
+      errorEl.style.display = '';
+    } else {
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+    }
+  }
+  const prRow = document.getElementById('dh-pr-row');
+  if (prRow) {
+    const isLive = data.task.status === 'running'
+                || data.task.status === 'awaiting_input'
+                || data.task.status === 'background_waiting';
+    const lastTurn = data.turns.length ? data.turns[data.turns.length - 1].turn_num : null;
+    const termBtnHtml = (isLive && lastTurn != null)
+      ? `<button class="header-term-btn" data-id="${data.task.id}" data-turn="${lastTurn}"
+                 onclick="openTerminalFromBtn(this)" title="attach to active terminal">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25H1.75zM5.28 5.22a.75.75 0 0 0-1.06 1.06L6.69 8.75 4.22 11.22a.75.75 0 1 0 1.06 1.06l3-3a.75.75 0 0 0 0-1.06l-3-3zM8.75 11a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3z"/></svg>
+           terminal
+         </button>`
+      : '';
+    const PR_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354zM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0z"/></svg>';
+    const MERGE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.254V3.25v.005a.75.75 0 1 1 0-.005v.004zm.45 2.9a2.25 2.25 0 1 0-1.95.218v3.256a2.25 2.25 0 1 0 1.5 0V7.123A5.735 5.735 0 0 0 9.25 9h1.378a2.251 2.251 0 1 0 0-1.5H9.25a4.25 4.25 0 0 1-3.8-2.346zM12.75 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm-8.5 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/></svg>';
+    // The branch name moved to the ⓘ details popover; this row is now purely
+    // the action buttons (view/merge PR, ship, etc.), still gated on a branch.
+    let prBtnHtml = '';
+    if (data.task.branch) {
+      const prUrl = data.task.pr_url;
+      if (data.task.status === 'merged' && prUrl) {
+        prBtnHtml += ` <a class="pr-link merged" href="${escapeHtml(prUrl)}" target="_blank" rel="noopener">${MERGE_ICON_SVG}PR merged</a>`;
+      } else if (prUrl) {
+        prBtnHtml += ` <a class="pr-link" href="${escapeHtml(prUrl)}" target="_blank" rel="noopener">${PR_ICON_SVG}view PR</a>`;
+        // A 'done' thread is closed out (merged off-platform, abandoned, or
+        // rolled into another task) — keep the PR link as a reference but never
+        // offer the actionable "merge PR", which would re-merge a stale/merged
+        // PR. (mark_done leaves pr_url intact; status alone distinguishes it.)
+        if (gitEnabled() && data.task.status !== 'done') {
+          // "merging…" only when this task actually triggered a merge turn
+          // (server flag); a normal live turn just disables the button.
+          prBtnHtml += isLive
+            ? `<button class="pr-link merge${data.task.merge_pending ? ' working' : ''}" disabled>${MERGE_ICON_SVG}${data.task.merge_pending ? 'merging…' : 'merge PR'}</button>`
+            : `<button class="pr-link merge" onclick="mergePr('${data.task.id}', this)">${MERGE_ICON_SVG}merge PR</button>`;
+        }
+      } else if (gitEnabled() && data.task.status !== 'done') {
+        // "ship it" = commit + open PR + merge, all in one turn (the common
+        // case). Suppressed once a thread is 'done' (closed out) — undo done
+        // first to act on it again. "shipping…" only when this task actually
+        // triggered the turn (server flag); a normal live turn just disables
+        // the button. If a
+        // ship half-completes (PR opens but merge fails), pr_url gets recorded
+        // and the branch falls through to the view PR + merge PR recovery path
+        // above on the next render.
+        prBtnHtml += isLive
+          ? ` <button class="pr-link merge${data.task.pr_pending ? ' working' : ''}" disabled>${MERGE_ICON_SVG}${data.task.pr_pending ? 'shipping…' : 'ship it'}</button>`
+          : ` <button class="pr-link merge" onclick="shipTask('${data.task.id}', this)" title="commit, open a PR, and merge it in one go">${MERGE_ICON_SVG}ship it</button>`;
+      }
+    }
+    const canMarkDone = !isLive
+      && data.task.status !== 'merged'
+      && data.task.status !== 'done'
+      && data.task.status !== 'queued';
+    const CHECK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>';
+    const doneBtnHtml = canMarkDone
+      ? ` <button class="pr-link done" onclick="markDone('${data.task.id}', this)" title="mark this thread done (no PR needed)">${CHECK_ICON_SVG}mark done</button>`
+      : '';
+    // Once a thread is manually 'done', offer an undo in case it wasn't meant.
+    // (A 'merged' thread went through the real PR flow — not reversible here.)
+    const UNDO_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M2.534 1.794A.25.25 0 0 1 3 1.985V3.5h6.5a5 5 0 1 1 0 10 .75.75 0 0 1 0-1.5 3.5 3.5 0 1 0 0-7H3v1.515a.25.25 0 0 1-.466.19l-2.4-2.6a.25.25 0 0 1 0-.32l2.4-2.6z"/></svg>';
+    const undoDoneBtnHtml = (!isLive && data.task.status === 'done')
+      ? ` <button class="pr-link done" onclick="undoDone('${data.task.id}', this)" title="undo — this thread wasn't done after all">${UNDO_ICON_SVG}undo done</button>`
+      : '';
+    // Live dev preview — only when the project defines a dev_command. Runs the
+    // app from this task's worktree on a dedicated port so the change can be
+    // clicked through before merging.
+    const PREVIEW_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 13h-4.553l.3 1.5h1.253a.75.75 0 0 1 0 1.5h-6.5a.75.75 0 0 1 0-1.5h1.253l.3-1.5H1.75A1.75 1.75 0 0 1 0 11.25v-8.5zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25H1.75z"/></svg>';
+    const project = projectsCache[data.task.project_id];
+    const hasDevCmd = !!(project && (project.dev_command || '').trim());
+    const pv = data.preview || {};
+    let previewBtnHtml = '';
+    if (hasDevCmd) {
+      if (pv.running && pv.port) {
+        const url = `http://${location.hostname}:${pv.port}/`;
+        previewBtnHtml =
+          ` <a class="pr-link preview-live" href="${url}" target="_blank" rel="noopener" title="open the live preview in a new tab">${PREVIEW_ICON_SVG}preview :${pv.port}</a>` +
+          ` <button class="pr-link preview-stop" onclick="stopPreview('${data.task.id}', this)" title="stop the preview server">stop preview</button>`;
+      } else {
+        previewBtnHtml = ` <button class="pr-link preview" onclick="startPreview('${data.task.id}', this)" title="run this change on a dev port">${PREVIEW_ICON_SVG}preview</button>`;
+      }
+    }
+    // renderDetail() runs on every SSE event during a live turn. Rewriting
+    // innerHTML unconditionally tears down and recreates the buttons each
+    // tick, which makes them visibly flicker. Only touch the DOM when the
+    // markup actually changed.
+    // Compare against the exact string we last set, not prRow.innerHTML —
+    // the browser re-serialises innerHTML on read, so reading it back would
+    // never match and the guard would be useless.
+    const nextHtml = (termBtnHtml || prBtnHtml || doneBtnHtml || undoDoneBtnHtml || previewBtnHtml)
+      ? prBtnHtml + previewBtnHtml + doneBtnHtml + undoDoneBtnHtml + termBtnHtml
+      : '';
+    if (prRow._lastHtml !== nextHtml) {
+      prRow.innerHTML = nextHtml;
+      prRow._lastHtml = nextHtml;
+    }
+    prRow.style.display = nextHtml ? '' : 'none';
+  }
+
+  // Live activity bar under the header — travels while the agent works,
+  // steady-pulses purple when it's parked awaiting your input.
+  const liveBar = document.getElementById('dh-livebar');
+  if (liveBar) {
+    const liveStatuses = ['running', 'awaiting_input', 'background_waiting'];
+    const live = liveStatuses.includes(data.task.status);
+    liveBar.className = 'live-bar' + (live ? ' on ' + data.task.status : '');
+  }
+
+  const scrollEl = document.getElementById('dh-scroll');
+  if (!scrollEl) return;
+  const wasNearBottom =
+    (scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight) < 120;
+
+  // Group events by turn for inline rendering.
+  const eventsByTurn = {};
+  for (const e of data.events) {
+    if (e.turn_num == null) continue;
+    (eventsByTurn[e.turn_num] = eventsByTurn[e.turn_num] || []).push(e);
+  }
+
+  const turnsHtml = data.turns.map(t => {
+    const evs = eventsByTurn[t.turn_num] || [];
+    const EVENT_GLYPHS = {
+      SessionStart:     { icon: '▶', klass: 'session'   },
+      SessionEnd:       { icon: '◾', klass: 'end'       },
+      UserPromptSubmit: { icon: '✎', klass: 'prompt'    },
+      PreToolUse:       { icon: '◯', klass: 'pre-tool'  },
+      PostToolUse:      { icon: '●', klass: 'post-tool' },
+      Stop:             { icon: '✓', klass: 'stop'      },
+      SubagentStop:     { icon: '↩', klass: 'stop'      },
+    };
+    const isAwaiting = !t.finished_at && data.task.status === 'awaiting_input';
+    const isBgWaiting = !t.finished_at && data.task.status === 'background_waiting';
+    const isRunning = !t.finished_at
+      && (data.task.status === 'running' || isAwaiting || isBgWaiting);
+    const evsHtml = evs.length === 0 ? '' : `
+      <div class="turn-events">
+        ${evs.map((e, i) => {
+          const g = EVENT_GLYPHS[e.kind] || { icon: '·', klass: '' };
+          // The newest event of a still-running turn is the in-flight one —
+          // surface it in full rather than truncated.
+          const liveRow = isRunning && i === evs.length - 1;
+          return `<div class="row${liveRow ? ' live' : ''}">
+            <div class="icon ${g.klass}" title="${escapeHtml(e.kind)}">${g.icon}</div>
+            <div class="summary" title="${escapeHtml(e.kind + ' — ' + e.summary)}">${escapeHtml(e.summary)}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    let resultBlock = '';
+    if (t.result) {
+      const rendered = window.marked
+        ? renderMarkdown(t.result)
+        : `<pre>${escapeHtml(t.result)}</pre>`;
+      const rawAttr = encodeURIComponent(t.result);
+      resultBlock = `
+        <div class="result">
+          ${rendered}
+          <button class="copy-btn" data-raw="${rawAttr}" onclick="copyResult(this)" title="copy raw markdown">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M5 1.75A1.75 1.75 0 0 1 6.75 0h6.5A1.75 1.75 0 0 1 15 1.75v8.5A1.75 1.75 0 0 1 13.25 12H11v2.25A1.75 1.75 0 0 1 9.25 16h-6.5A1.75 1.75 0 0 1 1 14.25v-8.5A1.75 1.75 0 0 1 2.75 4H5V1.75zm1.75-.25a.25.25 0 0 0-.25.25V4h2.75A1.75 1.75 0 0 1 11 5.75V10.5h2.25a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25h-6.5zM2.75 5.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h6.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25h-6.5z"/>
+            </svg>
+            copy md
+          </button>
+        </div>`;
+    } else if (!isRunning) {
+      resultBlock = `<div class="result pending">no result captured</div>`;
+    }
+    return `
+      <div class="turn">
+        <div class="label" title="${escapeHtml(fmt(t.started_at) + (t.finished_at ? ' → ' + fmt(t.finished_at) : ''))}">turn ${t.turn_num} &middot; ${turnDuration(t.started_at, t.finished_at)}${isAwaiting ? '<span class="awaiting-pill">awaiting input</span>' : (isBgWaiting ? '<span class="bg-waiting-pill">waiting on subagents</span>' : (isRunning ? '<span class="running-pill">running</span>' : ''))}</div>
+        <div class="prompt">${escapeHtml(t.prompt)}</div>
+        ${evsHtml}
+        ${resultBlock}
+      </div>`;
+  }).join('');
+
+  scrollEl.innerHTML = turnsHtml;
+  if (wasNearBottom) scrollEl.scrollTop = scrollEl.scrollHeight;
+}
+
+async function continueTask(id) {
+  if (attachState.cont.some(a => a.status === 'uploading')) {
+    alert('still uploading — wait a moment');
+    return;
+  }
+  const ta = document.getElementById('cont-prompt');
+  const typed = ta.value.trim();
+  const prompt = attachmentPathPrefix('cont') + typed;
+  if (!prompt.trim()) return;
+  ta.value = '';
+  clearAttachments('cont');
+  await fetch(`/tasks/${id}/continue`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({prompt}),
+  });
+  setTimeout(renderDetail, 400);
+}
+
+async function stopTask(id) {
+  if (!confirm('kill this task?')) return;
+  await fetch(`/tasks/${id}/stop`, {method: 'POST'});
+  setTimeout(renderDetail, 200);
+}
+
+async function resumeTask(id) {
+  const r = await fetch(`/tasks/${id}/resume`, {method: 'POST'});
+  if (!r.ok) { alert('resume failed: ' + (await r.text())); return; }
+  setTimeout(renderDetail, 400);
+}
+
+function startPreview(taskId, btn) {
+  // Don't open the tab until the app actually answers — the wait happens here
+  // in the dashboard (button shows progress), so the new tab never lands on a
+  // connection-refused. We deliberately do NOT renderDetail() until the port is
+  // up, so the pane's "preview :PORT" link can't be clicked prematurely either.
+  if (btn) { btn.disabled = true; btn.textContent = 'starting…'; }
+  driveStartPreview(taskId, btn);
+}
+
+async function driveStartPreview(taskId, btn) {
+  let port;
+  try {
+    const r = await fetch(`/tasks/${taskId}/preview`, {method: 'POST'});
+    if (!r.ok) { alert('preview failed: ' + (await r.text())); renderDetail(); return; }
+    port = (await r.json()).port;
+  } catch (e) { alert('preview failed: ' + e); renderDetail(); return; }
+  const url = `${location.protocol}//${location.hostname}:${port}/`;
+  if (btn && btn.isConnected) btn.textContent = 'waiting for app…';
+  const ready = await waitForUrl(url);
+  // Open only now that it's serving. If the browser blocks this deferred popup,
+  // renderDetail() below paints the (now-ready) "preview :PORT" link to click.
+  window.open(url, '_blank', 'noopener');
+  if (!ready) console.warn('preview port', port, 'never came up; opened anyway');
+  renderDetail();
+}
+
+// Resolve once `url` accepts a connection (opaque no-cors response), or false
+// after ~30s. A refused port rejects the fetch; a live one resolves.
+async function waitForUrl(url, tries = 60, delayMs = 500) {
+  for (let i = 0; i < tries; i++) {
+    try { await fetch(url, {mode: 'no-cors', cache: 'no-store'}); return true; }
+    catch (e) { await new Promise(r => setTimeout(r, delayMs)); }
+  }
+  return false;
+}
+
+async function stopPreview(taskId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'stopping…'; }
+  const r = await fetch(`/tasks/${taskId}/preview`, {method: 'DELETE'});
+  if (!r.ok) { alert('stop preview failed: ' + (await r.text())); }
+  renderDetail();
+}
+
+async function openPr(taskId, btn) {
+  // Sends a continue-turn prompting the AI to commit + push + open the PR.
+  // The PR URL is scraped from the AI's reply server-side and stored on the
+  // task; the dashboard then swaps this button for view PR + merge PR.
+  let originalHtml = null;
+  if (btn) {
+    originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'asking AI…';
+  }
+  const r = await fetch(`/tasks/${taskId}/pr`, {method: 'POST'});
+  if (!r.ok) {
+    alert('open PR failed: ' + (await r.text()));
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    return;
+  }
+  renderDetail();
+}
+
+async function shipTask(taskId, btn) {
+  // One-click "ship it": a single continue-turn commits, opens a PR, and
+  // merges it. on_stop scrapes both the PR URL and the MERGED sentinel from
+  // the one reply and flips status to merged. (openPr/mergePr remain for the
+  // pause-at-PR flow and as the recovery path if a ship half-completes.)
+  let originalHtml = null;
+  if (btn) {
+    originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'asking AI…';
+  }
+  const r = await fetch(`/tasks/${taskId}/ship`, {method: 'POST'});
+  if (!r.ok) {
+    alert('ship failed: ' + (await r.text()));
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    return;
+  }
+  renderDetail();
+}
+
+async function markDone(taskId, btn) {
+  // Manual "done" — same blue UI as merged, no PR involved. For threads
+  // that finished off-platform and just need clearing from the green
+  // "needs action" bucket.
+  let originalHtml = null;
+  if (btn) {
+    originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'marking…';
+  }
+  const r = await fetch(`/tasks/${taskId}/done`, {method: 'POST'});
+  if (!r.ok) {
+    alert('mark done failed: ' + (await r.text()));
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    return;
+  }
+  renderDetail();
+}
+
+async function undoDone(taskId, btn) {
+  // Reverse a manual "mark done" — server restores the task's prior status.
+  let originalHtml = null;
+  if (btn) {
+    originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'undoing…';
+  }
+  const r = await fetch(`/tasks/${taskId}/undone`, {method: 'POST'});
+  if (!r.ok) {
+    alert('undo done failed: ' + (await r.text()));
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    return;
+  }
+  renderDetail();
+}
+
+async function mergePr(taskId, btn) {
+  // Sends a continue-turn prompting the AI to merge the PR via the Forgejo
+  // API. on_stop scrapes 'MERGED' from the reply and flips status to merged.
+  let originalHtml = null;
+  if (btn) {
+    originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'asking AI…';
+  }
+  const r = await fetch(`/tasks/${taskId}/merge`, {method: 'POST'});
+  if (!r.ok) {
+    alert('merge PR failed: ' + (await r.text()));
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    return;
+  }
+  renderDetail();
+}
+
+// Double-click-to-confirm: first click arms the button (red), a second click
+// within the window commits. Avoids a modal confirm() popup on delete.
+//
+// The armed state is keyed by the target's id (NOT the DOM node), because the
+// sidebar re-renders on every SSE event — for an active chat that streams
+// events, the button node is replaced between the two clicks. Keeping the key
+// in a variable and re-applying the visual after each render (reflectArmed)
+// lets the second click commit even though it lands on a freshly-rendered node.
+let armedDelKey = null, armedDelTimer = null;
+
+function delKey(btn) {
+  return btn.dataset.pid ? 'chat:' + btn.dataset.pid : 'task:' + btn.dataset.id;
+}
+
+function armDelete(btn, action) {
+  const key = delKey(btn);
+  if (armedDelKey === key) {           // second click → commit
+    clearTimeout(armedDelTimer);
+    armedDelKey = null; armedDelTimer = null;
+    reflectArmed();
+    action();
+    return;
+  }
+  clearTimeout(armedDelTimer);
+  armedDelKey = key;
+  armedDelTimer = setTimeout(() => { armedDelKey = null; armedDelTimer = null; reflectArmed(); }, 2500);
+  reflectArmed();
+}
+
+// Sync every delete button's visual to armedDelKey. Called after arming and
+// after each re-render so the armed button stays red across SSE refreshes.
+function reflectArmed() {
+  document.querySelectorAll('.row-del[data-pid], .row-del[data-id], .detail-del[data-pid], .detail-del[data-id]').forEach(btn => {
+    const armed = armedDelKey === delKey(btn);
+    if (armed === btn.classList.contains('armed')) return;
+    btn.classList.toggle('armed', armed);
+    if (btn.classList.contains('detail-del')) {
+      // Icon + trailing "delete" text node — relabel only the text so the SVG survives.
+      const label = btn.lastChild;
+      if (armed) { if (btn.dataset.origLabel == null) btn.dataset.origLabel = label.textContent; label.textContent = 'confirm?'; }
+      else if (btn.dataset.origLabel != null) { label.textContent = btn.dataset.origLabel; delete btn.dataset.origLabel; }
+    } else {
+      if (armed) { if (btn.dataset.origTitle == null) btn.dataset.origTitle = btn.title; btn.title = 'click again to confirm'; }
+      else if (btn.dataset.origTitle != null) { btn.title = btn.dataset.origTitle; delete btn.dataset.origTitle; }
+    }
+  });
+}
+
+function deleteFromBtn(btn) {
+  armDelete(btn, () => deleteTask(btn.dataset.id, btn.dataset.title || ''));
+}
+
+async function deleteTask(id, title) {
+  // Hide the row immediately; the server delete is slow and emits SSE events
+  // that would otherwise re-render it while its DB row still exists.
+  pendingDeletes.add(id);
+  refreshList();
+  let ok = false;
+  try {
+    const r = await fetch(`/tasks/${id}`, {method: 'DELETE'});
+    if (r.ok) ok = true;
+    else alert('delete failed: ' + (await r.text()));
+  } catch (e) {
+    alert('delete failed: ' + e);
+  }
+  pendingDeletes.delete(id);
+  if (!ok) { refreshList(); return; }  // restore the row we optimistically hid
+  if (id === activeTaskId) clearActiveDetail();
+  refreshList();
+}
+
+// Reset the detail pane to its empty state and tear down its event stream.
+function clearActiveDetail() {
+  if (detailEvents) { detailEvents.close(); detailEvents = null; }
+  activeTaskId = null;
+  mountedTaskId = null;
+  mountedDetailProjectId = null;
+  const d = document.getElementById('detail');
+  d.className = 'empty';
+  d.textContent = 'select a task or create a new one';
+}
+
+function openNewModal() {
+  if (activeTab === 'projects' && !activeProjectId) {
+    alert('select a project first');
+    return;
+  }
+  const heading = document.getElementById('m-heading');
+  const context = document.getElementById('m-context');
+  if (activeTab === 'chats') {
+    heading.textContent = 'new chat';
+    context.textContent = 'disposable cwd under ' + (SETTINGS.chats_root || 'the chats root') + '/<id>/';
+  } else {
+    const p = projectsCache[activeProjectId];
+    heading.textContent = 'new task';
+    context.innerHTML = `in project <strong>${escapeHtml(p?.name || '?')}</strong> — ${escapeHtml(p?.path || '')}`;
+  }
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('m-prompt').focus();
+  bindPromptDropzone('m');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('m-prompt').value = '';
+  clearAttachments('m');
+}
+
+function openNewProjectModal() {
+  document.getElementById('pm-name').value = '';
+  document.getElementById('pm-desc').value = '';
+  document.getElementById('pm-clone').value = '';
+  document.getElementById('pm-scaffold').checked = false;
+  const err = document.getElementById('pm-error');
+  err.style.display = 'none';
+  err.textContent = '';
+  document.getElementById('pm-submit').disabled = false;
+  const rootHint = document.getElementById('pm-root-hint');
+  if (rootHint) rootHint.textContent = SETTINGS.projects_root || 'the projects root';
+  document.getElementById('project-modal').classList.add('open');
+  document.getElementById('pm-name').focus();
+}
+
+function closeProjectModal() {
+  document.getElementById('project-modal').classList.remove('open');
+}
+
+async function submitNewProjectModal() {
+  const name = document.getElementById('pm-name').value.trim();
+  const description = document.getElementById('pm-desc').value.trim();
+  const git_remote = document.getElementById('pm-clone').value.trim();
+  const scaffold_ui = document.getElementById('pm-scaffold').checked;
+  const err = document.getElementById('pm-error');
+  const btn = document.getElementById('pm-submit');
+  err.style.display = 'none';
+  err.textContent = '';
+  if (!name) {
+    err.textContent = 'name is required';
+    err.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = git_remote ? 'cloning…' : (scaffold_ui ? 'scaffolding…' : 'creating…');
+  try {
+    const r = await fetch('/projects', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name,
+        description: description || null,
+        git_remote: git_remote || null,
+        scaffold_ui,
+      }),
+    });
+    if (!r.ok) {
+      let msg = await r.text();
+      try { msg = JSON.parse(msg).detail || msg; } catch (_) {}
+      err.textContent = msg;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'create';
+      return;
+    }
+    const j = await r.json();
+    closeProjectModal();
+    btn.textContent = 'create';
+    activeProjectId = j.project_id;
+    activeTaskId = null;
+    mountedProjectHomeId = null;
+    await refreshSidebar();
+    updateNewBtnLabel();
+  } catch (e) {
+    err.textContent = String(e);
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'create';
+  }
+}
+
+// ── Image attachments (drag/drop + paste on prompt textareas) ──────────────
+// One state bucket per textarea ("m" = new-task modal, "cont" = follow-up form).
+// Each item: { localId, status: 'uploading'|'ready'|'failed', upload_id?, path?, name?, previewUrl }
+const attachState = { m: [], cont: [] };
+let attLocalSeq = 0;
+
+function attTextareaId(target) { return target === 'm' ? 'm-prompt' : 'cont-prompt'; }
+function attStripId(target)    { return target === 'm' ? 'm-attachments' : 'cont-attachments'; }
+
+function renderAttachments(target) {
+  const strip = document.getElementById(attStripId(target));
+  if (!strip) return;
+  strip.innerHTML = attachState[target].map(a => {
+    const cls = a.status === 'uploading' ? 'uploading' : (a.status === 'failed' ? 'failed' : '');
+    return `
+      <div class="attachment ${cls}" data-local="${a.localId}" title="${escapeHtml(a.name || 'image')}">
+        ${a.previewUrl ? `<img src="${a.previewUrl}" alt="">` : ''}
+        <button class="att-remove" onclick="removeAttachment('${target}', ${a.localId})" title="remove">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function uploadAttachment(target, file) {
+  if (!file.type || !file.type.startsWith('image/')) return;
+  const localId = ++attLocalSeq;
+  const item = {
+    localId,
+    status: 'uploading',
+    name: file.name || 'image',
+    previewUrl: URL.createObjectURL(file),
+  };
+  attachState[target].push(item);
+  renderAttachments(target);
+  try {
+    const fd = new FormData();
+    fd.append('file', file, file.name || 'image');
+    const r = await fetch('/uploads', { method: 'POST', body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    const j = await r.json();
+    item.status = 'ready';
+    item.upload_id = j.upload_id;
+    item.path = j.path;
+    item.name = j.name;
+  } catch (e) {
+    item.status = 'failed';
+    console.error('upload failed', e);
+  }
+  renderAttachments(target);
+}
+
+async function removeAttachment(target, localId) {
+  const idx = attachState[target].findIndex(a => a.localId === localId);
+  if (idx === -1) return;
+  const item = attachState[target][idx];
+  attachState[target].splice(idx, 1);
+  renderAttachments(target);
+  if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  if (item.upload_id) {
+    try { await fetch(`/uploads/${item.upload_id}`, { method: 'DELETE' }); }
+    catch (e) { /* sweeper will catch it */ }
+  }
+}
+
+function clearAttachments(target) {
+  for (const a of attachState[target]) {
+    if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+  }
+  attachState[target] = [];
+  renderAttachments(target);
+}
+
+function attachmentPathPrefix(target) {
+  const ready = attachState[target].filter(a => a.status === 'ready' && a.path);
+  return ready.length ? ready.map(a => a.path).join('\n') + '\n\n' : '';
+}
+
+function bindPromptDropzone(target) {
+  const wrap = document.querySelector(`.prompt-wrap[data-att-target="${target}"]`);
+  if (!wrap || wrap.dataset.dropBound === '1') return;
+  wrap.dataset.dropBound = '1';
+  wrap.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    e.preventDefault();
+    wrap.classList.add('drag-hover');
+  });
+  wrap.addEventListener('dragleave', (e) => {
+    if (e.target === wrap) wrap.classList.remove('drag-hover');
+  });
+  wrap.addEventListener('drop', (e) => {
+    if (!e.dataTransfer || !e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    e.preventDefault();
+    wrap.classList.remove('drag-hover');
+    for (const f of e.dataTransfer.files) uploadAttachment(target, f);
+  });
+  const ta = document.getElementById(attTextareaId(target));
+  if (ta) {
+    ta.addEventListener('paste', (e) => {
+      if (!e.clipboardData || !e.clipboardData.items) return;
+      let consumed = false;
+      for (const item of e.clipboardData.items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          if (blob) {
+            uploadAttachment(target, blob);
+            consumed = true;
+          }
+        }
+      }
+      if (consumed) e.preventDefault();
+    });
+  }
+}
+
+function handlePromptKey(event, submit) {
+  if (event.key !== 'Enter') return;
+  if (event.shiftKey) return;
+  if (event.isComposing || event.keyCode === 229) return;
+  event.preventDefault();
+  submit();
+}
+
+async function submitNewModal() {
+  if (attachState.m.some(a => a.status === 'uploading')) {
+    alert('still uploading — wait a moment');
+    return;
+  }
+  const typed = document.getElementById('m-prompt').value.trim();
+  const prompt = attachmentPathPrefix('m') + typed;
+  if (!prompt.trim()) return;
+  let url, body;
+  if (activeTab === 'chats') {
+    url = '/projects/chat';
+    body = { prompt };
+  } else {
+    if (!activeProjectId) { alert('no project selected'); return; }
+    url = '/tasks';
+    body = { prompt, project_id: activeProjectId };
+  }
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) { alert('failed: ' + (await r.text())); return; }
+  const j = await r.json();
+  closeModal();
+  await refreshSidebar();
+  openTask(j.task_id);
+}
+
+// The ⓘ details popover: a click-to-toggle disclosure holding the verbose
+// reference metadata (status, session id, cwd, branch). stopPropagation keeps
+// this click from reaching the document-level outside-click closer below.
+function toggleDetailInfo(ev) {
+  if (ev) ev.stopPropagation();
+  const pop = document.getElementById('dh-info-pop');
+  const btn = document.getElementById('dh-info-btn');
+  if (!pop) return;
+  if (pop.hasAttribute('hidden')) {
+    pop.removeAttribute('hidden');
+    btn?.classList.add('open');
+  } else {
+    pop.setAttribute('hidden', '');
+    btn?.classList.remove('open');
+  }
+}
+// Close the popover on any click outside it (copy buttons live inside, so they
+// don't trip this) or on Escape.
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('dh-info-pop');
+  if (!pop || pop.hasAttribute('hidden')) return;
+  if (pop.contains(e.target)) return;
+  pop.setAttribute('hidden', '');
+  document.getElementById('dh-info-btn')?.classList.remove('open');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const pop = document.getElementById('dh-info-pop');
+  if (!pop || pop.hasAttribute('hidden')) return;
+  pop.setAttribute('hidden', '');
+  document.getElementById('dh-info-btn')?.classList.remove('open');
+});
+
+function copyId(btn) {
+  const raw = decodeURIComponent(btn.dataset.raw || '');
+  const ta = document.createElement('textarea');
+  ta.value = raw;
+  ta.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, raw.length);
+  const ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  if (!ok) return;
+  const orig = btn.innerHTML;
+  btn.classList.add('copied');
+  btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>';
+  setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1400);
+}
+
+function copyResult(btn) {
+  const raw = decodeURIComponent(btn.dataset.raw || '');
+  const ta = document.createElement('textarea');
+  ta.value = raw;
+  ta.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, raw.length);
+  const ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  const orig = btn.innerHTML;
+  btn.classList.add('copied');
+  btn.innerHTML = ok
+    ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg> copied'
+    : 'failed';
+  setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1400);
+}
+
+// ── Terminal modal ────────────────────────────────────────────────────────
+let termInstance = null;
+let termWs = null;
+let termFit = null;
+let termResizeHandler = null;
+let termFontSize = parseInt(localStorage.getItem('tank-term-font') || '13', 10);
+
+function setTermConn(state) {
+  const el = document.getElementById('term-conn');
+  if (el) { el.className = 'term-conn ' + state;
+            el.title = 'connection: ' + state; }
+}
+
+// Bump terminal text size (clamped) and re-fit; persists across sessions.
+function termZoom(delta) {
+  termFontSize = Math.max(9, Math.min(24, termFontSize + delta));
+  localStorage.setItem('tank-term-font', String(termFontSize));
+  if (termInstance) {
+    termInstance.options.fontSize = termFontSize;
+    try { termFit.fit(); } catch {}
+    sendTermResize();
+  }
+}
+
+function openTerminalFromBtn(btn) {
+  openTerminal(btn.dataset.id, parseInt(btn.dataset.turn, 10));
+}
+
+function openTerminal(taskId, turnNum) {
+  closeTerminal();
+  document.getElementById('term-modal').classList.add('open');
+  document.getElementById('term-title').textContent =
+    `terminal — task ${taskId.slice(0, 8)} · turn ${turnNum}`;
+  setTermConn('pending');
+
+  termInstance = new Terminal({
+    cursorBlink: true,
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: termFontSize,
+    theme: { background: '#000000', foreground: '#e6edf3' },
+    scrollback: 5000,
+  });
+  termFit = new FitAddon.FitAddon();
+  termInstance.loadAddon(termFit);
+  termInstance.open(document.getElementById('term-body'));
+  setTimeout(() => { try { termFit.fit(); } catch {} }, 0);
+
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${proto}//${location.host}/tasks/${taskId}/terminal/${turnNum}`;
+  termWs = new WebSocket(url);
+
+  termWs.onopen = () => {
+    setTermConn('live');
+    sendTermResize();
+  };
+  termWs.onmessage = (ev) => {
+    termInstance && termInstance.write(ev.data);
+  };
+  termWs.onclose = () => {
+    setTermConn('dead');
+    if (termInstance) termInstance.write('\r\n\x1b[33m[disconnected]\x1b[0m\r\n');
+  };
+  termInstance.onData((data) => {
+    if (termWs && termWs.readyState === 1) termWs.send(data);
+  });
+
+  termResizeHandler = () => {
+    try { termFit.fit(); } catch {}
+    sendTermResize();
+  };
+  window.addEventListener('resize', termResizeHandler);
+}
+
+function sendTermResize() {
+  if (!termWs || termWs.readyState !== 1 || !termInstance) return;
+  const cols = termInstance.cols;
+  const rows = termInstance.rows;
+  termWs.send('\x1b__RESIZE__' + JSON.stringify({ cols, rows }));
+}
+
+function termSendCtrlC() {
+  if (termWs && termWs.readyState === 1) termWs.send('\x03');
+}
+
+function closeTerminal() {
+  document.getElementById('term-modal').classList.remove('open');
+  if (termWs) { try { termWs.close(); } catch {} termWs = null; }
+  if (termInstance) { try { termInstance.dispose(); } catch {} termInstance = null; }
+  if (termResizeHandler) {
+    window.removeEventListener('resize', termResizeHandler);
+    termResizeHandler = null;
+  }
+  termFit = null;
+}
+
+function fmt(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+}
+function relTime(iso) {
+  if (!iso) return '';
+  let s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 0) s = 0;
+  if (s < 5) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} hr ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d} day${d === 1 ? '' : 's'} ago`;
+  const w = Math.floor(d / 7);
+  if (w < 5) return `${w} week${w === 1 ? '' : 's'} ago`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo} month${mo === 1 ? '' : 's'} ago`;
+  const y = Math.floor(d / 365);
+  return `${y} year${y === 1 ? '' : 's'} ago`;
+}
+function turnDuration(startIso, endIso) {
+  if (!startIso) return '';
+  const end = endIso ? new Date(endIso) : new Date();
+  let s = Math.max(0, Math.round((end - new Date(startIso)) / 1000));
+  if (s < 60) return `${s}s`;
+  const days = Math.floor(s / 86400); s %= 86400;
+  const hrs  = Math.floor(s / 3600);  s %= 3600;
+  const mins = Math.floor(s / 60);    s %= 60;
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (hrs || days) parts.push(`${hrs}h`);
+  if (mins || hrs || days) parts.push(`${mins}m`);
+  parts.push(`${s}s`);
+  return parts.join(' ');
+}
+// In-place tick so .rel-time spans don't go stale between SSE events.
+function refreshRelTimes() {
+  document.querySelectorAll('.rel-time[data-iso]').forEach(el => {
+    el.textContent = relTime(el.dataset.iso);
+  });
+}
+setInterval(refreshRelTimes, 30000);
+function escapeHtml(s) {
+  return (s ?? '').toString()
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+
+// Global SSE: re-list when anything happens anywhere.
+const globalEvents = new EventSource('/stream');
+globalEvents.onmessage = () => refreshList();
+
+// ── Plan usage ────────────────────────────────────────────────────────────
+function relTimeFuture(iso) {
+  if (!iso) return '';
+  let s = Math.round((new Date(iso).getTime() - Date.now()) / 1000);
+  if (s <= 0) return 'now';
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60), mm = m % 60;
+  if (h < 24) return mm ? `${h}h ${mm}m` : `${h}h`;
+  const d = Math.floor(h / 24), hh = h % 24;
+  return hh ? `${d}d ${hh}h` : `${d}d`;
+}
+function paintUsageBar(elId, label, blob) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!blob) { el.style.display = 'none'; return; }
+  const pct = Math.round(blob.utilization || 0);
+  el.style.display = '';
+  el.querySelector('.ub-fill').style.width = `${Math.min(pct, 100)}%`;
+  el.querySelector('.ub-pct').textContent = `${pct}%`;
+  el.classList.remove('warn', 'crit');
+  if (pct >= 85) el.classList.add('crit');
+  else if (pct >= 60) el.classList.add('warn');
+  const reset = blob.resets_at ? ` · resets in ${relTimeFuture(blob.resets_at)}` : '';
+  el.title = `${label}: ${pct}% used${reset}`;
+}
+async function refreshUsage() {
+  const strip = document.getElementById('usage-strip');
+  try {
+    const r = await fetch('/usage');
+    const j = await r.json();
+    if (!j.ok) {
+      strip.classList.add('error');
+      strip.title = `usage unavailable: ${j.error || 'unknown'}`;
+      return;
+    }
+    strip.classList.remove('error');
+    strip.title = 'claude plan usage';
+    const u = j.usage || {};
+    paintUsageBar('usage-5h', '5h session', u.five_hour);
+    paintUsageBar('usage-wk', 'weekly all models', u.seven_day);
+    // Hide Sonnet-only bar when at 0 — it's only meaningful once you've used it.
+    const son = u.seven_day_sonnet && u.seven_day_sonnet.utilization > 0
+      ? u.seven_day_sonnet : null;
+    paintUsageBar('usage-son', 'weekly sonnet', son);
+  } catch {
+    strip.classList.add('error');
+    strip.title = 'usage unavailable: network error';
+  }
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+async function refreshAuth() {
+  try {
+    const r = await fetch('/auth/status');
+    const j = await r.json();
+    const pill = document.getElementById('auth-pill');
+    if (j.authed) {
+      pill.className = 'auth-pill ok';
+      pill.title = 'claude code: signed in';
+    } else {
+      pill.className = 'auth-pill bad';
+      pill.title = 'claude code: not signed in';
+    }
+    return j.authed;
+  } catch { return false; }
+}
+
+async function openAuthModal() {
+  document.getElementById('auth-modal').classList.add('open');
+  // Branch on current auth state: offer logout when signed in, else sign-in.
+  let authed = false, account = null;
+  try {
+    const j = await (await fetch('/auth/status')).json();
+    authed = j.authed; account = j.account;
+  } catch {}
+  if (authed) {
+    document.getElementById('auth-modal-title').textContent = 'claude code account';
+    document.getElementById('auth-signedin-msg').textContent =
+      account ? `Signed in as ${account}.` : 'Signed in.';
+    showAuthStage('signedin');
+  } else {
+    document.getElementById('auth-modal-title').textContent = 'claude code login';
+    showAuthStage('idle');
+  }
+}
+function closeAuthModal() {
+  document.getElementById('auth-modal').classList.remove('open');
+}
+function showAuthStage(name) {
+  for (const s of ['idle', 'signedin', 'loading', 'url', 'result']) {
+    document.getElementById(`auth-stage-${s}`).style.display = s === name ? '' : 'none';
+  }
+}
+// Drive the shared loading stage per flow — login and logout reuse it, so the
+// title, message, optional sub-line and cancel button are all parameterised.
+function showAuthLoading({title, msg, sub, cancel}) {
+  document.getElementById('auth-modal-title').textContent = title;
+  document.getElementById('auth-loading-msg').innerHTML = `${msg}<span class="dots"></span>`;
+  const subEl = document.getElementById('auth-loading-sub');
+  subEl.textContent = sub || '';
+  subEl.style.display = sub ? '' : 'none';
+  document.getElementById('auth-loading-actions').style.display = cancel ? '' : 'none';
+  showAuthStage('loading');
+}
+async function startAuth() {
+  showAuthLoading({title: 'claude login', msg: 'spinning up claude',
+    sub: 'grabbing the OAuth URL, usually 5-10s on first run', cancel: true});
+  try {
+    const r = await fetch('/auth/login/start', {method: 'POST'});
+    if (!r.ok) {
+      const txt = await r.text();
+      document.getElementById('auth-result-msg').textContent = '✗ failed to start';
+      document.getElementById('auth-result-raw').textContent = txt;
+      showAuthStage('result');
+      return;
+    }
+    const j = await r.json();
+    const a = document.getElementById('auth-url');
+    a.href = j.url; a.textContent = j.url;
+    document.getElementById('auth-code').value = '';
+    showAuthStage('url');
+    setTimeout(() => document.getElementById('auth-code').focus(), 100);
+  } catch (e) {
+    document.getElementById('auth-result-msg').textContent = '✗ network error';
+    document.getElementById('auth-result-raw').textContent = String(e);
+    showAuthStage('result');
+  }
+}
+async function submitCode() {
+  const code = document.getElementById('auth-code').value.trim();
+  if (!code) return;
+  // Show loading while claude verifies the code.
+  showAuthLoading({title: 'claude login', msg: 'verifying code', sub: '', cancel: true});
+  try {
+    const r = await fetch('/auth/login/code', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code}),
+    });
+    const j = await r.json();
+    document.getElementById('auth-result-msg').textContent =
+      j.authed ? '✓ signed in' : '✗ sign-in did not complete';
+    document.getElementById('auth-result-raw').textContent =
+      (j.final_pane || '') + '\n---\n' + (j.raw || '');
+    showAuthStage('result');
+    refreshAuth();
+  } catch (e) {
+    document.getElementById('auth-result-msg').textContent = '✗ network error';
+    document.getElementById('auth-result-raw').textContent = String(e);
+    showAuthStage('result');
+  }
+}
+async function cancelAuth() {
+  await fetch('/auth/login/cancel', {method: 'POST'});
+  closeAuthModal();
+}
+async function logout() {
+  showAuthLoading({title: 'signing out', msg: 'signing out', sub: '', cancel: false});
+  try {
+    const j = await (await fetch('/auth/logout', {method: 'POST'})).json();
+    document.getElementById('auth-result-msg').textContent =
+      j.authed ? '✗ still signed in' : '✓ signed out';
+    document.getElementById('auth-result-raw').textContent = j.detail || '';
+    showAuthStage('result');
+    refreshAuth();
+  } catch (e) {
+    document.getElementById('auth-result-msg').textContent = '✗ network error';
+    document.getElementById('auth-result-raw').textContent = String(e);
+    showAuthStage('result');
+  }
+}
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+// Server-side runtime config. Loaded at boot; gates the PR/merge buttons and
+// sets the dashboard title. Edited via the cog modal.
+let SETTINGS = {git_provider: 'none', dashboard_title: 'tank'};
+
+function gitEnabled() { return (SETTINGS.git_provider || 'none') !== 'none'; }
+
+function applySettings() {
+  const title = (SETTINGS.dashboard_title || 'tank').trim() || 'tank';
+  document.title = title;
+  const h1 = document.querySelector('header h1');
+  if (h1) h1.textContent = title;
+}
+
+async function loadSettings() {
+  try {
+    const r = await fetch('/settings');
+    if (r.ok) SETTINGS = await r.json();
+  } catch { /* keep defaults */ }
+  applySettings();
+}
+
+function openSettingsModal() {
+  document.getElementById('set-error').style.display = 'none';
+  document.getElementById('set-title').value = SETTINGS.dashboard_title || '';
+  document.getElementById('set-house-style').value = SETTINGS.house_style_url || '';
+  document.getElementById('set-provider').value = SETTINGS.git_provider || 'none';
+  document.getElementById('set-forgejo-url').value = SETTINGS.forgejo_url || '';
+  document.getElementById('set-forgejo-token').value = SETTINGS.forgejo_token || '';
+  document.getElementById('set-projects-root').value = SETTINGS.projects_root || '';
+  document.getElementById('set-worktrees-root').value = SETTINGS.worktrees_root || '';
+  document.getElementById('set-chats-root').value = SETTINGS.chats_root || '';
+  document.getElementById('set-concurrent').value = SETTINGS.max_concurrent || '3';
+  document.getElementById('set-preview-ports').value = SETTINGS.preview_port_range || '7900-7950';
+  document.getElementById('set-ai').checked = (SETTINGS.ai_features_enabled === '1');
+  document.getElementById('set-model-url').value = SETTINGS.title_model_url || '';
+  document.getElementById('set-model').value = SETTINGS.title_model || '';
+  document.getElementById('set-api-token').value = SETTINGS.api_token || '';
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+async function saveSettings() {
+  const btn = document.getElementById('set-submit');
+  btn.disabled = true;
+  const body = {
+    dashboard_title: document.getElementById('set-title').value,
+    house_style_url: document.getElementById('set-house-style').value.trim(),
+    git_provider: document.getElementById('set-provider').value,
+    forgejo_url: document.getElementById('set-forgejo-url').value.trim(),
+    forgejo_token: document.getElementById('set-forgejo-token').value.trim(),
+    projects_root: document.getElementById('set-projects-root').value,
+    worktrees_root: document.getElementById('set-worktrees-root').value,
+    chats_root: document.getElementById('set-chats-root').value,
+    max_concurrent: document.getElementById('set-concurrent').value,
+    preview_port_range: document.getElementById('set-preview-ports').value.trim(),
+    ai_features_enabled: document.getElementById('set-ai').checked ? '1' : '0',
+    title_model_url: document.getElementById('set-model-url').value,
+    title_model: document.getElementById('set-model').value,
+    api_token: document.getElementById('set-api-token').value.trim(),
+  };
+  // Mirror the API token into this browser's cookie so saving it here doesn't
+  // lock the operator's own session out on the very next request.
+  setTankToken(body.api_token);
+  try {
+    const r = await fetch('/settings', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      const err = document.getElementById('set-error');
+      err.textContent = 'save failed: ' + (await r.text());
+      err.style.display = '';
+      return;
+    }
+    SETTINGS = await r.json();
+    applySettings();
+    closeSettingsModal();
+    refreshList();  // re-render so PR/merge buttons reflect the new provider
+  } catch (e) {
+    const err = document.getElementById('set-error');
+    err.textContent = 'network error: ' + e;
+    err.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('term-modal').classList.contains('open')) { closeTerminal(); return; }
+  if (document.getElementById('icon-modal').classList.contains('open')) { closeIconPicker(); return; }
+  if (document.getElementById('flatten-modal').classList.contains('open')) { closeFlattenModal(); return; }
+  if (document.getElementById('api-modal').classList.contains('open')) { closeApiModal(); return; }
+  if (document.getElementById('settings-modal').classList.contains('open')) { closeSettingsModal(); return; }
+  if (document.getElementById('modal').classList.contains('open')) { closeModal(); return; }
+  if (document.getElementById('auth-modal').classList.contains('open')) { closeAuthModal(); return; }
+});
+
+// Initial load. Settings first so the title + PR/merge gating are correct
+// before the first task render.
+// ── Flatten a Forgejo repo to one text file ──────────────────────────
+async function openFlattenModal() {
+  document.getElementById('flatten-modal').classList.add('open');
+  document.getElementById('flatten-error').style.display = 'none';
+  const sel = document.getElementById('flatten-repo');
+  const status = document.getElementById('flatten-status');
+  status.textContent = 'loading repos\u2026';
+  sel.innerHTML = '';
+  try {
+    const r = await fetch('/forgejo/repos');
+    if (!r.ok) {
+      const msg = (await r.json().catch(() => ({}))).detail || ('error ' + r.status);
+      throw new Error(msg);
+    }
+    const repos = (await r.json()).repos || [];
+    if (!repos.length) { status.textContent = 'no repos found.'; return; }
+    sel.innerHTML = repos.map(rp =>
+      `<wa-option value="${escapeHtml(rp.full_name)}">${escapeHtml(rp.full_name)}${rp.private ? ' (private)' : ''}${rp.empty ? ' (empty)' : ''}</wa-option>`
+    ).join('');
+    status.textContent = `${repos.length} repo${repos.length === 1 ? '' : 's'} available.`;
+  } catch (e) {
+    status.textContent = '';
+    showFlattenError(String(e.message || e) + ' \u2014 configure Forgejo in settings (cog).');
+  }
+}
+function closeFlattenModal() {
+  document.getElementById('flatten-modal').classList.remove('open');
+}
+function showFlattenError(msg) {
+  const el = document.getElementById('flatten-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+async function submitFlatten() {
+  const repo = document.getElementById('flatten-repo').value;
+  if (!repo) return;
+  const btn = document.getElementById('flatten-submit');
+  const status = document.getElementById('flatten-status');
+  document.getElementById('flatten-error').style.display = 'none';
+  const prevLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'flattening\u2026';
+  status.textContent = 'building file, large repos can take a few seconds\u2026';
+  try {
+    const r = await fetch(`/forgejo/flatten?repo=${encodeURIComponent(repo)}`);
+    if (!r.ok) {
+      const msg = (await r.json().catch(() => ({}))).detail || ('error ' + r.status);
+      throw new Error(msg);
+    }
+    const blob = await r.blob();
+    const cd = r.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename="([^"]+)"/);
+    const fname = m ? m[1] : (repo.replace('/', '-') + '.txt');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    status.textContent = `downloaded ${fname}`;
+  } catch (e) {
+    status.textContent = '';
+    showFlattenError(String(e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prevLabel;
+  }
+}
+// Publish the real header height so the mobile sidebar can anchor to it
+// instead of a hardcoded constant (the header wraps to two lines on phones).
+function syncHeaderHeight() {
+  const h = document.querySelector('header');
+  if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+}
+syncHeaderHeight();
+window.addEventListener('resize', syncHeaderHeight);
+
+loadSettings().then(refreshList);
+refreshAuth();
+setInterval(refreshAuth, 30000);
+refreshUsage();
+setInterval(refreshUsage, 60000);
+setInterval(async () => {
+  try {
+    const r = await fetch('/health');
+    document.getElementById('health').style.color = r.ok ? 'var(--green)' : 'var(--red)';
+  } catch { document.getElementById('health').style.color = 'var(--red)'; }
+}, 5000);
+</script>
+
+</body>
+</html>
