@@ -170,6 +170,43 @@ describe("ApiClient schema fallback", () => {
     });
   });
 
+  describe("listQueues", () => {
+    it("falls back to an empty list when the response is malformed", async () => {
+      stubFetchJson({ queues: "not-an-array", total: 1 });
+      const client = new ApiClient("https://api.example.test");
+      const res = await client.listQueues();
+      expect(res).toEqual({ queues: [], total: 0 });
+    });
+
+    it("passes a minimal valid row through", async () => {
+      stubFetchJson({
+        queues: [
+          {
+            id: "q-1",
+            workspace_id: "ws-1",
+            name: "Nightly triage",
+            description: null,
+            default_agent_id: null,
+            status: "idle",
+            start_at: null,
+            item_delay_seconds: 0,
+            cron_expression: null,
+            timezone: null,
+            next_run_at: null,
+            created_at: "2026-06-01T00:00:00Z",
+            updated_at: "2026-06-01T00:00:00Z",
+          },
+        ],
+        total: 1,
+      });
+      const client = new ApiClient("https://api.example.test");
+      const res = await client.listQueues();
+      expect(res.queues).toHaveLength(1);
+      expect(res.queues[0]?.id).toBe("q-1");
+      expect(res.queues[0]?.status).toBe("idle");
+    });
+  });
+
   describe("getConfig", () => {
     it("drops malformed daemon setup URLs instead of throwing", async () => {
       stubFetchJson({

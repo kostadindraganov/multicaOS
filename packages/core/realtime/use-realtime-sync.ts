@@ -13,6 +13,7 @@ import { issueKeys } from "../issues/queries";
 import { projectKeys } from "../projects/queries";
 import { pinKeys } from "../pins/queries";
 import { autopilotKeys } from "../autopilots/queries";
+import { queueKeys } from "../queues/queries";
 import { runtimeKeys } from "../runtimes/queries";
 import { labelKeys } from "../labels/queries";
 import {
@@ -511,6 +512,10 @@ export function useRealtimeSync(
       autopilot: () => {
         const wsId = getCurrentWsId();
         if (wsId) qc.invalidateQueries({ queryKey: autopilotKeys.all(wsId) });
+      },
+      queue: () => {
+        const wsId = getCurrentWsId();
+        if (wsId) qc.invalidateQueries({ queryKey: queueKeys.all(wsId) });
       },
       github_installation: () => {
         const wsId = getCurrentWsId();

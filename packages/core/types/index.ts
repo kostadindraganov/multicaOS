@@ -164,6 +164,18 @@ export type {
   ListWebhookDeliveriesResponse,
 } from "./autopilot";
 export type {
+  QueueStatus,
+  QueueItemKind,
+  QueueItemStatus,
+  WorkQueue,
+  WorkQueueItem,
+  CreateQueueRequest,
+  UpdateQueueRequest,
+  AddQueueItemsRequest,
+  ListQueuesResponse,
+  GetQueueResponse,
+} from "./queue";
+export type {
   Squad,
   SquadMember,
   SquadMemberType,

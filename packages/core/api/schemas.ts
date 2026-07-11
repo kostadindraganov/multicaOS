@@ -924,6 +924,57 @@ export const EMPTY_LIST_AUTOPILOTS_RESPONSE = {
   total: 0,
 };
 
+// ---------------------------------------------------------------------------
+// Work queue schemas. `status` / `kind` / item `status` stay `z.string()` so
+// future server-side enum values degrade to a generic UI fallback instead of
+// throwing.
+// ---------------------------------------------------------------------------
+
+const WorkQueueSchema = z
+  .object({
+    id: z.string(),
+    workspace_id: z.string(),
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    default_agent_id: z.string().nullable().optional(),
+    status: z.string(),
+    start_at: z.string().nullable().optional(),
+    item_delay_seconds: z.number().default(0),
+    cron_expression: z.string().nullable().optional(),
+    timezone: z.string().nullable().optional(),
+    next_run_at: z.string().nullable().optional(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+  })
+  .loose();
+
+const WorkQueueItemSchema = z
+  .object({
+    id: z.string(),
+    queue_id: z.string(),
+    seq: z.number().default(0),
+    kind: z.string(),
+    title: z.string().nullable().optional(),
+    body: z.string().nullable().optional(),
+    issue_id: z.string().nullable().optional(),
+    agent_id: z.string().nullable().optional(),
+    status: z.string(),
+    task_id: z.string().nullable().optional(),
+    error: z.string().nullable().optional(),
+    started_at: z.string().nullable().optional(),
+    finished_at: z.string().nullable().optional(),
+  })
+  .loose();
+
+export const ListQueuesResponseSchema = z
+  .object({ queues: z.array(WorkQueueSchema).default([]), total: z.number().default(0) })
+  .loose();
+export const EMPTY_LIST_QUEUES_RESPONSE = { queues: [], total: 0 };
+
+export const GetQueueResponseSchema = z
+  .object({ queue: WorkQueueSchema, items: z.array(WorkQueueItemSchema).default([]) })
+  .loose();
+
 export const EMPTY_WEBHOOK_DELIVERY: WebhookDelivery = {
   id: "",
   workspace_id: "",

@@ -134,6 +134,13 @@ import type {
   CreateBillingCheckoutSessionResponse,
   BillingCheckoutSessionStatus,
   CreateBillingPortalSessionResponse,
+  WorkQueue,
+  WorkQueueItem,
+  CreateQueueRequest,
+  UpdateQueueRequest,
+  AddQueueItemsRequest,
+  ListQueuesResponse,
+  GetQueueResponse,
 } from "../types";
 import type { OnboardingCompletionPath } from "../onboarding/types";
 import type { CreateFeedbackResponse, FeedbackKind } from "../feedback/types";
@@ -186,6 +193,9 @@ import {
   GroupedIssuesResponseSchema,
   ListAutopilotsResponseSchema,
   EMPTY_LIST_AUTOPILOTS_RESPONSE,
+  ListQueuesResponseSchema,
+  EMPTY_LIST_QUEUES_RESPONSE,
+  GetQueueResponseSchema,
   ListIssuesResponseSchema,
   ListWebhookDeliveriesResponseSchema,
   RuntimeHourlyActivityListSchema,
@@ -2291,6 +2301,60 @@ export class ApiClient {
       { ...EMPTY_WEBHOOK_DELIVERY, autopilot_id: autopilotId },
       { endpoint: "POST /api/autopilots/:id/deliveries/:deliveryId/replay" },
     );
+  }
+
+  // Work queues
+  async listQueues(): Promise<ListQueuesResponse> {
+    const raw = await this.fetch<unknown>(`/api/queues`);
+    return parseWithFallback(raw, ListQueuesResponseSchema, EMPTY_LIST_QUEUES_RESPONSE as ListQueuesResponse, {
+      endpoint: "GET /api/queues",
+    });
+  }
+  async getQueue(id: string): Promise<GetQueueResponse> {
+    const raw = await this.fetch<unknown>(`/api/queues/${id}`);
+    return parseWithFallback(raw, GetQueueResponseSchema, { queue: null, items: [] } as unknown as GetQueueResponse, {
+      endpoint: "GET /api/queues/:id",
+    });
+  }
+  async createQueue(data: CreateQueueRequest): Promise<{ queue: WorkQueue }> {
+    return this.fetch(`/api/queues`, { method: "POST", body: JSON.stringify(data) });
+  }
+  async updateQueue(id: string, data: UpdateQueueRequest): Promise<{ queue: WorkQueue }> {
+    return this.fetch(`/api/queues/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+  }
+  async deleteQueue(id: string): Promise<void> {
+    await this.fetch(`/api/queues/${id}`, { method: "DELETE" });
+  }
+  async addQueueItems(id: string, data: AddQueueItemsRequest): Promise<{ items: WorkQueueItem[] }> {
+    return this.fetch(`/api/queues/${id}/items`, { method: "POST", body: JSON.stringify(data) });
+  }
+  async updateQueueItem(
+    id: string,
+    itemId: string,
+    data: { title?: string; body?: string; agent_id?: string | null },
+  ): Promise<{ item: WorkQueueItem }> {
+    return this.fetch(`/api/queues/${id}/items/${itemId}`, { method: "PATCH", body: JSON.stringify(data) });
+  }
+  async deleteQueueItem(id: string, itemId: string): Promise<void> {
+    await this.fetch(`/api/queues/${id}/items/${itemId}`, { method: "DELETE" });
+  }
+  async reorderQueueItems(id: string, order: string[]): Promise<void> {
+    await this.fetch(`/api/queues/${id}/items/reorder`, { method: "POST", body: JSON.stringify({ order }) });
+  }
+  async startQueue(id: string, startAt?: string): Promise<{ queue: WorkQueue }> {
+    return this.fetch(`/api/queues/${id}/start`, {
+      method: "POST",
+      body: JSON.stringify(startAt ? { start_at: startAt } : {}),
+    });
+  }
+  async pauseQueue(id: string): Promise<{ queue: WorkQueue }> {
+    return this.fetch(`/api/queues/${id}/pause`, { method: "POST", body: "{}" });
+  }
+  async resumeQueue(id: string): Promise<{ queue: WorkQueue }> {
+    return this.fetch(`/api/queues/${id}/resume`, { method: "POST", body: "{}" });
+  }
+  async clearFinishedQueueItems(id: string): Promise<{ deleted: number }> {
+    return this.fetch(`/api/queues/${id}/clear-finished`, { method: "POST", body: "{}" });
   }
 
   // GitHub integration
