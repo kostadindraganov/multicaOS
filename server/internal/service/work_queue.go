@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/multica-ai/multica/server/internal/events"
+	"github.com/multica-ai/multica/server/internal/issueguard"
 	"github.com/multica-ai/multica/server/internal/issueposition"
 	"github.com/multica-ai/multica/server/internal/util"
 	db "github.com/multica-ai/multica/server/pkg/db/generated"
@@ -51,17 +52,17 @@ func (s *WorkQueueService) TickAll(ctx context.Context, now time.Time) (int, err
 	for _, queue := range queues {
 		switch {
 		case queue.Status == "scheduled" && queue.StartAt.Valid && !queue.StartAt.Time.After(now):
-			updated, err := s.Queries.SetWorkQueueStatus(ctx, db.SetWorkQueueStatusParams{
-				ID:          queue.ID,
-				WorkspaceID: queue.WorkspaceID,
-				Status:      "running",
-				StartAt:     pgtype.Timestamptz{},
-			})
+			rows, err := s.Queries.MarkWorkQueueScheduledStarted(ctx, queue.ID)
 			if err != nil {
 				slog.Warn("work queue tick: failed to start scheduled queue", "queue_id", util.UUIDToString(queue.ID), "error", err)
 				continue
 			}
-			queue = updated
+			if rows == 0 {
+				// Another replica already promoted this scheduled queue.
+				continue
+			}
+			queue.Status = "running"
+			queue.StartAt = pgtype.Timestamptz{}
 			s.publishQueueUpdated(util.UUIDToString(queue.WorkspaceID), util.UUIDToString(queue.ID))
 
 		case queue.Status == "idle" && queue.CronExpression.Valid:
@@ -212,53 +213,67 @@ func (s *WorkQueueService) dispatchPrompt(ctx context.Context, queue db.WorkQueu
 
 	qtx := s.Queries.WithTx(tx)
 
-	issueNumber, err := qtx.IncrementIssueCounter(ctx, queue.WorkspaceID)
+	// Guard against re-creating the issue if a prior dispatch attempt
+	// crashed between tx.Commit (issue created) and MarkWorkQueueItemRunning
+	// (item marked running + linked): the item would still be pending on
+	// retry, but the issue would already exist. Mirrors
+	// issueguard.LockAndFindRecentAutopilotDuplicate.
+	issue, found, err := issueguard.LockAndFindWorkQueueItemIssue(ctx, qtx, item.ID)
 	if err != nil {
-		return fmt.Errorf("increment issue counter: %w", err)
+		return fmt.Errorf("work queue item issue guard: %w", err)
 	}
 
-	newPosition, err := issueposition.NextTopPosition(ctx, tx, queue.WorkspaceID, "todo")
-	if err != nil {
-		return fmt.Errorf("get next issue position: %w", err)
-	}
+	if !found {
+		issueNumber, err := qtx.IncrementIssueCounter(ctx, queue.WorkspaceID)
+		if err != nil {
+			return fmt.Errorf("increment issue counter: %w", err)
+		}
 
-	issue, err := qtx.CreateIssueWithOrigin(ctx, db.CreateIssueWithOriginParams{
-		WorkspaceID:   queue.WorkspaceID,
-		Title:         item.Title.String,
-		Description:   item.Body,
-		Status:        "todo",
-		Priority:      "none",
-		AssigneeType:  pgtype.Text{String: "agent", Valid: true},
-		AssigneeID:    agentID,
-		CreatorType:   "agent",
-		CreatorID:     agentID,
-		ParentIssueID: pgtype.UUID{},
-		Position:      newPosition,
-		StartDate:     pgtype.Date{},
-		DueDate:       pgtype.Date{},
-		Number:        issueNumber,
-		ProjectID:     pgtype.UUID{},
-		OriginType:    pgtype.Text{String: "work_queue", Valid: true},
-		OriginID:      item.ID,
-	})
-	if err != nil {
-		return fmt.Errorf("create issue: %w", err)
+		newPosition, err := issueposition.NextTopPosition(ctx, tx, queue.WorkspaceID, "todo")
+		if err != nil {
+			return fmt.Errorf("get next issue position: %w", err)
+		}
+
+		issue, err = qtx.CreateIssueWithOrigin(ctx, db.CreateIssueWithOriginParams{
+			WorkspaceID:   queue.WorkspaceID,
+			Title:         item.Title.String,
+			Description:   item.Body,
+			Status:        "todo",
+			Priority:      "none",
+			AssigneeType:  pgtype.Text{String: "agent", Valid: true},
+			AssigneeID:    agentID,
+			CreatorType:   "agent",
+			CreatorID:     agentID,
+			ParentIssueID: pgtype.UUID{},
+			Position:      newPosition,
+			StartDate:     pgtype.Date{},
+			DueDate:       pgtype.Date{},
+			Number:        issueNumber,
+			ProjectID:     pgtype.UUID{},
+			OriginType:    pgtype.Text{String: "work_queue", Valid: true},
+			OriginID:      item.ID,
+		})
+		if err != nil {
+			return fmt.Errorf("create issue: %w", err)
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
 	}
 
-	prefix := s.getIssuePrefix(queue.WorkspaceID)
-	s.Bus.Publish(events.Event{
-		Type:        protocol.EventIssueCreated,
-		WorkspaceID: util.UUIDToString(queue.WorkspaceID),
-		ActorType:   "agent",
-		ActorID:     util.UUIDToString(agentID),
-		Payload: map[string]any{
-			"issue": issueToMap(issue, prefix),
-		},
-	})
+	if !found {
+		prefix := s.getIssuePrefix(queue.WorkspaceID)
+		s.Bus.Publish(events.Event{
+			Type:        protocol.EventIssueCreated,
+			WorkspaceID: util.UUIDToString(queue.WorkspaceID),
+			ActorType:   "agent",
+			ActorID:     util.UUIDToString(agentID),
+			Payload: map[string]any{
+				"issue": issueToMap(issue, prefix),
+			},
+		})
+	}
 
 	task, err := s.TaskSvc.EnqueueTaskForIssue(ctx, issue)
 	if err != nil {

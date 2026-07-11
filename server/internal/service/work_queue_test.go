@@ -531,6 +531,134 @@ func TestWorkQueueDrainToIdle(t *testing.T) {
 	}
 }
 
+// TestWorkQueueDispatchPromptReusesExistingIssue reproduces the crash window
+// between tx.Commit (issue created) and MarkWorkQueueItemRunning (item
+// marked running + linked): the item is seeded pending with an issue that
+// already carries origin_type=work_queue/origin_id=item.id, simulating a
+// prior attempt that crashed before linking. DispatchNext must reuse that
+// issue rather than creating a second one.
+func TestWorkQueueDispatchPromptReusesExistingIssue(t *testing.T) {
+	pool := workQueueTestPool(t)
+	fx := setupWorkQueueFixture(t, pool)
+	ctx := context.Background()
+	queries := db.New(pool)
+
+	queue := createTestWorkQueue(t, ctx, queries, fx, func(p *db.CreateWorkQueueParams) {
+		p.ItemDelaySeconds = 0
+	})
+	item := createTestWorkQueueItem(t, ctx, queries, queue, 1, func(p *db.CreateWorkQueueItemParams) {
+		p.Title = pgtype.Text{String: "crash window item", Valid: true}
+	})
+
+	issueNumber, err := queries.IncrementIssueCounter(ctx, fx.WorkspaceID)
+	if err != nil {
+		t.Fatalf("increment issue counter: %v", err)
+	}
+	preExisting, err := queries.CreateIssueWithOrigin(ctx, db.CreateIssueWithOriginParams{
+		WorkspaceID:  fx.WorkspaceID,
+		Title:        "crash window item",
+		Description:  item.Body,
+		Status:       "todo",
+		Priority:     "none",
+		AssigneeType: pgtype.Text{String: "agent", Valid: true},
+		AssigneeID:   fx.AgentID,
+		CreatorType:  "agent",
+		CreatorID:    fx.AgentID,
+		Position:     -1,
+		Number:       issueNumber,
+		OriginType:   pgtype.Text{String: "work_queue", Valid: true},
+		OriginID:     item.ID,
+	})
+	if err != nil {
+		t.Fatalf("seed pre-existing issue: %v", err)
+	}
+
+	queue, err = queries.SetWorkQueueStatus(ctx, db.SetWorkQueueStatusParams{
+		ID: queue.ID, WorkspaceID: queue.WorkspaceID, Status: "running", StartAt: pgtype.Timestamptz{},
+	})
+	if err != nil {
+		t.Fatalf("set queue running: %v", err)
+	}
+
+	taskID, err := util.ParseUUID(uuid.NewString())
+	if err != nil {
+		t.Fatalf("parse task id: %v", err)
+	}
+	enqueuer := &stubEnqueuer{next: db.AgentTaskQueue{ID: taskID}}
+	svc := newWorkQueueTestService(pool, enqueuer)
+
+	dispatched, err := svc.DispatchNext(ctx, queue, time.Now())
+	if err != nil {
+		t.Fatalf("DispatchNext: %v", err)
+	}
+	if !dispatched {
+		t.Fatalf("expected dispatch to occur")
+	}
+	if len(enqueuer.calls) != 1 {
+		t.Fatalf("expected 1 enqueue call, got %d", len(enqueuer.calls))
+	}
+	if enqueuer.calls[0].ID != preExisting.ID {
+		t.Fatalf("expected reused issue %v, got %v", preExisting.ID, enqueuer.calls[0].ID)
+	}
+
+	reloadedItem, err := queries.GetWorkQueueItemInWorkspace(ctx, db.GetWorkQueueItemInWorkspaceParams{ID: item.ID, WorkspaceID: queue.WorkspaceID})
+	if err != nil {
+		t.Fatalf("reload item: %v", err)
+	}
+	if reloadedItem.Status != "running" {
+		t.Fatalf("expected item running, got %s", reloadedItem.Status)
+	}
+	if reloadedItem.IssueID != preExisting.ID {
+		t.Fatalf("expected item linked to reused issue %v, got %v", preExisting.ID, reloadedItem.IssueID)
+	}
+
+	var issueCount int
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM issue WHERE origin_type = 'work_queue' AND origin_id = $1
+	`, item.ID).Scan(&issueCount); err != nil {
+		t.Fatalf("count issues by origin: %v", err)
+	}
+	if issueCount != 1 {
+		t.Fatalf("expected exactly 1 issue for this work queue item, got %d", issueCount)
+	}
+}
+
+// TestWorkQueueScheduledStartedGuardsAgainstDoubleDispatch verifies that
+// MarkWorkQueueScheduledStarted's status guard makes a second, concurrent
+// scheduled->running promotion a no-op, mirroring
+// TestWorkQueueCronFireIdempotent's coverage of MarkWorkQueueCronFired.
+func TestWorkQueueScheduledStartedGuardsAgainstDoubleDispatch(t *testing.T) {
+	pool := workQueueTestPool(t)
+	fx := setupWorkQueueFixture(t, pool)
+	ctx := context.Background()
+	queries := db.New(pool)
+
+	queue := createTestWorkQueue(t, ctx, queries, fx, nil)
+	queue, err := queries.SetWorkQueueStatus(ctx, db.SetWorkQueueStatusParams{
+		ID: queue.ID, WorkspaceID: queue.WorkspaceID, Status: "scheduled",
+		StartAt: pgtype.Timestamptz{Time: time.Now().Add(-time.Minute), Valid: true},
+	})
+	if err != nil {
+		t.Fatalf("set queue scheduled: %v", err)
+	}
+
+	rows1, err := queries.MarkWorkQueueScheduledStarted(ctx, queue.ID)
+	if err != nil {
+		t.Fatalf("MarkWorkQueueScheduledStarted (1st): %v", err)
+	}
+	if rows1 != 1 {
+		t.Fatalf("expected 1 row affected on first promotion, got %d", rows1)
+	}
+
+	rows2, err := queries.MarkWorkQueueScheduledStarted(ctx, queue.ID)
+	if err != nil {
+		t.Fatalf("MarkWorkQueueScheduledStarted (2nd): %v", err)
+	}
+	if rows2 != 0 {
+		t.Fatalf("expected 0 rows affected on repeated scheduled promotion, got %d", rows2)
+	}
+}
+
 func TestWorkQueueCronFireIdempotent(t *testing.T) {
 	pool := workQueueTestPool(t)
 	fx := setupWorkQueueFixture(t, pool)

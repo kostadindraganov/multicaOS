@@ -588,6 +588,22 @@ func (q *Queries) MarkWorkQueueItemTerminal(ctx context.Context, arg MarkWorkQue
 	return i, err
 }
 
+const markWorkQueueScheduledStarted = `-- name: MarkWorkQueueScheduledStarted :execrows
+UPDATE work_queue SET status = 'running', start_at = NULL, updated_at = now()
+WHERE id = $1 AND status = 'scheduled'
+`
+
+// MarkWorkQueueScheduledStarted flips a scheduled queue to running exactly
+// once: the status guard makes concurrent tick replicas no-op for the same
+// scheduled promotion.
+func (q *Queries) MarkWorkQueueScheduledStarted(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, markWorkQueueScheduledStarted, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const maxWorkQueueItemSeq = `-- name: MaxWorkQueueItemSeq :one
 SELECT COALESCE(MAX(seq), 0)::int FROM work_queue_item
 WHERE queue_id = $1

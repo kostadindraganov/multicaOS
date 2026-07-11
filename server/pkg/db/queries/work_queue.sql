@@ -46,6 +46,13 @@ RETURNING *;
 UPDATE work_queue SET status = 'running', next_run_at = $2, updated_at = now()
 WHERE id = $1 AND status = 'idle';
 
+-- MarkWorkQueueScheduledStarted flips a scheduled queue to running exactly
+-- once: the status guard makes concurrent tick replicas no-op for the same
+-- scheduled promotion.
+-- name: MarkWorkQueueScheduledStarted :execrows
+UPDATE work_queue SET status = 'running', start_at = NULL, updated_at = now()
+WHERE id = $1 AND status = 'scheduled';
+
 -- name: DeleteWorkQueue :exec
 DELETE FROM work_queue
 WHERE id = $1 AND workspace_id = $2;

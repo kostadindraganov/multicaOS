@@ -153,6 +153,15 @@ WHERE i.workspace_id = $1
 ORDER BY i.created_at ASC
 LIMIT 1;
 
+-- name: FindWorkQueueItemIssue :one
+-- Origin-scoped idempotency check for work-queue prompt dispatch: origin_id
+-- is a work_queue_item.id, which is already a unique per-attempt key, so
+-- (unlike the autopilot duplicate finders) no title/window matching is
+-- needed -- an issue with this origin either exists or it doesn't.
+SELECT * FROM issue
+WHERE origin_type = 'work_queue' AND origin_id = $1
+LIMIT 1;
+
 -- name: DeleteIssue :exec
 -- Defense-in-depth: the workspace_id predicate makes the tenant invariant a
 -- SQL-layer guarantee rather than a handler-layer one. Handler loaders

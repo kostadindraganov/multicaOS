@@ -527,6 +527,49 @@ func (q *Queries) FindRecentAutopilotDuplicateIssue(ctx context.Context, arg Fin
 	return i, err
 }
 
+const findWorkQueueItemIssue = `-- name: FindWorkQueueItemIssue :one
+SELECT id, workspace_id, title, description, status, priority, assignee_type, assignee_id, creator_type, creator_id, parent_issue_id, acceptance_criteria, context_refs, position, due_date, created_at, updated_at, number, project_id, origin_type, origin_id, first_executed_at, start_date, metadata, stage FROM issue
+WHERE origin_type = 'work_queue' AND origin_id = $1
+LIMIT 1
+`
+
+// Origin-scoped idempotency check for work-queue prompt dispatch: origin_id
+// is a work_queue_item.id, which is already a unique per-attempt key, so
+// (unlike the autopilot duplicate finders) no title/window matching is
+// needed -- an issue with this origin either exists or it doesn't.
+func (q *Queries) FindWorkQueueItemIssue(ctx context.Context, originID pgtype.UUID) (Issue, error) {
+	row := q.db.QueryRow(ctx, findWorkQueueItemIssue, originID)
+	var i Issue
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Title,
+		&i.Description,
+		&i.Status,
+		&i.Priority,
+		&i.AssigneeType,
+		&i.AssigneeID,
+		&i.CreatorType,
+		&i.CreatorID,
+		&i.ParentIssueID,
+		&i.AcceptanceCriteria,
+		&i.ContextRefs,
+		&i.Position,
+		&i.DueDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Number,
+		&i.ProjectID,
+		&i.OriginType,
+		&i.OriginID,
+		&i.FirstExecutedAt,
+		&i.StartDate,
+		&i.Metadata,
+		&i.Stage,
+	)
+	return i, err
+}
+
 const getIssue = `-- name: GetIssue :one
 SELECT id, workspace_id, title, description, status, priority, assignee_type, assignee_id, creator_type, creator_id, parent_issue_id, acceptance_criteria, context_refs, position, due_date, created_at, updated_at, number, project_id, origin_type, origin_id, first_executed_at, start_date, metadata, stage FROM issue
 WHERE id = $1
