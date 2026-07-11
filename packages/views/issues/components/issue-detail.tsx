@@ -1420,7 +1420,9 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           <Skeleton className="h-4 w-24" />
         </div>
         <div className="flex flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto">
+          {/* Same scrollbar-gutter as the loaded scroller below, so the skeleton
+              column doesn't shift sideways when real content mounts. */}
+          <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
             <div className="mx-auto w-full max-w-4xl px-8 py-8 space-y-6">
               <Skeleton className="h-8 w-3/4" />
               <div className="space-y-2">
@@ -1850,9 +1852,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     <div className="relative flex h-full min-w-0 flex-1 flex-col">
         {/* In-page find bar — floats over the top-right of the content column
             (below the breadcrumb header), outside the scroll container so it
-            stays put while the timeline scrolls and its own text isn't walked. */}
+            stays put while the timeline scrolls and its own text isn't walked.
+            z-30: must beat every sticky affordance pinned at the timeline's
+            top-0 (comment headers z-10, resolve collapse bars z-20) — at equal
+            z the later-in-DOM sticky bar paints over the find bar and orphans
+            its close button (MUL-4414). */}
         {find.open && (
-          <FindBar find={find} className="absolute right-4 top-14 z-20" />
+          <FindBar find={find} className="absolute right-4 top-14 z-30" />
         )}
         <BreadcrumbHeader
           segments={breadcrumbSegments}
@@ -1952,10 +1958,16 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           }
         />
 
+        {/* scrollbar-gutter both-edges: with classic (space-taking) scrollbars —
+            macOS with a mouse or "always show", Windows, Linux — the global
+            `scrollbar-width: thin` carves ~11px off the right side only, so the
+            centered column reads 32px left vs 43px right (MUL-4404). Mirroring
+            the gutter restores symmetry; overlay-scrollbar platforms reserve
+            nothing and render unchanged. */}
         <div
           ref={setScrollContainerEl}
           data-tab-scroll-root
-          className="relative flex-1 overflow-y-auto"
+          className="relative flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]"
         >
         <div className="mx-auto w-full max-w-4xl px-8 py-8">
           <TitleEditor
