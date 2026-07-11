@@ -2615,17 +2615,25 @@ func (s *TaskService) HandleFailedTasks(ctx context.Context, tasks []db.AgentTas
 		}
 
 		if workspaceID != "" {
+			payload := map[string]any{
+				"task_id":        util.UUIDToString(t.ID),
+				"agent_id":       util.UUIDToString(t.AgentID),
+				"issue_id":       util.UUIDToString(t.IssueID),
+				"status":         "failed",
+				"failure_reason": failureReason,
+			}
+			// chat_session_id must ride along like broadcastTaskEvent does:
+			// the chat frontend drops task:failed events without it, leaving
+			// the session's "Typing…" pill stuck when a chat task dies via
+			// orphan recovery or the stale-task sweeper.
+			if t.ChatSessionID.Valid {
+				payload["chat_session_id"] = util.UUIDToString(t.ChatSessionID)
+			}
 			s.Bus.Publish(events.Event{
 				Type:        protocol.EventTaskFailed,
 				WorkspaceID: workspaceID,
 				ActorType:   "system",
-				Payload: map[string]any{
-					"task_id":        util.UUIDToString(t.ID),
-					"agent_id":       util.UUIDToString(t.AgentID),
-					"issue_id":       util.UUIDToString(t.IssueID),
-					"status":         "failed",
-					"failure_reason": failureReason,
-				},
+				Payload:     payload,
 			})
 		}
 
