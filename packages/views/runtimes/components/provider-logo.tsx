@@ -258,6 +258,20 @@ function TraeLogo({ className }: { className: string }) {
   return <img src={TRAE_ICON} alt="Trae" className={className} />;
 }
 
+// Omnigent — no official mark is published, so this is a simple orbit glyph
+// (a hub with satellite agents) matching the multi-harness orchestrator idea.
+function OmnigentLogo({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="9" stroke="#7C6CF0" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="3.2" fill="#7C6CF0" />
+      <circle cx="12" cy="3" r="1.8" fill="#7C6CF0" />
+      <circle cx="19.8" cy="16.5" r="1.8" fill="#7C6CF0" />
+      <circle cx="4.2" cy="16.5" r="1.8" fill="#7C6CF0" />
+    </svg>
+  );
+}
+
 export function ProviderLogo({
   provider,
   className = "h-4 w-4",
@@ -294,6 +308,8 @@ export function ProviderLogo({
       return <AntigravityLogo className={className} />;
     case "traecli":
       return <TraeLogo className={className} />;
+    case "omnigent":
+      return <OmnigentLogo className={className} />;
     default:
       return <Monitor className={className} />;
   }

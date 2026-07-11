@@ -311,8 +311,14 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	if e, ok := probe("MULTICA_TRAECLI_PATH", "traecli", "MULTICA_TRAECLI_MODEL"); ok {
 		agents["traecli"] = e
 	}
+	// Omnigent multi-harness orchestrator, driven over its local HTTP+SSE
+	// server API. MULTICA_OMNIGENT_MODEL names a default Omnigent agent
+	// (e.g. "polly" or "claude-native-ui").
+	if e, ok := probe("MULTICA_OMNIGENT_PATH", "omnigent", "MULTICA_OMNIGENT_MODEL"); ok {
+		agents["omnigent"] = e
+	}
 	if len(agents) == 0 {
-		return Config{}, fmt.Errorf("no agent CLI found: install claude, codebuddy, codex, copilot, opencode, openclaw, hermes, pi, cursor-agent, kimi, kiro-cli, agy, qodercli, or traecli and ensure it is on PATH")
+		return Config{}, fmt.Errorf("no agent CLI found: install claude, codebuddy, codex, copilot, opencode, openclaw, hermes, pi, cursor-agent, kimi, kiro-cli, agy, qodercli, traecli, or omnigent and ensure it is on PATH")
 	}
 
 	claudeArgs, err := shellArgsFromEnv("MULTICA_CLAUDE_ARGS")
@@ -753,7 +759,7 @@ func isExecutableFile(path string) bool {
 // invocation, instead of paying the cost-per-miss.
 var defaultAgentCommandNames = []string{
 	"claude", "codex", "opencode", "openclaw", "hermes",
-	"pi", "cursor-agent", "copilot", "kimi", "kiro-cli", "codebuddy", "agy", "traecli",
+	"pi", "cursor-agent", "copilot", "kimi", "kiro-cli", "codebuddy", "agy", "traecli", "omnigent",
 }
 
 var codexDesktopAppBundlePaths = func() []string {

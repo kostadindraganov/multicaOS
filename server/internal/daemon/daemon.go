@@ -3247,7 +3247,9 @@ func providerDisplayName(name string) string {
 
 func providerNeedsInlineSystemPrompt(provider string) bool {
 	switch provider {
-	case "openclaw", "kiro", "kimi", "traecli":
+	// omnigent: sessions carry no per-turn system-prompt field; instructions
+	// travel inline with the first message like the ACP-style backends.
+	case "openclaw", "kiro", "kimi", "traecli", "omnigent":
 		return true
 	default:
 		return false

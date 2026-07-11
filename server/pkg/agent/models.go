@@ -151,6 +151,14 @@ func ListModels(ctx context.Context, providerType, executablePath string) ([]Mod
 		return cachedDiscovery(providerType, func() ([]Model, error) {
 			return discoverOpenclawAgents(ctx, executablePath)
 		})
+	case "omnigent":
+		// Omnigent's "models" are its registered agents (native harness
+		// wrappers plus custom agents such as polly/debby), enumerated live
+		// from the local server so newly registered agents appear without a
+		// daemon restart.
+		return cachedDiscovery(discoveryCacheKey(providerType, executablePath), func() ([]Model, error) {
+			return discoverOmnigentAgents(ctx, executablePath)
+		})
 	case "codebuddy":
 		return cachedDiscovery(providerType, func() ([]Model, error) {
 			models, err := discoverCodebuddyModels(ctx, executablePath)

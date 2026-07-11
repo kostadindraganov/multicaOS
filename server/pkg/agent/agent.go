@@ -160,6 +160,7 @@ var SupportedTypes = []string{
 	"antigravity",
 	"qoder",
 	"traecli",
+	"omnigent",
 }
 
 // IsSupportedType reports whether agentType is in the SupportedTypes whitelist.
@@ -208,8 +209,10 @@ func New(agentType string, cfg Config) (Backend, error) {
 		return &qoderBackend{cfg: cfg}, nil
 	case "traecli":
 		return &traecliBackend{cfg: cfg}, nil
+	case "omnigent":
+		return &omnigentBackend{cfg: cfg}, nil
 	default:
-		return nil, fmt.Errorf("unknown agent type: %q (supported: claude, codebuddy, codex, copilot, opencode, openclaw, hermes, pi, cursor, kimi, kiro, antigravity, qoder, traecli)", agentType)
+		return nil, fmt.Errorf("unknown agent type: %q (supported: claude, codebuddy, codex, copilot, opencode, openclaw, hermes, pi, cursor, kimi, kiro, antigravity, qoder, traecli, omnigent)", agentType)
 	}
 }
 
@@ -234,6 +237,7 @@ var launchHeaders = map[string]string{
 	"hermes":      "hermes acp",
 	"kimi":        "kimi acp",
 	"kiro":        "kiro-cli acp",
+	"omnigent":    "omnigent server (HTTP + SSE)",
 	"openclaw":    "openclaw agent (json)",
 	"opencode":    "opencode run (json)",
 	"pi":          "pi (json mode)",
