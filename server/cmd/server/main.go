@@ -374,6 +374,8 @@ func main() {
 	taskSvc.Metrics = businessMetrics
 	autopilotSvc := service.NewAutopilotService(queries, pool, bus, taskSvc)
 	registerAutopilotListeners(bus, autopilotSvc)
+	workQueueSvc := service.NewWorkQueueService(queries, pool, bus, taskSvc)
+	registerWorkQueueListeners(sweepCtx, bus, workQueueSvc)
 
 	// Construct a LivenessStore that mirrors the one wired into the HTTP
 	// handler. Both the heartbeat write path (handler) and the sweeper read
@@ -427,6 +429,9 @@ func main() {
 	// — there is no separate goroutine for scheduled Autopilot anymore.
 	if err := schedulerMgr.Register(scheduler.AutopilotScheduleDispatchJob(pool, queries, autopilotSvc)); err != nil {
 		slog.Warn("scheduler: failed to register autopilot_schedule_dispatch job", "error", err)
+	}
+	if err := schedulerMgr.Register(scheduler.WorkQueueDispatchJob(workQueueSvc)); err != nil {
+		slog.Warn("scheduler: failed to register work_queue_dispatch job", "error", err)
 	}
 	go func() {
 		_ = schedulerMgr.Run(sweepCtx)
