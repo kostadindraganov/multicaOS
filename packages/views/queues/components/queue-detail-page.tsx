@@ -535,7 +535,7 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
         actions={
           <>
             {queue.status === "idle" && <StartPopover queueId={queueId} />}
-            {queue.status === "running" && (
+            {(queue.status === "running" || queue.status === "scheduled") && (
               <Button size="sm" variant="outline" disabled={pauseQueue.isPending} onClick={handlePause}>
                 <Pause className="size-3.5" />
                 {t(($) => $.detail.pause_button)}
