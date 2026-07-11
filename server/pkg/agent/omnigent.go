@@ -445,6 +445,12 @@ func (b *omnigentBackend) consumeStream(runCtx context.Context, cancel context.C
 	var outputs []string
 	var deltaBuf strings.Builder
 	usage := map[string]TokenUsage{}
+	// The server can emit response.output_item.done twice for one tool call —
+	// once with item.status=in_progress when the call is issued and once with
+	// status=completed when its output lands (distinct item ids, same call_id).
+	// seenCalls dedupes both function_call and function_call_output emissions
+	// by "<kind>:<call_id>" so the UI transcript shows each call once.
+	seenCalls := map[string]bool{}
 	sawActivity := false
 	finalStatus := ""
 	finalError := ""
@@ -479,7 +485,14 @@ func (b *omnigentBackend) consumeStream(runCtx context.Context, cancel context.C
 
 		switch {
 		case ev.Type == "session.status":
-			status := ev.Data.Status
+			// The live server emits `status` at the top level of the event
+			// (ServerStreamEvent); the nested data.status form is kept as a
+			// fallback for older payloads. Reading only data.status left every
+			// turn stuck in "running" because idle/failed were never seen.
+			status := ev.Status
+			if status == "" {
+				status = ev.Data.Status
+			}
 			trySend(msgCh, Message{Type: MessageStatus, Status: status, SessionID: sessionID})
 			switch status {
 			case "running", "waiting":
@@ -499,7 +512,7 @@ func (b *omnigentBackend) consumeStream(runCtx context.Context, cancel context.C
 			if ev.Type == "response.output_item.done" {
 				sawActivity = true
 			}
-			b.emitItem(ev, msgCh, &outputs, &deltaBuf)
+			b.emitItem(ev, msgCh, &outputs, &deltaBuf, seenCalls)
 		case ev.Type == "response.failed" || ev.Type == "response.error":
 			sawActivity = true
 			errMsg := ev.ErrorMessage()
@@ -508,13 +521,27 @@ func (b *omnigentBackend) consumeStream(runCtx context.Context, cancel context.C
 			}
 			finish("failed", errMsg)
 		case ev.Type == "session.usage":
-			model := ev.Data.Model
-			if model == "" {
-				model = "omnigent"
-			}
-			usage[model] = TokenUsage{
-				InputTokens:  ev.Data.CumulativeInputTokens,
-				OutputTokens: ev.Data.CumulativeOutputTokens,
+			// Live shape: top-level usage_by_model keyed by real model id.
+			// The nested data.* form is kept as a fallback for older payloads.
+			if len(ev.UsageByModel) > 0 {
+				for model, u := range ev.UsageByModel {
+					if model == "" {
+						model = "omnigent"
+					}
+					usage[model] = TokenUsage{
+						InputTokens:  u.InputTokens,
+						OutputTokens: u.OutputTokens,
+					}
+				}
+			} else {
+				model := ev.Data.Model
+				if model == "" {
+					model = "omnigent"
+				}
+				usage[model] = TokenUsage{
+					InputTokens:  ev.Data.CumulativeInputTokens,
+					OutputTokens: ev.Data.CumulativeOutputTokens,
+				}
 			}
 		case ev.Type == "response.elicitation_request":
 			// Headless runs cannot surface approval prompts; accept them,
@@ -565,8 +592,9 @@ func (b *omnigentBackend) consumeStream(runCtx context.Context, cancel context.C
 }
 
 // emitItem maps a completed conversation item (OpenAI Responses shape) onto
-// the unified Message model.
-func (b *omnigentBackend) emitItem(ev omnigentStreamEvent, msgCh chan Message, outputs *[]string, deltaBuf *strings.Builder) {
+// the unified Message model. seenCalls dedupes tool-call items the server
+// reports more than once (in_progress + completed done-events per call_id).
+func (b *omnigentBackend) emitItem(ev omnigentStreamEvent, msgCh chan Message, outputs *[]string, deltaBuf *strings.Builder, seenCalls map[string]bool) {
 	item := ev.Item
 	if item == nil {
 		return
@@ -574,6 +602,12 @@ func (b *omnigentBackend) emitItem(ev omnigentStreamEvent, msgCh chan Message, o
 	switch item.Type {
 	case "message":
 		if item.Role != "assistant" || ev.Type != "response.output_item.done" {
+			return
+		}
+		// Defensive mirror of the function_call double-done: only treat a
+		// message item as final when it isn't still marked in_progress —
+		// deltas cover the streaming, and the completed event follows.
+		if item.Status == "in_progress" {
 			return
 		}
 		var parts []string
@@ -595,21 +629,46 @@ func (b *omnigentBackend) emitItem(ev omnigentStreamEvent, msgCh chan Message, o
 		if ev.Type != "response.output_item.done" {
 			return
 		}
+		if item.CallID != "" {
+			key := "call:" + item.CallID
+			if seenCalls[key] {
+				return
+			}
+			seenCalls[key] = true
+		}
 		input := map[string]any{}
 		if item.Arguments != "" {
 			_ = json.Unmarshal([]byte(item.Arguments), &input)
 		}
 		trySend(msgCh, Message{Type: MessageToolUse, Tool: item.Name, CallID: item.CallID, Input: input})
 	case "function_call_output":
+		if ev.Type != "response.output_item.done" {
+			return
+		}
+		if item.CallID != "" {
+			key := "output:" + item.CallID
+			if seenCalls[key] {
+				return
+			}
+			seenCalls[key] = true
+		}
 		trySend(msgCh, Message{Type: MessageToolResult, CallID: item.CallID, Output: item.Output})
 	}
 }
 
 // omnigentStreamEvent is a permissive union of the SSE event fields this
-// backend consumes. Canonical shapes: openapi.json ServerStreamEvent.
+// backend consumes. Canonical shapes: openapi.json ServerStreamEvent. The
+// live server puts session.status's `status` and session.usage's
+// `usage_by_model` at the top level of the event; the nested `data` block is
+// kept as a fallback for older payload shapes.
 type omnigentStreamEvent struct {
 	Type string `json:"type"`
-	Data struct {
+	// Status is session.status's top-level payload ("running"/"idle"/...).
+	Status string `json:"status"`
+	// UsageByModel is session.usage's top-level cumulative usage keyed by
+	// real model id (e.g. "claude-fable-5").
+	UsageByModel map[string]omnigentModelUsage `json:"usage_by_model"`
+	Data         struct {
 		Status                 string `json:"status"`
 		Model                  string `json:"model"`
 		CumulativeInputTokens  int64  `json:"cumulative_input_tokens"`
@@ -649,6 +708,7 @@ func (e *omnigentStreamEvent) ErrorMessage() string {
 
 type omnigentStreamItem struct {
 	Type      string `json:"type"`
+	Status    string `json:"status"`
 	Role      string `json:"role"`
 	Name      string `json:"name"`
 	CallID    string `json:"call_id"`
@@ -658,4 +718,11 @@ type omnigentStreamItem struct {
 		Type string `json:"type"`
 		Text string `json:"text"`
 	} `json:"content"`
+}
+
+// omnigentModelUsage is one entry in session.usage's usage_by_model map.
+// Token fields may be null upstream; they unmarshal to 0.
+type omnigentModelUsage struct {
+	InputTokens  int64 `json:"input_tokens"`
+	OutputTokens int64 `json:"output_tokens"`
 }

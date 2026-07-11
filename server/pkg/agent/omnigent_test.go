@@ -128,24 +128,29 @@ func runConsumeStream(t *testing.T, baseURL, sse string) ([]Message, Result) {
 }
 
 func TestOmnigentConsumeStreamCompletedTurn(t *testing.T) {
+	// Event shapes mirror the live server: session.status carries `status`
+	// and session.usage carries `usage_by_model` at the TOP level of the
+	// event, not nested under `data` (the nested form is legacy fallback,
+	// covered by TestOmnigentConsumeStreamLegacyDataNesting). Reading only
+	// data.status left every turn stuck in "running" forever.
 	sse := strings.Join([]string{
-		`data: {"type":"session.status","data":{"status":"running"}}`,
+		`data: {"type":"session.status","conversation_id":"conv_test","status":"running"}`,
 		``,
 		`data: {"type":"response.output_text.delta","delta":"Hel"}`,
 		``,
 		`data: {"type":"response.output_text.delta","delta":"lo"}`,
 		``,
-		`data: {"type":"response.output_item.done","item":{"type":"function_call","name":"read_file","call_id":"call_1","arguments":"{\"path\":\"main.go\"}"}}`,
+		`data: {"type":"response.output_item.done","item":{"type":"function_call","status":"completed","name":"read_file","call_id":"call_1","arguments":"{\"path\":\"main.go\"}"}}`,
 		``,
 		`data: {"type":"response.output_item.done","item":{"type":"function_call_output","call_id":"call_1","output":"package main"}}`,
 		``,
-		`data: {"type":"response.output_item.done","item":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Hello from polly"}]}}`,
+		`data: {"type":"response.output_item.done","item":{"type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"Hello from polly"}]}}`,
 		``,
-		`data: {"type":"session.usage","data":{"model":"claude-sonnet-5","cumulative_input_tokens":120,"cumulative_output_tokens":45}}`,
+		`data: {"type":"session.usage","conversation_id":"conv_test","usage_by_model":{"claude-sonnet-5":{"input_tokens":120,"output_tokens":45}}}`,
 		``,
 		`data: {"type":"response.completed","response":{}}`,
 		``,
-		`data: {"type":"session.status","data":{"status":"idle"}}`,
+		`data: {"type":"session.status","conversation_id":"conv_test","status":"idle"}`,
 		``,
 		`data: [DONE]`,
 		``,
@@ -182,6 +187,76 @@ func TestOmnigentConsumeStreamCompletedTurn(t *testing.T) {
 	}
 	if msgs[0].Type != MessageStatus || msgs[0].SessionID != "conv_test" {
 		t.Errorf("first message should pin the session id for early resume, got %+v", msgs[0])
+	}
+}
+
+// TestOmnigentConsumeStreamLegacyDataNesting keeps the nested data.status /
+// data.model usage fallback alive for older server payloads.
+func TestOmnigentConsumeStreamLegacyDataNesting(t *testing.T) {
+	sse := strings.Join([]string{
+		`data: {"type":"session.status","data":{"status":"running"}}`,
+		``,
+		`data: {"type":"response.output_item.done","item":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"legacy"}]}}`,
+		``,
+		`data: {"type":"session.usage","data":{"model":"claude-sonnet-5","cumulative_input_tokens":120,"cumulative_output_tokens":45}}`,
+		``,
+		`data: {"type":"session.status","data":{"status":"idle"}}`,
+		``,
+	}, "\n")
+
+	_, res := runConsumeStream(t, "http://127.0.0.1:1", sse)
+	if res.Status != "completed" {
+		t.Fatalf("status = %q (err %q), want completed", res.Status, res.Error)
+	}
+	if res.Output != "legacy" {
+		t.Errorf("output = %q, want the message text", res.Output)
+	}
+	if u, ok := res.Usage["claude-sonnet-5"]; !ok || u.InputTokens != 120 || u.OutputTokens != 45 {
+		t.Errorf("usage = %+v, want claude-sonnet-5 {120,45}", res.Usage)
+	}
+}
+
+// TestOmnigentConsumeStreamDedupesDoubleDoneToolCalls reproduces the live
+// server emitting response.output_item.done TWICE per tool call: once with
+// item.status=in_progress when the call is issued and once with
+// status=completed when its output lands (distinct item ids, same call_id).
+// Without call_id dedupe every tool call showed up twice in the transcript.
+func TestOmnigentConsumeStreamDedupesDoubleDoneToolCalls(t *testing.T) {
+	sse := strings.Join([]string{
+		`data: {"type":"session.status","status":"running"}`,
+		``,
+		`data: {"type":"response.output_item.done","item":{"id":"fc_1","type":"function_call","status":"in_progress","name":"sys_os_shell","call_id":"toolu_1","arguments":"{\"command\":\"echo hi\"}"}}`,
+		``,
+		`data: {"type":"response.output_item.done","item":{"id":"fc_2","type":"function_call","status":"completed","name":"sys_os_shell","call_id":"toolu_1","arguments":"{\"command\":\"echo hi\"}"}}`,
+		``,
+		`data: {"type":"response.output_item.done","item":{"type":"function_call_output","call_id":"toolu_1","output":"hi"}}`,
+		``,
+		`data: {"type":"response.output_item.done","item":{"type":"function_call_output","call_id":"toolu_1","output":"hi"}}`,
+		``,
+		`data: {"type":"response.output_item.done","item":{"type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"done"}]}}`,
+		``,
+		`data: {"type":"session.status","status":"idle"}`,
+		``,
+	}, "\n")
+
+	msgs, res := runConsumeStream(t, "http://127.0.0.1:1", sse)
+	if res.Status != "completed" {
+		t.Fatalf("status = %q (err %q), want completed", res.Status, res.Error)
+	}
+	var toolUses, toolResults int
+	for _, m := range msgs {
+		switch m.Type {
+		case MessageToolUse:
+			toolUses++
+		case MessageToolResult:
+			toolResults++
+		}
+	}
+	if toolUses != 1 {
+		t.Errorf("tool_use emitted %d times, want 1 (double-done dedupe by call_id)", toolUses)
+	}
+	if toolResults != 1 {
+		t.Errorf("tool_result emitted %d times, want 1", toolResults)
 	}
 }
 
