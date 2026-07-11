@@ -945,6 +945,42 @@ type WebhookDelivery struct {
 	CreatedAt              pgtype.Timestamptz `json:"created_at"`
 }
 
+type WorkQueue struct {
+	ID               pgtype.UUID        `json:"id"`
+	WorkspaceID      pgtype.UUID        `json:"workspace_id"`
+	Name             string             `json:"name"`
+	Description      pgtype.Text        `json:"description"`
+	DefaultAgentID   pgtype.UUID        `json:"default_agent_id"`
+	Status           string             `json:"status"`
+	StartAt          pgtype.Timestamptz `json:"start_at"`
+	ItemDelaySeconds int32              `json:"item_delay_seconds"`
+	CronExpression   pgtype.Text        `json:"cron_expression"`
+	Timezone         pgtype.Text        `json:"timezone"`
+	NextRunAt        pgtype.Timestamptz `json:"next_run_at"`
+	CreatedBy        pgtype.UUID        `json:"created_by"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkQueueItem struct {
+	ID          pgtype.UUID        `json:"id"`
+	QueueID     pgtype.UUID        `json:"queue_id"`
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	Seq         int32              `json:"seq"`
+	Kind        string             `json:"kind"`
+	Title       pgtype.Text        `json:"title"`
+	Body        pgtype.Text        `json:"body"`
+	IssueID     pgtype.UUID        `json:"issue_id"`
+	AgentID     pgtype.UUID        `json:"agent_id"`
+	Status      string             `json:"status"`
+	TaskID      pgtype.UUID        `json:"task_id"`
+	Error       pgtype.Text        `json:"error"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	FinishedAt  pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Workspace struct {
 	ID           pgtype.UUID        `json:"id"`
 	Name         string             `json:"name"`
