@@ -1,0 +1,95 @@
+{
+  "page": {
+    "title": "队列",
+    "new_queue": "新建队列",
+    "empty_title": "还没有队列",
+    "empty_hint": "把 prompt 或 issue 批量排队，让智能体按顺序依次处理。",
+    "table": {
+      "name": "名称",
+      "status": "状态",
+      "agent": "智能体",
+      "next_run": "下次运行"
+    }
+  },
+  "status": {
+    "idle": "空闲",
+    "scheduled": "已安排",
+    "running": "运行中",
+    "paused": "已暂停"
+  },
+  "item_status": {
+    "pending": "待处理",
+    "running": "运行中",
+    "completed": "已完成",
+    "failed": "失败"
+  },
+  "item_kind": {
+    "prompt": "Prompt",
+    "issue": "Issue"
+  },
+  "dialog": {
+    "create_title": "新建队列",
+    "edit_title": "编辑队列",
+    "description_hint": "队列按顺序逐个执行条目，默认使用指定的智能体，除非条目单独指定。",
+    "name_label": "名称",
+    "name_placeholder": "队列名称",
+    "description_label": "描述",
+    "description_placeholder": "可选描述",
+    "agent_label": "默认智能体",
+    "select_agent": "选择智能体",
+    "delay_label": "条目间隔（分钟）",
+    "cron_label": "Cron 表达式",
+    "cron_placeholder": "0 9 * * 1-5",
+    "timezone_label": "时区",
+    "timezone_placeholder": "UTC",
+    "cancel": "取消",
+    "create": "创建",
+    "save": "保存",
+    "creating": "创建中…",
+    "saving": "保存中…",
+    "toast_created": "队列已创建",
+    "toast_updated": "队列已更新",
+    "toast_create_failed": "创建队列失败",
+    "toast_update_failed": "更新队列失败"
+  },
+  "detail": {
+    "not_found": "未找到队列",
+    "drag_handle": "拖动排序",
+    "untitled_item": "未命名",
+    "delete_item": "删除条目",
+    "items_empty": "队列中还没有条目",
+    "start_at_label": "开始时间",
+    "delay_label": "间隔",
+    "delay_minutes": "{{count}} 分钟",
+    "cron_label": "Cron",
+    "next_run_label": "下次运行",
+    "start_button": "开始",
+    "start_now": "立即开始",
+    "start_at_specific": "定时开始",
+    "pause_button": "暂停",
+    "resume_button": "继续",
+    "clear_finished_button": "清除已完成",
+    "composer": {
+      "mode_prompt": "Prompt",
+      "mode_issue": "Issue",
+      "title_placeholder": "条目标题",
+      "body_placeholder": "给智能体的详细说明（可选）",
+      "pick_issue_button": "选择 issue",
+      "add_button": "添加"
+    },
+    "toast_item_added": "条目已添加",
+    "toast_item_add_failed": "添加条目失败",
+    "toast_item_deleted": "条目已移除",
+    "toast_item_delete_failed": "移除条目失败",
+    "toast_item_agent_update_failed": "更新条目智能体失败",
+    "toast_started": "队列已开始",
+    "toast_start_failed": "启动队列失败",
+    "toast_paused": "队列已暂停",
+    "toast_pause_failed": "暂停队列失败",
+    "toast_resumed": "队列已继续",
+    "toast_resume_failed": "继续队列失败",
+    "toast_cleared": "已完成条目已清除",
+    "toast_clear_failed": "清除已完成条目失败",
+    "toast_reorder_failed": "排序失败"
+  }
+}

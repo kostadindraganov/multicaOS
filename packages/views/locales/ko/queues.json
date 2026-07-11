@@ -1,0 +1,95 @@
+{
+  "page": {
+    "title": "큐",
+    "new_queue": "새 큐",
+    "empty_title": "아직 큐가 없습니다",
+    "empty_hint": "프롬프트나 이슈를 큐에 모아 에이전트가 순서대로 처리하도록 하세요.",
+    "table": {
+      "name": "이름",
+      "status": "상태",
+      "agent": "에이전트",
+      "next_run": "다음 실행"
+    }
+  },
+  "status": {
+    "idle": "대기",
+    "scheduled": "예약됨",
+    "running": "실행 중",
+    "paused": "일시 중지"
+  },
+  "item_status": {
+    "pending": "대기 중",
+    "running": "실행 중",
+    "completed": "완료",
+    "failed": "실패"
+  },
+  "item_kind": {
+    "prompt": "프롬프트",
+    "issue": "이슈"
+  },
+  "dialog": {
+    "create_title": "새 큐",
+    "edit_title": "큐 편집",
+    "description_hint": "큐는 항목을 하나씩 순서대로 실행합니다. 항목에서 별도로 지정하지 않으면 기본 에이전트가 사용됩니다.",
+    "name_label": "이름",
+    "name_placeholder": "큐 이름",
+    "description_label": "설명",
+    "description_placeholder": "설명(선택 사항)",
+    "agent_label": "기본 에이전트",
+    "select_agent": "에이전트 선택",
+    "delay_label": "항목 간 지연(분)",
+    "cron_label": "Cron 표현식",
+    "cron_placeholder": "0 9 * * 1-5",
+    "timezone_label": "시간대",
+    "timezone_placeholder": "UTC",
+    "cancel": "취소",
+    "create": "생성",
+    "save": "저장",
+    "creating": "생성 중…",
+    "saving": "저장 중…",
+    "toast_created": "큐가 생성되었습니다",
+    "toast_updated": "큐가 업데이트되었습니다",
+    "toast_create_failed": "큐 생성에 실패했습니다",
+    "toast_update_failed": "큐 업데이트에 실패했습니다"
+  },
+  "detail": {
+    "not_found": "큐를 찾을 수 없습니다",
+    "drag_handle": "항목 순서 변경",
+    "untitled_item": "제목 없음",
+    "delete_item": "항목 삭제",
+    "items_empty": "이 큐에는 아직 항목이 없습니다",
+    "start_at_label": "시작 시간",
+    "delay_label": "지연",
+    "delay_minutes": "{{count}}분",
+    "cron_label": "Cron",
+    "next_run_label": "다음 실행",
+    "start_button": "시작",
+    "start_now": "지금 시작",
+    "start_at_specific": "예약 시작",
+    "pause_button": "일시 중지",
+    "resume_button": "재개",
+    "clear_finished_button": "완료 항목 지우기",
+    "composer": {
+      "mode_prompt": "프롬프트",
+      "mode_issue": "이슈",
+      "title_placeholder": "항목 제목",
+      "body_placeholder": "에이전트에 대한 세부 설명(선택 사항)",
+      "pick_issue_button": "이슈 선택",
+      "add_button": "추가"
+    },
+    "toast_item_added": "항목이 추가되었습니다",
+    "toast_item_add_failed": "항목 추가에 실패했습니다",
+    "toast_item_deleted": "항목이 삭제되었습니다",
+    "toast_item_delete_failed": "항목 삭제에 실패했습니다",
+    "toast_item_agent_update_failed": "항목 에이전트 업데이트에 실패했습니다",
+    "toast_started": "큐가 시작되었습니다",
+    "toast_start_failed": "큐 시작에 실패했습니다",
+    "toast_paused": "큐가 일시 중지되었습니다",
+    "toast_pause_failed": "큐 일시 중지에 실패했습니다",
+    "toast_resumed": "큐가 재개되었습니다",
+    "toast_resume_failed": "큐 재개에 실패했습니다",
+    "toast_cleared": "완료 항목이 지워졌습니다",
+    "toast_clear_failed": "완료 항목 지우기에 실패했습니다",
+    "toast_reorder_failed": "순서 변경에 실패했습니다"
+  }
+}
