@@ -66,6 +66,29 @@ func (h *Handler) loadWorkQueueItemInWorkspace(w http.ResponseWriter, r *http.Re
 	return item, true
 }
 
+// agentExistsInWorkspace and issueExistsInWorkspace back the FK-existence
+// checks below. Client-supplied agent_id / issue_id / default_agent_id are
+// FK columns; a well-formed UUID pointing at no row (or a row outside the
+// workspace) would otherwise trip a Postgres FK violation on INSERT/UPDATE,
+// which the blanket error path maps to an opaque 500. Checking existence
+// first turns that into a clear 400, matching validateAutopilotAssignee's
+// approach in autopilot.go.
+func (h *Handler) agentExistsInWorkspace(r *http.Request, agentID, workspaceID pgtype.UUID) bool {
+	_, err := h.Queries.GetAgentInWorkspace(r.Context(), db.GetAgentInWorkspaceParams{
+		ID:          agentID,
+		WorkspaceID: workspaceID,
+	})
+	return err == nil
+}
+
+func (h *Handler) issueExistsInWorkspace(r *http.Request, issueID, workspaceID pgtype.UUID) bool {
+	_, err := h.Queries.GetIssueInWorkspace(r.Context(), db.GetIssueInWorkspaceParams{
+		ID:          issueID,
+		WorkspaceID: workspaceID,
+	})
+	return err == nil
+}
+
 // publishWorkQueueUpdated fires queue:updated for member-triggered writes
 // that the WorkQueueService doesn't already cover (create/update/delete on
 // the queue itself, and any item mutation).
@@ -175,6 +198,10 @@ func (h *Handler) CreateWorkQueue(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			return
 		}
+		if !h.agentExistsInWorkspace(r, defaultAgentID, wsUUID) {
+			writeError(w, http.StatusBadRequest, "default_agent_id must be a valid agent in this workspace")
+			return
+		}
 	}
 
 	itemDelay := int32(0)
@@ -272,6 +299,10 @@ func (h *Handler) UpdateWorkQueue(w http.ResponseWriter, r *http.Request) {
 		if req.DefaultAgentID != nil && *req.DefaultAgentID != "" {
 			parsed, pok := parseUUIDOrBadRequest(w, *req.DefaultAgentID, "default_agent_id")
 			if !pok {
+				return
+			}
+			if !h.agentExistsInWorkspace(r, parsed, prev.WorkspaceID) {
+				writeError(w, http.StatusBadRequest, "default_agent_id must be a valid agent in this workspace")
 				return
 			}
 			params.DefaultAgentID = parsed
@@ -398,11 +429,19 @@ func (h *Handler) CreateWorkQueueItems(w http.ResponseWriter, r *http.Request) {
 			if !iok {
 				return
 			}
+			if !h.issueExistsInWorkspace(r, parsed, queue.WorkspaceID) {
+				writeError(w, http.StatusBadRequest, fmt.Sprintf("items[%d].issue_id must be a valid issue in this workspace", i))
+				return
+			}
 			p.issueID = parsed
 		}
 		if item.AgentID != nil && *item.AgentID != "" {
 			parsed, aok := parseUUIDOrBadRequest(w, *item.AgentID, fmt.Sprintf("items[%d].agent_id", i))
 			if !aok {
+				return
+			}
+			if !h.agentExistsInWorkspace(r, parsed, queue.WorkspaceID) {
+				writeError(w, http.StatusBadRequest, fmt.Sprintf("items[%d].agent_id must be a valid agent in this workspace", i))
 				return
 			}
 			p.agentID = parsed
@@ -500,6 +539,10 @@ func (h *Handler) UpdateWorkQueueItem(w http.ResponseWriter, r *http.Request) {
 		if req.AgentID != nil && *req.AgentID != "" {
 			parsed, aok := parseUUIDOrBadRequest(w, *req.AgentID, "agent_id")
 			if !aok {
+				return
+			}
+			if !h.agentExistsInWorkspace(r, parsed, item.WorkspaceID) {
+				writeError(w, http.StatusBadRequest, "agent_id must be a valid agent in this workspace")
 				return
 			}
 			params.AgentID = parsed

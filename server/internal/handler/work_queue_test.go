@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 // createTestWorkQueue creates a work queue via the handler under test and
@@ -291,6 +293,64 @@ func TestWorkQueueItem_NotPendingRejectsUpdateAndDelete(t *testing.T) {
 	if w.Code != http.StatusConflict {
 		t.Fatalf("DeleteWorkQueueItem on running item: expected 409, got %d: %s", w.Code, w.Body.String())
 	}
+}
+
+// TestCreateWorkQueue_RejectsNonexistentDefaultAgent locks in that a
+// well-formed but nonexistent default_agent_id is rejected with 400 instead
+// of surfacing the underlying FK violation as a 500.
+func TestCreateWorkQueue_RejectsNonexistentDefaultAgent(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	w := httptest.NewRecorder()
+	req := newRequest("POST", "/api/queues", map[string]any{
+		"name":             "Bad default agent queue",
+		"default_agent_id": uuid.New().String(),
+	})
+	testHandler.CreateWorkQueue(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("CreateWorkQueue with nonexistent default_agent_id: expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+// TestCreateWorkQueueItems_RejectsNonexistentReferences locks in that
+// well-formed but nonexistent agent_id / issue_id references on item
+// batch-add are rejected with 400 instead of surfacing the underlying FK
+// violation as a 500.
+func TestCreateWorkQueueItems_RejectsNonexistentReferences(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	queue := createTestWorkQueue(t, map[string]any{"name": "Bad reference queue"})
+	queueID, _ := queue["id"].(string)
+
+	t.Run("nonexistent agent_id", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req := withURLParam(newRequest("POST", "/api/queues/"+queueID+"/items", map[string]any{
+			"items": []map[string]any{
+				{"kind": "prompt", "title": "Item", "agent_id": uuid.New().String()},
+			},
+		}), "id", queueID)
+		testHandler.CreateWorkQueueItems(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("CreateWorkQueueItems with nonexistent agent_id: expected 400, got %d: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("nonexistent issue_id", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req := withURLParam(newRequest("POST", "/api/queues/"+queueID+"/items", map[string]any{
+			"items": []map[string]any{
+				{"kind": "issue", "issue_id": uuid.New().String()},
+			},
+		}), "id", queueID)
+		testHandler.CreateWorkQueueItems(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("CreateWorkQueueItems with nonexistent issue_id: expected 400, got %d: %s", w.Code, w.Body.String())
+		}
+	})
 }
 
 // TestWorkQueue_CrossWorkspace404 locks in that a queue id from another
