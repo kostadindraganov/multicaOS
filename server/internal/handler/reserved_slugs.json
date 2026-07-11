@@ -71,6 +71,7 @@
         "issues",
         "projects",
         "autopilots",
+        "queues",
         "agents",
         "squads",
         "inbox",
