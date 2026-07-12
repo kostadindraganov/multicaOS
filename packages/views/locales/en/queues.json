@@ -1,0 +1,95 @@
+{
+  "page": {
+    "title": "Queues",
+    "new_queue": "New queue",
+    "empty_title": "No queues yet",
+    "empty_hint": "Batch up prompts or issues for an agent to work through in order.",
+    "table": {
+      "name": "Name",
+      "status": "Status",
+      "agent": "Agent",
+      "next_run": "Next run"
+    }
+  },
+  "status": {
+    "idle": "Idle",
+    "scheduled": "Scheduled",
+    "running": "Running",
+    "paused": "Paused"
+  },
+  "item_status": {
+    "pending": "Pending",
+    "running": "Running",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "item_kind": {
+    "prompt": "Prompt",
+    "issue": "Issue"
+  },
+  "dialog": {
+    "create_title": "New queue",
+    "edit_title": "Edit queue",
+    "description_hint": "Queues run items in order, one at a time, through the default agent unless an item overrides it.",
+    "name_label": "Name",
+    "name_placeholder": "Queue name",
+    "description_label": "Description",
+    "description_placeholder": "Optional description",
+    "agent_label": "Default agent",
+    "select_agent": "Select agent",
+    "delay_label": "Delay between items (minutes)",
+    "cron_label": "Cron expression",
+    "cron_placeholder": "0 9 * * 1-5",
+    "timezone_label": "Timezone",
+    "timezone_placeholder": "UTC",
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save",
+    "creating": "Creating…",
+    "saving": "Saving…",
+    "toast_created": "Queue created",
+    "toast_updated": "Queue updated",
+    "toast_create_failed": "Failed to create queue",
+    "toast_update_failed": "Failed to update queue"
+  },
+  "detail": {
+    "not_found": "Queue not found",
+    "drag_handle": "Reorder item",
+    "untitled_item": "Untitled",
+    "delete_item": "Delete item",
+    "items_empty": "No items in this queue yet",
+    "start_at_label": "Starts at",
+    "delay_label": "Delay",
+    "delay_minutes": "{{count}} min",
+    "cron_label": "Cron",
+    "next_run_label": "Next run",
+    "start_button": "Start",
+    "start_now": "Start now",
+    "start_at_specific": "Schedule",
+    "pause_button": "Pause",
+    "resume_button": "Resume",
+    "clear_finished_button": "Clear finished",
+    "composer": {
+      "mode_prompt": "Prompt",
+      "mode_issue": "Issue",
+      "title_placeholder": "Item title",
+      "body_placeholder": "Details for the agent (optional)",
+      "pick_issue_button": "Pick an issue",
+      "add_button": "Add"
+    },
+    "toast_item_added": "Item added",
+    "toast_item_add_failed": "Failed to add item",
+    "toast_item_deleted": "Item removed",
+    "toast_item_delete_failed": "Failed to remove item",
+    "toast_item_agent_update_failed": "Failed to update item agent",
+    "toast_started": "Queue started",
+    "toast_start_failed": "Failed to start queue",
+    "toast_paused": "Queue paused",
+    "toast_pause_failed": "Failed to pause queue",
+    "toast_resumed": "Queue resumed",
+    "toast_resume_failed": "Failed to resume queue",
+    "toast_cleared": "Finished items cleared",
+    "toast_clear_failed": "Failed to clear finished items",
+    "toast_reorder_failed": "Failed to reorder items"
+  }
+}

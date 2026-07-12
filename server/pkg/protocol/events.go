@@ -107,6 +107,9 @@ const (
 	EventAutopilotRunStart = "autopilot:run_start"
 	EventAutopilotRunDone  = "autopilot:run_done"
 
+	// EventQueueUpdated fires on any work-queue or work-queue-item state change.
+	EventQueueUpdated = "queue:updated"
+
 	// Squad events
 	EventSquadCreated = "squad:created"
 	EventSquadUpdated = "squad:updated"

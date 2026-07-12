@@ -1096,6 +1096,27 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				})
 			})
 
+			// Work queues
+			r.Route("/api/queues", func(r chi.Router) {
+				r.Get("/", h.ListWorkQueues)
+				r.Post("/", h.CreateWorkQueue)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", h.GetWorkQueue)
+					r.Patch("/", h.UpdateWorkQueue)
+					r.Delete("/", h.DeleteWorkQueue)
+					r.Post("/start", h.StartWorkQueue)
+					r.Post("/pause", h.PauseWorkQueue)
+					r.Post("/resume", h.ResumeWorkQueue)
+					r.Post("/clear-finished", h.ClearFinishedWorkQueueItems)
+					r.Post("/items", h.CreateWorkQueueItems)
+					r.Post("/items/reorder", h.ReorderWorkQueueItems)
+					r.Route("/items/{itemId}", func(r chi.Router) {
+						r.Patch("/", h.UpdateWorkQueueItem)
+						r.Delete("/", h.DeleteWorkQueueItem)
+					})
+				})
+			})
+
 			// Pins
 			r.Route("/api/pins", func(r chi.Router) {
 				r.Get("/", h.ListPins)

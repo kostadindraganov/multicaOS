@@ -1,0 +1,95 @@
+{
+  "page": {
+    "title": "キュー",
+    "new_queue": "新規キュー",
+    "empty_title": "まだキューがありません",
+    "empty_hint": "プロンプトやイシューをまとめてキューに入れ、エージェントに順番に処理させます。",
+    "table": {
+      "name": "名前",
+      "status": "ステータス",
+      "agent": "エージェント",
+      "next_run": "次回実行"
+    }
+  },
+  "status": {
+    "idle": "待機中",
+    "scheduled": "予約済み",
+    "running": "実行中",
+    "paused": "一時停止中"
+  },
+  "item_status": {
+    "pending": "保留中",
+    "running": "実行中",
+    "completed": "完了",
+    "failed": "失敗"
+  },
+  "item_kind": {
+    "prompt": "プロンプト",
+    "issue": "イシュー"
+  },
+  "dialog": {
+    "create_title": "新規キュー",
+    "edit_title": "キューを編集",
+    "description_hint": "キューは項目を1つずつ順番に実行します。項目側で指定しない限り、デフォルトのエージェントが使われます。",
+    "name_label": "名前",
+    "name_placeholder": "キュー名",
+    "description_label": "説明",
+    "description_placeholder": "説明（任意）",
+    "agent_label": "デフォルトエージェント",
+    "select_agent": "エージェントを選択",
+    "delay_label": "項目間の遅延（分）",
+    "cron_label": "Cron 式",
+    "cron_placeholder": "0 9 * * 1-5",
+    "timezone_label": "タイムゾーン",
+    "timezone_placeholder": "UTC",
+    "cancel": "キャンセル",
+    "create": "作成",
+    "save": "保存",
+    "creating": "作成中…",
+    "saving": "保存中…",
+    "toast_created": "キューを作成しました",
+    "toast_updated": "キューを更新しました",
+    "toast_create_failed": "キューの作成に失敗しました",
+    "toast_update_failed": "キューの更新に失敗しました"
+  },
+  "detail": {
+    "not_found": "キューが見つかりません",
+    "drag_handle": "項目を並べ替え",
+    "untitled_item": "無題",
+    "delete_item": "項目を削除",
+    "items_empty": "このキューにはまだ項目がありません",
+    "start_at_label": "開始時刻",
+    "delay_label": "遅延",
+    "delay_minutes": "{{count}}分",
+    "cron_label": "Cron",
+    "next_run_label": "次回実行",
+    "start_button": "開始",
+    "start_now": "今すぐ開始",
+    "start_at_specific": "予約開始",
+    "pause_button": "一時停止",
+    "resume_button": "再開",
+    "clear_finished_button": "完了済みをクリア",
+    "composer": {
+      "mode_prompt": "プロンプト",
+      "mode_issue": "イシュー",
+      "title_placeholder": "項目のタイトル",
+      "body_placeholder": "エージェントへの詳細（任意）",
+      "pick_issue_button": "イシューを選択",
+      "add_button": "追加"
+    },
+    "toast_item_added": "項目を追加しました",
+    "toast_item_add_failed": "項目の追加に失敗しました",
+    "toast_item_deleted": "項目を削除しました",
+    "toast_item_delete_failed": "項目の削除に失敗しました",
+    "toast_item_agent_update_failed": "項目のエージェント更新に失敗しました",
+    "toast_started": "キューを開始しました",
+    "toast_start_failed": "キューの開始に失敗しました",
+    "toast_paused": "キューを一時停止しました",
+    "toast_pause_failed": "キューの一時停止に失敗しました",
+    "toast_resumed": "キューを再開しました",
+    "toast_resume_failed": "キューの再開に失敗しました",
+    "toast_cleared": "完了済み項目をクリアしました",
+    "toast_clear_failed": "完了済み項目のクリアに失敗しました",
+    "toast_reorder_failed": "並べ替えに失敗しました"
+  }
+}
