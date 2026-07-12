@@ -28,6 +28,7 @@ function workspaceScoped(slug: string) {
     queues: () => `${ws}/queues`,
     queueDetail: (id: string) => `${ws}/queues/${encode(id)}`,
     agents: () => `${ws}/agents`,
+    newAgent: () => `${ws}/agents/new`,
     agentDetail: (id: string) => `${ws}/agents/${encode(id)}`,
     memberDetail: (id: string) => `${ws}/members/${encode(id)}`,
     squads: () => `${ws}/squads`,
@@ -37,6 +38,8 @@ function workspaceScoped(slug: string) {
     myIssues: () => `${ws}/my-issues`,
     runtimes: () => `${ws}/runtimes`,
     runtimeDetail: (id: string) => `${ws}/runtimes/${encode(id)}`,
+    runtimeSettings: (machineId: string, runtimeId: string) =>
+      `${ws}/runtimes/${encode(machineId)}/runtime/${encode(runtimeId)}`,
     skills: () => `${ws}/skills`,
     skillDetail: (id: string) => `${ws}/skills/${encode(id)}`,
     settings: () => `${ws}/settings`,
