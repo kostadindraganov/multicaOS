@@ -6,6 +6,7 @@ export {
   useAddQueueItems,
   useUpdateQueueItem,
   useDeleteQueueItem,
+  useRetryQueueItem,
   useReorderQueueItems,
   useStartQueue,
   usePauseQueue,

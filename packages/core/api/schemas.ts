@@ -1086,6 +1086,7 @@ const WorkQueueSchema = z
     name: z.string(),
     description: z.string().nullable().optional(),
     default_agent_id: z.string().nullable().optional(),
+    project_id: z.string().nullable().optional(),
     status: z.string(),
     start_at: z.string().nullable().optional(),
     item_delay_seconds: z.number().default(0),
@@ -1094,6 +1095,15 @@ const WorkQueueSchema = z
     next_run_at: z.string().nullable().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
+    // Per-status item counts (list endpoint); absent on older servers.
+    item_counts: z
+      .object({
+        pending: z.number().default(0),
+        running: z.number().default(0),
+        completed: z.number().default(0),
+        failed: z.number().default(0),
+      })
+      .optional(),
   })
   .loose();
 

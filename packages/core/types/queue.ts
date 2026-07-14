@@ -8,6 +8,7 @@ export interface WorkQueue {
   name: string;
   description: string | null;
   default_agent_id: string | null;
+  project_id?: string | null;
   status: QueueStatus;
   start_at: string | null;
   item_delay_seconds: number;
@@ -16,6 +17,13 @@ export interface WorkQueue {
   next_run_at: string | null;
   created_at: string;
   updated_at: string;
+  // Per-status item counts from the list endpoint; absent on older servers.
+  item_counts?: {
+    pending: number;
+    running: number;
+    completed: number;
+    failed: number;
+  };
 }
 
 export interface WorkQueueItem {
@@ -38,6 +46,8 @@ export interface CreateQueueRequest {
   name: string;
   description?: string;
   default_agent_id?: string;
+  // null clears the project on update.
+  project_id?: string | null;
   item_delay_seconds?: number;
   cron_expression?: string;
   timezone?: string;

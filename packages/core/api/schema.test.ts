@@ -204,6 +204,43 @@ describe("ApiClient schema fallback", () => {
       expect(res.queues).toHaveLength(1);
       expect(res.queues[0]?.id).toBe("q-1");
       expect(res.queues[0]?.status).toBe("idle");
+      // Older servers omit project_id and item_counts; both stay absent, not throw.
+      expect(res.queues[0]?.project_id).toBeUndefined();
+      expect(res.queues[0]?.item_counts).toBeUndefined();
+    });
+
+    it("parses project_id and item_counts when present, defaulting missing count fields", async () => {
+      stubFetchJson({
+        queues: [
+          {
+            id: "q-2",
+            workspace_id: "ws-1",
+            name: "Backlog burn",
+            description: null,
+            default_agent_id: null,
+            project_id: "p-1",
+            status: "running",
+            start_at: null,
+            item_delay_seconds: 0,
+            cron_expression: null,
+            timezone: null,
+            next_run_at: null,
+            created_at: "2026-06-01T00:00:00Z",
+            updated_at: "2026-06-01T00:00:00Z",
+            item_counts: { completed: 3 },
+          },
+        ],
+        total: 1,
+      });
+      const client = new ApiClient("https://api.example.test");
+      const res = await client.listQueues();
+      expect(res.queues[0]?.project_id).toBe("p-1");
+      expect(res.queues[0]?.item_counts).toEqual({
+        pending: 0,
+        running: 0,
+        completed: 3,
+        failed: 0,
+      });
     });
   });
 

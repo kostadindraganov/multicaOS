@@ -2502,6 +2502,9 @@ export class ApiClient {
   async deleteQueueItem(id: string, itemId: string): Promise<void> {
     await this.fetch(`/api/queues/${id}/items/${itemId}`, { method: "DELETE" });
   }
+  async retryQueueItem(id: string, itemId: string): Promise<{ item: WorkQueueItem }> {
+    return this.fetch(`/api/queues/${id}/items/${itemId}/retry`, { method: "POST", body: "{}" });
+  }
   async reorderQueueItems(id: string, order: string[]): Promise<void> {
     await this.fetch(`/api/queues/${id}/items/reorder`, { method: "POST", body: JSON.stringify({ order }) });
   }

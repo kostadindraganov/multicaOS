@@ -86,6 +86,17 @@ export function useDeleteQueueItem() {
   });
 }
 
+export function useRetryQueueItem() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+  return useMutation({
+    mutationFn: ({ id, itemId }: { id: string; itemId: string }) => api.retryQueueItem(id, itemId),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: queueKeys.all(wsId) });
+    },
+  });
+}
+
 export function useReorderQueueItems() {
   const qc = useQueryClient();
   const wsId = useWorkspaceId();
