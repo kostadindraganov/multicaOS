@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@multica/ui/components/ui/select";
+import { Switch } from "@multica/ui/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -80,6 +81,7 @@ export function QueueDialog(props: QueueDialogProps) {
   const [hour, setHour] = useState(parsedCron?.hour ?? 9);
   const [dayOfWeek, setDayOfWeek] = useState(parsedCron?.dayOfWeek ?? 1);
   const [customCron, setCustomCron] = useState(initial?.cron_expression ?? "");
+  const [runOnce, setRunOnce] = useState(initial?.run_once === true);
   const [timezone, setTimezone] = useState(initial?.timezone || DEFAULT_TIMEZONE);
   const [submitting, setSubmitting] = useState(false);
 
@@ -110,6 +112,7 @@ export function QueueDialog(props: QueueDialogProps) {
         item_delay_seconds: Math.max(0, delayMinutes) * 60,
         cron_expression: cronExpression || undefined,
         timezone: cronExpression ? timezone : undefined,
+        run_once: runOnce,
       };
       if (isCreate) {
         await createQueue.mutateAsync(data);
@@ -320,6 +323,23 @@ export function QueueDialog(props: QueueDialogProps) {
               </div>
             )}
           </div>
+
+          {frequency !== "none" && (
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="space-y-0.5">
+                <label
+                  htmlFor="queue-run-once"
+                  className="text-xs font-medium cursor-pointer"
+                >
+                  {t(($) => $.dialog.run_once_label)}
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {t(($) => $.dialog.run_once_hint)}
+                </p>
+              </div>
+              <Switch id="queue-run-once" checked={runOnce} onCheckedChange={setRunOnce} />
+            </div>
+          )}
         </div>
 
         <DialogFooter>

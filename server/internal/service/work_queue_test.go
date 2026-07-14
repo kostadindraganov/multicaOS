@@ -531,6 +531,60 @@ func TestWorkQueueDrainToIdle(t *testing.T) {
 	}
 }
 
+// TestWorkQueueRunOnceClearsCronOnDrain: a run_once cron queue that drains to
+// idle must have its schedule cleared so the tick loop never re-fires it; a
+// non-run_once queue keeps its cron and gets a fresh next_run_at.
+func TestWorkQueueRunOnceClearsCronOnDrain(t *testing.T) {
+	pool := workQueueTestPool(t)
+	fx := setupWorkQueueFixture(t, pool)
+	ctx := context.Background()
+	queries := db.New(pool)
+
+	for _, tc := range []struct {
+		name    string
+		runOnce bool
+	}{
+		{"run_once clears schedule", true},
+		{"recurring keeps schedule", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			queue := createTestWorkQueue(t, ctx, queries, fx, func(p *db.CreateWorkQueueParams) {
+				p.CronExpression = pgtype.Text{String: "0 20 * * *", Valid: true}
+				p.Timezone = pgtype.Text{String: "Europe/Sofia", Valid: true}
+				p.RunOnce = tc.runOnce
+			})
+			queue, err := queries.SetWorkQueueStatus(ctx, db.SetWorkQueueStatusParams{
+				ID: queue.ID, WorkspaceID: queue.WorkspaceID, Status: "running", StartAt: pgtype.Timestamptz{},
+			})
+			if err != nil {
+				t.Fatalf("set queue running: %v", err)
+			}
+
+			svc := newWorkQueueTestService(pool, &stubEnqueuer{})
+			if _, err := svc.DispatchNext(ctx, queue, time.Now()); err != nil {
+				t.Fatalf("DispatchNext: %v", err)
+			}
+
+			reloaded, err := queries.GetWorkQueueInWorkspace(ctx, db.GetWorkQueueInWorkspaceParams{ID: queue.ID, WorkspaceID: queue.WorkspaceID})
+			if err != nil {
+				t.Fatalf("reload queue: %v", err)
+			}
+			if reloaded.Status != "idle" {
+				t.Fatalf("expected queue idle, got %s", reloaded.Status)
+			}
+			if tc.runOnce {
+				if reloaded.CronExpression.Valid || reloaded.NextRunAt.Valid {
+					t.Fatalf("expected schedule cleared, got cron=%v next_run_at=%v", reloaded.CronExpression, reloaded.NextRunAt)
+				}
+			} else {
+				if !reloaded.CronExpression.Valid || !reloaded.NextRunAt.Valid {
+					t.Fatalf("expected schedule kept, got cron=%v next_run_at=%v", reloaded.CronExpression, reloaded.NextRunAt)
+				}
+			}
+		})
+	}
+}
+
 // TestWorkQueueDispatchPromptReusesExistingIssue reproduces the crash window
 // between tx.Commit (issue created) and MarkWorkQueueItemRunning (item
 // marked running + linked): the item is seeded pending with an issue that

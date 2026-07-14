@@ -170,6 +170,7 @@ type CreateWorkQueueRequest struct {
 	ItemDelaySeconds *int32  `json:"item_delay_seconds"`
 	CronExpression   *string `json:"cron_expression"`
 	Timezone         *string `json:"timezone"`
+	RunOnce          *bool   `json:"run_once"`
 }
 
 func (h *Handler) CreateWorkQueue(w http.ResponseWriter, r *http.Request) {
@@ -254,6 +255,7 @@ func (h *Handler) CreateWorkQueue(w http.ResponseWriter, r *http.Request) {
 		Timezone:         tzText,
 		NextRunAt:        nextRunAt,
 		CreatedBy:        userUUID,
+		RunOnce:          req.RunOnce != nil && *req.RunOnce,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create work queue")
@@ -272,6 +274,7 @@ type UpdateWorkQueueRequest struct {
 	ItemDelaySeconds *int32  `json:"item_delay_seconds"`
 	CronExpression   *string `json:"cron_expression"`
 	Timezone         *string `json:"timezone"`
+	RunOnce          *bool   `json:"run_once"`
 }
 
 func (h *Handler) UpdateWorkQueue(w http.ResponseWriter, r *http.Request) {
@@ -312,6 +315,9 @@ func (h *Handler) UpdateWorkQueue(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, sent := rawFields["item_delay_seconds"]; sent {
 		params.ItemDelaySeconds = ptrToInt4(req.ItemDelaySeconds)
+	}
+	if req.RunOnce != nil {
+		params.RunOnce = pgtype.Bool{Bool: *req.RunOnce, Valid: true}
 	}
 	if _, sent := rawFields["default_agent_id"]; sent {
 		params.SetDefaultAgent = true

@@ -6,8 +6,8 @@
 INSERT INTO work_queue (
     workspace_id, name, description, default_agent_id,
     item_delay_seconds, cron_expression, timezone, next_run_at, created_by,
-    project_id
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    project_id, run_once
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING *;
 
 -- name: GetWorkQueueInWorkspace :one
@@ -42,6 +42,7 @@ UPDATE work_queue SET
     cron_expression = CASE WHEN sqlc.arg('set_cron')::bool THEN sqlc.narg('cron_expression') ELSE cron_expression END,
     timezone = CASE WHEN sqlc.arg('set_cron')::bool THEN sqlc.narg('timezone') ELSE timezone END,
     next_run_at = CASE WHEN sqlc.arg('set_cron')::bool THEN sqlc.narg('next_run_at') ELSE next_run_at END,
+    run_once = COALESCE(sqlc.narg('run_once'), run_once),
     updated_at = now()
 WHERE id = $1 AND workspace_id = $2
 RETURNING *;

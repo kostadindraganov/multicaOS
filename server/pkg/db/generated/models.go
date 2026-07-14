@@ -1027,6 +1027,7 @@ type WorkQueue struct {
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	ProjectID        pgtype.UUID        `json:"project_id"`
+	RunOnce          bool               `json:"run_once"`
 }
 
 type WorkQueueItem struct {

@@ -15,6 +15,9 @@ export interface WorkQueue {
   cron_expression: string | null;
   timezone: string | null;
   next_run_at: string | null;
+  // When true, a scheduled queue fires once and its schedule is cleared on
+  // drain. Absent on older servers.
+  run_once?: boolean;
   created_at: string;
   updated_at: string;
   // Per-status item counts from the list endpoint; absent on older servers.
@@ -51,6 +54,7 @@ export interface CreateQueueRequest {
   item_delay_seconds?: number;
   cron_expression?: string;
   timezone?: string;
+  run_once?: boolean;
 }
 export type UpdateQueueRequest = Partial<CreateQueueRequest>;
 

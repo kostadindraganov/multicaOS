@@ -78,7 +78,9 @@
       "fri": "周五",
       "sat": "周六",
       "sun": "周日"
-    }
+    },
+    "run_once_label": "仅运行一次",
+    "run_once_hint": "仅在下次计划时间执行一次，然后停止计划。"
   },
   "detail": {
     "not_found": "未找到队列",

@@ -1093,6 +1093,7 @@ const WorkQueueSchema = z
     cron_expression: z.string().nullable().optional(),
     timezone: z.string().nullable().optional(),
     next_run_at: z.string().nullable().optional(),
+    run_once: z.boolean().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
     // Per-status item counts (list endpoint); absent on older servers.

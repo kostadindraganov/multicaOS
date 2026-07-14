@@ -89,7 +89,9 @@
       "fri": "Friday",
       "sat": "Saturday",
       "sun": "Sunday"
-    }
+    },
+    "run_once_label": "Run once",
+    "run_once_hint": "Fire at the next scheduled time only, then stop the schedule."
   },
   "detail": {
     "not_found": "Queue not found",

@@ -182,8 +182,17 @@ func (s *WorkQueueService) drainToIdle(ctx context.Context, queue db.WorkQueue, 
 	}
 
 	if queue.CronExpression.Valid && queue.CronExpression.String != "" {
-		next, err := NextOccurrenceAfterUTC(queue.CronExpression.String, queueTimezone(queue), now)
-		if err != nil {
+		if queue.RunOnce {
+			// run_once: the schedule has served its single fire — clear it so
+			// the tick loop never re-fires this queue.
+			if _, err := s.Queries.UpdateWorkQueue(ctx, db.UpdateWorkQueueParams{
+				ID:          queue.ID,
+				WorkspaceID: queue.WorkspaceID,
+				SetCron:     true,
+			}); err != nil {
+				return false, fmt.Errorf("clear run-once schedule: %w", err)
+			}
+		} else if next, err := NextOccurrenceAfterUTC(queue.CronExpression.String, queueTimezone(queue), now); err != nil {
 			slog.Warn("work queue: failed to compute next cron occurrence on drain", "queue_id", util.UUIDToString(queue.ID), "error", err)
 		} else if _, err := s.Queries.UpdateWorkQueue(ctx, db.UpdateWorkQueueParams{
 			ID:             queue.ID,
