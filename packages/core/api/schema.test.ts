@@ -392,6 +392,8 @@ describe("ApiClient schema fallback", () => {
       const res = await client.listAutopilotDeliveries("ap-1");
       expect(res.deliveries).toHaveLength(1);
       expect(res.deliveries[0]?.status).toBe("quarantined");
+      expect(res.deliveries[0]?.dispatch_attempts).toBe(0);
+      expect(res.deliveries[0]?.available_at).toBe("");
     });
   });
 

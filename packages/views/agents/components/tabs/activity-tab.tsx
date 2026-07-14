@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@multica/ui/components/ui/tooltip";
+import { NumberFlow } from "@multica/ui/components/ui/number-flow";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type {
   Agent,
@@ -36,6 +37,7 @@ import { useWorkspacePaths } from "@multica/core/paths";
 import { issueDetailOptions } from "@multica/core/issues/queries";
 import { AppLink } from "../../../navigation";
 import { TranscriptButton } from "../../../common/task-transcript";
+import { AttributionBadge } from "../../../issues/components/attribution-badge";
 import { taskStatusConfig } from "../../config";
 import { failureReasonLabel } from "./task-failure";
 import { Sparkline } from "../sparkline";
@@ -314,9 +316,10 @@ function Last30dSection({
   activity: AgentActivity | undefined;
   avgDurationMs: number;
 }) {
-  const { t } = useT("agents");
+  const { t, i18n } = useT("agents");
   const summary = summarizeActivityWindow(activity, 30);
   const { totalRuns, totalFailed } = summary;
+  const locales = i18n.resolvedLanguage ?? i18n.language;
   const successPct =
     totalRuns > 0
       ? Math.round(((totalRuns - totalFailed) / totalRuns) * 100)
@@ -330,9 +333,13 @@ function Last30dSection({
         <div className="flex items-end justify-between gap-5">
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold leading-none tabular-nums">
-                {totalRuns}
-              </span>
+              <NumberFlow
+                value={totalRuns}
+                locales={locales}
+                format={{ maximumFractionDigits: 0 }}
+                aria-label={String(totalRuns)}
+                className="text-3xl font-bold leading-none"
+              />
               <span className="text-sm text-muted-foreground">
                 {t(($) => $.tab_body.activity.runs, { count: totalRuns })}
               </span>
@@ -631,6 +638,21 @@ function TaskRow({
             <>
               <Sep />
               <span className="text-destructive">{failureLabel}</span>
+            </>
+          )}
+          {/* Accountable member (MUL-4302 §9): whose behalf this run is on.
+              A leading separator keeps the avatar on the same middot rhythm as
+              the rest of the meta line instead of glued to the duration. The
+              guard mirrors the badge's own render condition (avatar-only needs
+              an initiator) so no dangling separator is left for an
+              unattributed run. */}
+          {task.attribution?.initiator && (
+            <>
+              <Sep />
+              <AttributionBadge
+                attribution={task.attribution}
+                variant="avatar"
+              />
             </>
           )}
         </div>
