@@ -18,7 +18,8 @@
       "progress": "Progress",
       "agent": "Agent",
       "next_run": "Next run"
-    }
+    },
+    "edit_menu": "Edit queue"
   },
   "delete": {
     "menu": "Delete",
@@ -71,7 +72,24 @@
     "toast_created": "Queue created",
     "toast_updated": "Queue updated",
     "toast_create_failed": "Failed to create queue",
-    "toast_update_failed": "Failed to update queue"
+    "toast_update_failed": "Failed to update queue",
+    "schedule_label": "Schedule",
+    "schedule_none": "No schedule",
+    "schedule_hourly": "Hourly",
+    "schedule_daily": "Daily",
+    "schedule_weekly": "Weekly",
+    "schedule_custom": "Custom (cron)",
+    "schedule_time_label": "At time",
+    "schedule_day_label": "On day",
+    "weekdays": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    }
   },
   "detail": {
     "not_found": "Queue not found",
@@ -116,6 +134,7 @@
     "toast_resume_failed": "Failed to resume queue",
     "toast_cleared": "Finished items cleared",
     "toast_clear_failed": "Failed to clear finished items",
-    "toast_reorder_failed": "Failed to reorder items"
+    "toast_reorder_failed": "Failed to reorder items",
+    "edit_queue_button": "Edit queue"
   }
 }

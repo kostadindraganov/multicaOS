@@ -18,7 +18,8 @@
     "no_matches": "条件に一致するキューがありません",
     "row_menu": "キューの操作",
     "progress_done": "{{completed}}/{{total}} 完了",
-    "progress_failed": "{{count}} 件失敗"
+    "progress_failed": "{{count}} 件失敗",
+    "edit_menu": "キューを編集"
   },
   "status": {
     "idle": "待機中",
@@ -60,7 +61,24 @@
     "toast_updated": "キューを更新しました",
     "toast_create_failed": "キューの作成に失敗しました",
     "toast_update_failed": "キューの更新に失敗しました",
-    "project_label": "プロジェクト"
+    "project_label": "プロジェクト",
+    "schedule_label": "スケジュール",
+    "schedule_none": "スケジュールなし",
+    "schedule_hourly": "毎時",
+    "schedule_daily": "毎日",
+    "schedule_weekly": "毎週",
+    "schedule_custom": "カスタム（cron）",
+    "schedule_time_label": "時刻",
+    "schedule_day_label": "曜日",
+    "weekdays": {
+      "mon": "月曜日",
+      "tue": "火曜日",
+      "wed": "水曜日",
+      "thu": "木曜日",
+      "fri": "金曜日",
+      "sat": "土曜日",
+      "sun": "日曜日"
+    }
   },
   "detail": {
     "not_found": "キューが見つかりません",
@@ -105,7 +123,8 @@
     "retry_item": "項目を再試行",
     "delete_queue_button": "キューを削除",
     "toast_item_retried": "項目を再試行キューに入れました",
-    "toast_item_retry_failed": "項目の再試行に失敗しました"
+    "toast_item_retry_failed": "項目の再試行に失敗しました",
+    "edit_queue_button": "キューを編集"
   },
   "delete": {
     "menu": "削除",

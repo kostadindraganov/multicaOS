@@ -18,7 +18,8 @@
     "no_matches": "没有符合筛选条件的队列",
     "row_menu": "队列操作",
     "progress_done": "已完成 {{completed}}/{{total}}",
-    "progress_failed": "{{count}} 个失败"
+    "progress_failed": "{{count}} 个失败",
+    "edit_menu": "编辑队列"
   },
   "status": {
     "idle": "空闲",
@@ -60,7 +61,24 @@
     "toast_updated": "队列已更新",
     "toast_create_failed": "创建队列失败",
     "toast_update_failed": "更新队列失败",
-    "project_label": "项目"
+    "project_label": "项目",
+    "schedule_label": "计划",
+    "schedule_none": "无计划",
+    "schedule_hourly": "每小时",
+    "schedule_daily": "每天",
+    "schedule_weekly": "每周",
+    "schedule_custom": "自定义（cron）",
+    "schedule_time_label": "时间",
+    "schedule_day_label": "星期",
+    "weekdays": {
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六",
+      "sun": "周日"
+    }
   },
   "detail": {
     "not_found": "未找到队列",
@@ -105,7 +123,8 @@
     "retry_item": "重试条目",
     "delete_queue_button": "删除队列",
     "toast_item_retried": "条目已加入重试",
-    "toast_item_retry_failed": "重试条目失败"
+    "toast_item_retry_failed": "重试条目失败",
+    "edit_queue_button": "编辑队列"
   },
   "delete": {
     "menu": "删除",

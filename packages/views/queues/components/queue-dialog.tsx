@@ -12,6 +12,13 @@ import { Button } from "@multica/ui/components/ui/button";
 import { Input } from "@multica/ui/components/ui/input";
 import { Textarea } from "@multica/ui/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@multica/ui/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,6 +30,18 @@ import { ActorAvatar } from "../../common/actor-avatar";
 import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
 import { ProjectPicker } from "../../projects/components/project-picker";
 import { useT } from "../../i18n";
+import {
+  buildCron,
+  parseCron,
+  DEFAULT_TIMEZONE,
+  TIMEZONE_OPTIONS,
+  type ScheduleFrequency,
+} from "./cron-schedule";
+
+// Cron day-of-week values in Monday-first display order, and their i18n keys
+// indexed by cron value (Sunday = 0).
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 export type QueueDialogProps =
   | { mode: "create"; open: boolean; onOpenChange: (v: boolean) => void }
@@ -50,9 +69,27 @@ export function QueueDialog(props: QueueDialogProps) {
   const [delayMinutes, setDelayMinutes] = useState(
     initial ? Math.round(initial.item_delay_seconds / 60) : 0,
   );
-  const [cronExpression, setCronExpression] = useState(initial?.cron_expression ?? "");
-  const [timezone, setTimezone] = useState(initial?.timezone ?? "");
+  // Schedule is edited through dropdowns (frequency / time / weekday) and
+  // converted to a cron expression on submit. An existing expression the
+  // dropdowns cannot represent falls back to a raw "custom" input so editing
+  // never mangles a hand-written cron.
+  const parsedCron = parseCron(initial?.cron_expression ?? "");
+  const [frequency, setFrequency] = useState<ScheduleFrequency>(
+    parsedCron ? parsedCron.frequency : "custom",
+  );
+  const [hour, setHour] = useState(parsedCron?.hour ?? 9);
+  const [dayOfWeek, setDayOfWeek] = useState(parsedCron?.dayOfWeek ?? 1);
+  const [customCron, setCustomCron] = useState(initial?.cron_expression ?? "");
+  const [timezone, setTimezone] = useState(initial?.timezone || DEFAULT_TIMEZONE);
   const [submitting, setSubmitting] = useState(false);
+
+  // An edited queue may carry a timezone outside the curated list; keep it
+  // selectable so editing doesn't silently rewrite it.
+  const timezoneChoices: string[] = TIMEZONE_OPTIONS.includes(
+    timezone as (typeof TIMEZONE_OPTIONS)[number],
+  )
+    ? [...TIMEZONE_OPTIONS]
+    : [timezone, ...TIMEZONE_OPTIONS];
 
   const createQueue = useCreateQueue();
   const updateQueue = useUpdateQueue();
@@ -63,14 +100,16 @@ export function QueueDialog(props: QueueDialogProps) {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
+      const cronExpression =
+        frequency === "custom" ? customCron.trim() : buildCron({ frequency, hour, dayOfWeek });
       const data = {
         name: name.trim(),
         description: description.trim() || undefined,
         default_agent_id: agentId || undefined,
         project_id: projectId,
         item_delay_seconds: Math.max(0, delayMinutes) * 60,
-        cron_expression: cronExpression.trim() || undefined,
-        timezone: timezone.trim() || undefined,
+        cron_expression: cronExpression || undefined,
+        timezone: cronExpression ? timezone : undefined,
       };
       if (isCreate) {
         await createQueue.mutateAsync(data);
@@ -190,24 +229,96 @@ export function QueueDialog(props: QueueDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                {t(($) => $.dialog.cron_label)}
+                {t(($) => $.dialog.schedule_label)}
               </label>
-              <Input
-                value={cronExpression}
-                onChange={(e) => setCronExpression(e.target.value)}
-                placeholder={t(($) => $.dialog.cron_placeholder)}
-              />
+              <Select
+                value={frequency}
+                onValueChange={(v) => v && setFrequency(v as ScheduleFrequency)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t(($) => $.dialog.schedule_none)}</SelectItem>
+                  <SelectItem value="hourly">{t(($) => $.dialog.schedule_hourly)}</SelectItem>
+                  <SelectItem value="daily">{t(($) => $.dialog.schedule_daily)}</SelectItem>
+                  <SelectItem value="weekly">{t(($) => $.dialog.schedule_weekly)}</SelectItem>
+                  <SelectItem value="custom">{t(($) => $.dialog.schedule_custom)}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
-                {t(($) => $.dialog.timezone_label)}
-              </label>
-              <Input
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                placeholder={t(($) => $.dialog.timezone_placeholder)}
-              />
-            </div>
+            {frequency === "weekly" && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t(($) => $.dialog.schedule_day_label)}
+                </label>
+                <Select
+                  value={String(dayOfWeek)}
+                  onValueChange={(v) => v && setDayOfWeek(Number(v))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WEEKDAY_ORDER.map((d) => (
+                      <SelectItem key={d} value={String(d)}>
+                        {t(($) => $.dialog.weekdays[WEEKDAY_KEYS[d]])}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {(frequency === "daily" || frequency === "weekly") && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t(($) => $.dialog.schedule_time_label)}
+                </label>
+                <Select value={String(hour)} onValueChange={(v) => v && setHour(Number(v))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 24 }, (_, h) => (
+                      <SelectItem key={h} value={String(h)}>
+                        {String(h).padStart(2, "0")}:00
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {frequency === "custom" && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t(($) => $.dialog.cron_label)}
+                </label>
+                <Input
+                  value={customCron}
+                  onChange={(e) => setCustomCron(e.target.value)}
+                  placeholder={t(($) => $.dialog.cron_placeholder)}
+                />
+              </div>
+            )}
+            {frequency !== "none" && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t(($) => $.dialog.timezone_label)}
+                </label>
+                <Select value={timezone} onValueChange={(v) => v && setTimezone(v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timezoneChoices.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
 

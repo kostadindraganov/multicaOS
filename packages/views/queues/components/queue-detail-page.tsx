@@ -20,6 +20,7 @@ import {
   Loader2,
   MessageSquare,
   Pause,
+  Pencil,
   Play,
   Plus,
   RotateCcw,
@@ -60,6 +61,7 @@ import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
 import { IssuePickerModal } from "../../modals/issue-picker-modal";
 import { QueueStatusBadge } from "./queues-page";
 import { DeleteQueueDialog } from "./delete-queue-dialog";
+import { QueueDialog } from "./queue-dialog";
 import { useT } from "../../i18n";
 
 const ITEM_STATUS_VARIANT: Record<QueueItemStatus, "default" | "secondary" | "outline" | "destructive"> = {
@@ -475,6 +477,7 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
   const navigation = useNavigation();
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [itemIds, setItemIds] = useState<string[]>([]);
   useEffect(() => {
     if (data) {
@@ -599,6 +602,14 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
             <Button
               size="sm"
               variant="outline"
+              aria-label={t(($) => $.detail.edit_queue_button)}
+              onClick={() => setEditOpen(true)}
+            >
+              <Pencil className="size-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               aria-label={t(($) => $.detail.delete_queue_button)}
               className="text-muted-foreground hover:text-destructive"
               onClick={() => setDeleteOpen(true)}
@@ -662,6 +673,9 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
         onOpenChange={setDeleteOpen}
         onDeleted={() => navigation.push(wsPaths.queues())}
       />
+      {editOpen && (
+        <QueueDialog mode="edit" queue={queue} open={editOpen} onOpenChange={setEditOpen} />
+      )}
     </div>
   );
 }

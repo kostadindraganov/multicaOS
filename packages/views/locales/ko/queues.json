@@ -18,7 +18,8 @@
     "no_matches": "필터와 일치하는 큐가 없습니다",
     "row_menu": "큐 작업",
     "progress_done": "{{completed}}/{{total}} 완료",
-    "progress_failed": "{{count}}개 실패"
+    "progress_failed": "{{count}}개 실패",
+    "edit_menu": "큐 편집"
   },
   "status": {
     "idle": "대기",
@@ -60,7 +61,24 @@
     "toast_updated": "큐가 업데이트되었습니다",
     "toast_create_failed": "큐 생성에 실패했습니다",
     "toast_update_failed": "큐 업데이트에 실패했습니다",
-    "project_label": "프로젝트"
+    "project_label": "프로젝트",
+    "schedule_label": "일정",
+    "schedule_none": "일정 없음",
+    "schedule_hourly": "매시간",
+    "schedule_daily": "매일",
+    "schedule_weekly": "매주",
+    "schedule_custom": "사용자 지정(cron)",
+    "schedule_time_label": "시간",
+    "schedule_day_label": "요일",
+    "weekdays": {
+      "mon": "월요일",
+      "tue": "화요일",
+      "wed": "수요일",
+      "thu": "목요일",
+      "fri": "금요일",
+      "sat": "토요일",
+      "sun": "일요일"
+    }
   },
   "detail": {
     "not_found": "큐를 찾을 수 없습니다",
@@ -105,7 +123,8 @@
     "retry_item": "항목 재시도",
     "delete_queue_button": "큐 삭제",
     "toast_item_retried": "항목을 재시도 대기열에 추가했습니다",
-    "toast_item_retry_failed": "항목 재시도에 실패했습니다"
+    "toast_item_retry_failed": "항목 재시도에 실패했습니다",
+    "edit_queue_button": "큐 편집"
   },
   "delete": {
     "menu": "삭제",

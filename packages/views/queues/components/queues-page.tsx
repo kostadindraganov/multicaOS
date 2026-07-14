@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ListChecks, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { ListChecks, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queueListOptions } from "@multica/core/queues";
 import { projectListOptions } from "@multica/core/projects/queries";
@@ -179,6 +179,7 @@ export function QueuesPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<WorkQueue | null>(null);
+  const [editTarget, setEditTarget] = useState<WorkQueue | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | QueueStatus>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
@@ -322,6 +323,10 @@ export function QueuesPage() {
                               <MoreHorizontal className="size-3.5" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setEditTarget(queue)}>
+                                <Pencil className="size-3.5" />
+                                {t(($) => $.page.edit_menu)}
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 variant="destructive"
                                 onClick={() => setDeleteTarget(queue)}
@@ -344,6 +349,16 @@ export function QueuesPage() {
 
       {createOpen && (
         <QueueDialog mode="create" open={createOpen} onOpenChange={setCreateOpen} />
+      )}
+      {editTarget && (
+        <QueueDialog
+          mode="edit"
+          queue={editTarget}
+          open={!!editTarget}
+          onOpenChange={(v) => {
+            if (!v) setEditTarget(null);
+          }}
+        />
       )}
       {deleteTarget && (
         <DeleteQueueDialog
