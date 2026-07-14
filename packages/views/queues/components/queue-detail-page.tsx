@@ -22,6 +22,7 @@ import {
   Pause,
   Play,
   Plus,
+  RotateCcw,
   RotateCw,
   Trash2,
 } from "lucide-react";
@@ -33,6 +34,7 @@ import {
   usePauseQueue,
   useResumeQueue,
   useReorderQueueItems,
+  useRetryQueueItem,
   useStartQueue,
   useUpdateQueueItem,
 } from "@multica/core/queues";
@@ -51,12 +53,13 @@ import {
 import { Skeleton } from "@multica/ui/components/ui/skeleton";
 import { Textarea } from "@multica/ui/components/ui/textarea";
 import { cn } from "@multica/ui/lib/utils";
-import { AppLink } from "../../navigation";
+import { AppLink, useNavigation } from "../../navigation";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
 import { IssuePickerModal } from "../../modals/issue-picker-modal";
 import { QueueStatusBadge } from "./queues-page";
+import { DeleteQueueDialog } from "./delete-queue-dialog";
 import { useT } from "../../i18n";
 
 const ITEM_STATUS_VARIANT: Record<QueueItemStatus, "default" | "secondary" | "outline" | "destructive"> = {
@@ -94,6 +97,7 @@ function ItemRow({
   const { getActorName } = useActorName();
   const updateItem = useUpdateQueueItem();
   const deleteItem = useDeleteQueueItem();
+  const retryItem = useRetryQueueItem();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -130,6 +134,21 @@ function ItemRow({
             err instanceof Error && err.message
               ? err.message
               : t(($) => $.detail.toast_item_delete_failed),
+          ),
+      },
+    );
+  };
+
+  const handleRetry = () => {
+    retryItem.mutate(
+      { id: queueId, itemId: item.id },
+      {
+        onSuccess: () => toast.success(t(($) => $.detail.toast_item_retried)),
+        onError: (err) =>
+          toast.error(
+            err instanceof Error && err.message
+              ? err.message
+              : t(($) => $.detail.toast_item_retry_failed),
           ),
       },
     );
@@ -201,7 +220,18 @@ function ItemRow({
         <ItemStatusBadge status={item.status} />
       </div>
 
-      <div className="mt-0.5 shrink-0">
+      <div className="mt-0.5 flex shrink-0 items-center">
+        {item.status === "failed" && (
+          <button
+            type="button"
+            aria-label={t(($) => $.detail.retry_item)}
+            disabled={retryItem.isPending}
+            onClick={handleRetry}
+            className="flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="size-3.5" />
+          </button>
+        )}
         <button
           type="button"
           aria-label={t(($) => $.detail.delete_item)}
@@ -226,18 +256,18 @@ function AddItemComposer({ queueId, existingIssueIds }: { queueId: string; exist
   const [mode, setMode] = useState<"prompt" | "issue">("prompt");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [selectedIssues, setSelectedIssues] = useState<Issue[]>([]);
   const [agentId, setAgentId] = useState("");
   const [issuePickerOpen, setIssuePickerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit =
-    !submitting && (mode === "prompt" ? title.trim().length > 0 : selectedIssue !== null);
+    !submitting && (mode === "prompt" ? title.trim().length > 0 : selectedIssues.length > 0);
 
   const reset = () => {
     setTitle("");
     setBody("");
-    setSelectedIssue(null);
+    setSelectedIssues([]);
     setAgentId("");
   };
 
@@ -247,20 +277,21 @@ function AddItemComposer({ queueId, existingIssueIds }: { queueId: string; exist
     try {
       await addItems.mutateAsync({
         id: queueId,
-        items: [
+        items:
           mode === "prompt"
-            ? {
-                kind: "prompt",
-                title: title.trim(),
-                body: body.trim() || undefined,
+            ? [
+                {
+                  kind: "prompt" as const,
+                  title: title.trim(),
+                  body: body.trim() || undefined,
+                  agent_id: agentId || undefined,
+                },
+              ]
+            : selectedIssues.map((issue) => ({
+                kind: "issue" as const,
+                issue_id: issue.id,
                 agent_id: agentId || undefined,
-              }
-            : {
-                kind: "issue",
-                issue_id: selectedIssue!.id,
-                agent_id: agentId || undefined,
-              },
-        ],
+              })),
       });
       toast.success(t(($) => $.detail.toast_item_added));
       reset();
@@ -322,7 +353,11 @@ function AddItemComposer({ queueId, existingIssueIds }: { queueId: string; exist
               className="w-full justify-start"
               onClick={() => setIssuePickerOpen(true)}
             >
-              {selectedIssue ? selectedIssue.title : t(($) => $.detail.composer.pick_issue_button)}
+              {selectedIssues.length === 1
+                ? selectedIssues[0]!.title
+                : selectedIssues.length > 1
+                  ? t(($) => $.detail.composer.picked_count, { count: selectedIssues.length })
+                  : t(($) => $.detail.composer.pick_issue_button)}
             </Button>
           )}
         </div>
@@ -351,7 +386,10 @@ function AddItemComposer({ queueId, existingIssueIds }: { queueId: string; exist
         title={t(($) => $.detail.composer.pick_issue_button)}
         description={t(($) => $.detail.composer.mode_issue)}
         excludeIds={existingIssueIds}
-        onSelect={setSelectedIssue}
+        preloadAll
+        multiple
+        onSelect={(issue) => setSelectedIssues([issue])}
+        onSelectMany={setSelectedIssues}
       />
     </div>
   );
@@ -434,7 +472,9 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
   const resumeQueue = useResumeQueue();
   const clearFinished = useClearFinishedQueueItems();
   const reorderItems = useReorderQueueItems();
+  const navigation = useNavigation();
 
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [itemIds, setItemIds] = useState<string[]>([]);
   useEffect(() => {
     if (data) {
@@ -556,6 +596,15 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
               <RotateCw className="size-3.5" />
               {t(($) => $.detail.clear_finished_button)}
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              aria-label={t(($) => $.detail.delete_queue_button)}
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
           </>
         }
       />
@@ -606,6 +655,13 @@ export function QueueDetailPage({ queueId }: { queueId: string }) {
       </div>
 
       <AddItemComposer queueId={queueId} existingIssueIds={existingIssueIds} />
+
+      <DeleteQueueDialog
+        queue={queue}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => navigation.push(wsPaths.queues())}
+      />
     </div>
   );
 }

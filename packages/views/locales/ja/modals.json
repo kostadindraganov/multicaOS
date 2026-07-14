@@ -36,7 +36,8 @@
     "search_placeholder": "イシューを検索...",
     "searching": "検索中...",
     "no_results": "イシューが見つかりません。",
-    "prompt_to_search": "イシューを検索するには入力してください"
+    "prompt_to_search": "イシューを検索するには入力してください",
+    "add_selected_other": "{{count}}件のイシューを追加"
   },
   "set_parent": {
     "title": "親イシューを設定",

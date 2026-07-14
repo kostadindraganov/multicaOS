@@ -21,6 +21,7 @@ import {
 } from "@multica/ui/components/ui/dialog";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
+import { ProjectPicker } from "../../projects/components/project-picker";
 import { useT } from "../../i18n";
 
 export type QueueDialogProps =
@@ -43,6 +44,7 @@ export function QueueDialog(props: QueueDialogProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [agentId, setAgentId] = useState<string>(initial?.default_agent_id ?? "");
+  const [projectId, setProjectId] = useState<string | null>(initial?.project_id ?? null);
   // Delay is stored server-side in seconds; the form works in minutes for
   // usability, converting ×60 on submit.
   const [delayMinutes, setDelayMinutes] = useState(
@@ -65,6 +67,7 @@ export function QueueDialog(props: QueueDialogProps) {
         name: name.trim(),
         description: description.trim() || undefined,
         default_agent_id: agentId || undefined,
+        project_id: projectId,
         item_delay_seconds: Math.max(0, delayMinutes) * 60,
         cron_expression: cronExpression.trim() || undefined,
         timezone: timezone.trim() || undefined,
@@ -151,6 +154,23 @@ export function QueueDialog(props: QueueDialogProps) {
                       : t(($) => $.dialog.select_agent)}
                   </span>
                 </button>
+              }
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t(($) => $.dialog.project_label)}
+            </label>
+            <ProjectPicker
+              projectId={projectId}
+              onUpdate={(updates) => setProjectId(updates.project_id ?? null)}
+              align="start"
+              triggerRender={
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-md border bg-background px-2.5 py-1.5 text-left text-sm hover:bg-accent/40 transition-colors cursor-pointer"
+                />
               }
             />
           </div>

@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   addItems: vi.fn(),
   updateItem: vi.fn(),
   deleteItem: vi.fn(),
+  retryItem: vi.fn(),
+  deleteQueue: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -41,6 +43,8 @@ vi.mock("@multica/core/queues", () => ({
   useReorderQueueItems: () => ({ mutate: mocks.reorderItems }),
   useStartQueue: () => ({ mutateAsync: mocks.startQueue, isPending: false }),
   useUpdateQueueItem: () => ({ mutate: mocks.updateItem }),
+  useRetryQueueItem: () => ({ mutate: mocks.retryItem, isPending: false }),
+  useDeleteQueue: () => ({ mutateAsync: mocks.deleteQueue }),
 }));
 
 vi.mock("@multica/core/hooks", () => ({
@@ -216,6 +220,9 @@ beforeEach(() => {
   mocks.addItems.mockClear();
   mocks.updateItem.mockClear();
   mocks.deleteItem.mockClear();
+  mocks.retryItem.mockClear();
+  mocks.deleteQueue.mockClear();
+  mocks.deleteQueue.mockResolvedValue(undefined);
 });
 
 describe("QueueDetailPage — verb buttons", () => {
@@ -286,5 +293,51 @@ describe("QueueDetailPage — composer validation", () => {
 
     expect(screen.getByRole("button", { name: /Add/ })).toBeDisabled();
     expect(mocks.addItems).not.toHaveBeenCalled();
+  });
+});
+
+describe("QueueDetailPage — retry failed item", () => {
+  it("shows Retry only on failed items and calls the mutation", async () => {
+    const user = userEvent.setup();
+    renderDetail({
+      queue: QUEUE,
+      items: [
+        ITEMS[0]!,
+        { ...ITEMS[1]!, status: "failed", error: "boom" },
+      ],
+    });
+
+    const retryButtons = screen.getAllByRole("button", { name: "Retry item" });
+    expect(retryButtons).toHaveLength(1);
+
+    await user.click(retryButtons[0]!);
+
+    expect(mocks.retryItem).toHaveBeenCalledTimes(1);
+    const [payload] = mocks.retryItem.mock.calls[0]!;
+    expect(payload).toEqual({ id: "queue-1", itemId: "item-2" });
+  });
+});
+
+describe("QueueDetailPage — delete queue", () => {
+  it("awaits the delete then navigates back to the queues list", async () => {
+    const user = userEvent.setup();
+    const adapter = renderDetail({ queue: QUEUE, items: [] });
+
+    await user.click(screen.getByRole("button", { name: "Delete queue" }));
+    expect(await screen.findByText(/Delete "Backlog groomer"\?/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(mocks.deleteQueue).toHaveBeenCalledWith("queue-1");
+    expect(adapter.push).toHaveBeenCalledWith("/test-workspace/queues");
+  });
+
+  it("warns about the in-flight task when the queue is running", async () => {
+    const user = userEvent.setup();
+    renderDetail({ queue: { ...QUEUE, status: "running" }, items: [] });
+
+    await user.click(screen.getByRole("button", { name: "Delete queue" }));
+
+    expect(await screen.findByText(/task will keep running/)).toBeInTheDocument();
   });
 });

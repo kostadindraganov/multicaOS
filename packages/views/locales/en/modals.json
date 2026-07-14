@@ -36,7 +36,9 @@
     "search_placeholder": "Search issues...",
     "searching": "Searching...",
     "no_results": "No issues found.",
-    "prompt_to_search": "Type to search issues"
+    "prompt_to_search": "Type to search issues",
+    "add_selected_one": "Add {{count}} issue",
+    "add_selected_other": "Add {{count}} issues"
   },
   "set_parent": {
     "title": "Set parent issue",

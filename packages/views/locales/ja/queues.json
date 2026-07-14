@@ -8,8 +8,17 @@
       "name": "名前",
       "status": "ステータス",
       "agent": "エージェント",
-      "next_run": "次回実行"
-    }
+      "next_run": "次回実行",
+      "progress": "進捗"
+    },
+    "search_placeholder": "キューを検索…",
+    "filter_status_all": "すべてのステータス",
+    "filter_project_all": "すべてのプロジェクト",
+    "filter_project_none": "プロジェクトなし",
+    "no_matches": "条件に一致するキューがありません",
+    "row_menu": "キューの操作",
+    "progress_done": "{{completed}}/{{total}} 完了",
+    "progress_failed": "{{count}} 件失敗"
   },
   "status": {
     "idle": "待機中",
@@ -50,7 +59,8 @@
     "toast_created": "キューを作成しました",
     "toast_updated": "キューを更新しました",
     "toast_create_failed": "キューの作成に失敗しました",
-    "toast_update_failed": "キューの更新に失敗しました"
+    "toast_update_failed": "キューの更新に失敗しました",
+    "project_label": "プロジェクト"
   },
   "detail": {
     "not_found": "キューが見つかりません",
@@ -75,7 +85,8 @@
       "title_placeholder": "項目のタイトル",
       "body_placeholder": "エージェントへの詳細（任意）",
       "pick_issue_button": "イシューを選択",
-      "add_button": "追加"
+      "add_button": "追加",
+      "picked_count": "{{count}} 件のイシューを選択中"
     },
     "toast_item_added": "項目を追加しました",
     "toast_item_add_failed": "項目の追加に失敗しました",
@@ -90,6 +101,21 @@
     "toast_resume_failed": "キューの再開に失敗しました",
     "toast_cleared": "完了済み項目をクリアしました",
     "toast_clear_failed": "完了済み項目のクリアに失敗しました",
-    "toast_reorder_failed": "並べ替えに失敗しました"
+    "toast_reorder_failed": "並べ替えに失敗しました",
+    "retry_item": "項目を再試行",
+    "delete_queue_button": "キューを削除",
+    "toast_item_retried": "項目を再試行キューに入れました",
+    "toast_item_retry_failed": "項目の再試行に失敗しました"
+  },
+  "delete": {
+    "menu": "削除",
+    "title": "「{{name}}」を削除しますか？",
+    "description": "キューとすべての項目が削除されます。この操作は取り消せません。",
+    "running_warning": "実行中の項目があります。キューを削除してもそのタスクは実行され続けます。",
+    "cancel": "キャンセル",
+    "confirm": "削除",
+    "deleting": "削除中…",
+    "toast_deleted": "キューを削除しました",
+    "toast_delete_failed": "キューの削除に失敗しました"
   }
 }

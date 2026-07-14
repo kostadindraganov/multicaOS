@@ -8,8 +8,17 @@
       "name": "名称",
       "status": "状态",
       "agent": "智能体",
-      "next_run": "下次运行"
-    }
+      "next_run": "下次运行",
+      "progress": "进度"
+    },
+    "search_placeholder": "搜索队列…",
+    "filter_status_all": "全部状态",
+    "filter_project_all": "全部项目",
+    "filter_project_none": "无项目",
+    "no_matches": "没有符合筛选条件的队列",
+    "row_menu": "队列操作",
+    "progress_done": "已完成 {{completed}}/{{total}}",
+    "progress_failed": "{{count}} 个失败"
   },
   "status": {
     "idle": "空闲",
@@ -50,7 +59,8 @@
     "toast_created": "队列已创建",
     "toast_updated": "队列已更新",
     "toast_create_failed": "创建队列失败",
-    "toast_update_failed": "更新队列失败"
+    "toast_update_failed": "更新队列失败",
+    "project_label": "项目"
   },
   "detail": {
     "not_found": "未找到队列",
@@ -75,7 +85,8 @@
       "title_placeholder": "条目标题",
       "body_placeholder": "给智能体的详细说明（可选）",
       "pick_issue_button": "选择 issue",
-      "add_button": "添加"
+      "add_button": "添加",
+      "picked_count": "已选择 {{count}} 个 issue"
     },
     "toast_item_added": "条目已添加",
     "toast_item_add_failed": "添加条目失败",
@@ -90,6 +101,21 @@
     "toast_resume_failed": "继续队列失败",
     "toast_cleared": "已完成条目已清除",
     "toast_clear_failed": "清除已完成条目失败",
-    "toast_reorder_failed": "排序失败"
+    "toast_reorder_failed": "排序失败",
+    "retry_item": "重试条目",
+    "delete_queue_button": "删除队列",
+    "toast_item_retried": "条目已加入重试",
+    "toast_item_retry_failed": "重试条目失败"
+  },
+  "delete": {
+    "menu": "删除",
+    "title": "删除“{{name}}”？",
+    "description": "队列及其所有条目将被删除，此操作无法撤销。",
+    "running_warning": "有条目正在运行；删除队列后该任务仍会继续运行。",
+    "cancel": "取消",
+    "confirm": "删除",
+    "deleting": "正在删除…",
+    "toast_deleted": "队列已删除",
+    "toast_delete_failed": "删除队列失败"
   }
 }

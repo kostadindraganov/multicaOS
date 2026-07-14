@@ -36,7 +36,8 @@
     "search_placeholder": "搜索 issue...",
     "searching": "搜索中...",
     "no_results": "未找到 issue。",
-    "prompt_to_search": "输入关键词搜索 issue"
+    "prompt_to_search": "输入关键词搜索 issue",
+    "add_selected_other": "添加 {{count}} 个 issue"
   },
   "set_parent": {
     "title": "设置父 issue",

@@ -8,8 +8,17 @@
       "name": "이름",
       "status": "상태",
       "agent": "에이전트",
-      "next_run": "다음 실행"
-    }
+      "next_run": "다음 실행",
+      "progress": "진행률"
+    },
+    "search_placeholder": "큐 검색…",
+    "filter_status_all": "모든 상태",
+    "filter_project_all": "모든 프로젝트",
+    "filter_project_none": "프로젝트 없음",
+    "no_matches": "필터와 일치하는 큐가 없습니다",
+    "row_menu": "큐 작업",
+    "progress_done": "{{completed}}/{{total}} 완료",
+    "progress_failed": "{{count}}개 실패"
   },
   "status": {
     "idle": "대기",
@@ -50,7 +59,8 @@
     "toast_created": "큐가 생성되었습니다",
     "toast_updated": "큐가 업데이트되었습니다",
     "toast_create_failed": "큐 생성에 실패했습니다",
-    "toast_update_failed": "큐 업데이트에 실패했습니다"
+    "toast_update_failed": "큐 업데이트에 실패했습니다",
+    "project_label": "프로젝트"
   },
   "detail": {
     "not_found": "큐를 찾을 수 없습니다",
@@ -75,7 +85,8 @@
       "title_placeholder": "항목 제목",
       "body_placeholder": "에이전트에 대한 세부 설명(선택 사항)",
       "pick_issue_button": "이슈 선택",
-      "add_button": "추가"
+      "add_button": "추가",
+      "picked_count": "이슈 {{count}}개 선택됨"
     },
     "toast_item_added": "항목이 추가되었습니다",
     "toast_item_add_failed": "항목 추가에 실패했습니다",
@@ -90,6 +101,21 @@
     "toast_resume_failed": "큐 재개에 실패했습니다",
     "toast_cleared": "완료 항목이 지워졌습니다",
     "toast_clear_failed": "완료 항목 지우기에 실패했습니다",
-    "toast_reorder_failed": "순서 변경에 실패했습니다"
+    "toast_reorder_failed": "순서 변경에 실패했습니다",
+    "retry_item": "항목 재시도",
+    "delete_queue_button": "큐 삭제",
+    "toast_item_retried": "항목을 재시도 대기열에 추가했습니다",
+    "toast_item_retry_failed": "항목 재시도에 실패했습니다"
+  },
+  "delete": {
+    "menu": "삭제",
+    "title": "\"{{name}}\"을(를) 삭제할까요?",
+    "description": "큐와 모든 항목이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "running_warning": "실행 중인 항목이 있습니다. 큐를 삭제해도 해당 태스크는 계속 실행됩니다.",
+    "cancel": "취소",
+    "confirm": "삭제",
+    "deleting": "삭제 중…",
+    "toast_deleted": "큐를 삭제했습니다",
+    "toast_delete_failed": "큐 삭제에 실패했습니다"
   }
 }
