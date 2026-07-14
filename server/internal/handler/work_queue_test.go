@@ -382,3 +382,117 @@ func TestWorkQueue_CrossWorkspace404(t *testing.T) {
 		t.Fatalf("GetWorkQueue cross-workspace: expected 404, got %d: %s", w.Code, w.Body.String())
 	}
 }
+
+// TestWorkQueue_ProjectID locks in project_id behavior: a nonexistent
+// project is a 400 (not an FK-violation 500), a real one round-trips through
+// create/update, and sending null clears it.
+func TestWorkQueue_ProjectID(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	// Nonexistent project -> 400.
+	w := httptest.NewRecorder()
+	testHandler.CreateWorkQueue(w, newRequest("POST", "/api/queues", map[string]any{
+		"name":       "Bad project queue",
+		"project_id": uuid.New().String(),
+	}))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("CreateWorkQueue with nonexistent project_id: expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var projectID string
+	if err := testPool.QueryRow(context.Background(),
+		`INSERT INTO project (workspace_id, title) VALUES ($1, $2) RETURNING id`,
+		testWorkspaceID, "Work queue project").Scan(&projectID); err != nil {
+		t.Fatalf("insert project: %v", err)
+	}
+	t.Cleanup(func() {
+		testPool.Exec(context.Background(), `DELETE FROM project WHERE id = $1`, projectID)
+	})
+
+	queue := createTestWorkQueue(t, map[string]any{
+		"name":       "Project queue",
+		"project_id": projectID,
+	})
+	if got, _ := queue["project_id"].(string); got != projectID {
+		t.Fatalf("CreateWorkQueue: expected project_id %s, got %v", projectID, queue["project_id"])
+	}
+	queueID, _ := queue["id"].(string)
+
+	// Clear via PATCH project_id: null.
+	w = httptest.NewRecorder()
+	patchReq := withURLParam(newRequest("PATCH", "/api/queues/"+queueID, map[string]any{"project_id": nil}), "id", queueID)
+	testHandler.UpdateWorkQueue(w, patchReq)
+	if w.Code != http.StatusOK {
+		t.Fatalf("UpdateWorkQueue clearing project_id: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var patchResp struct {
+		Queue map[string]any `json:"queue"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &patchResp)
+	if patchResp.Queue["project_id"] != nil {
+		t.Fatalf("UpdateWorkQueue: expected project_id cleared, got %v", patchResp.Queue["project_id"])
+	}
+}
+
+// TestRetryWorkQueueItem locks in the retry verb: failed -> pending with
+// error/task linkage cleared; anything not failed -> 400.
+func TestRetryWorkQueueItem(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	agentID := createHandlerTestAgent(t, "work-queue-retry-agent", []byte(`[]`))
+	queue := createTestWorkQueue(t, map[string]any{
+		"name":             "Retry queue",
+		"default_agent_id": agentID,
+	})
+	queueID, _ := queue["id"].(string)
+
+	w := httptest.NewRecorder()
+	addReq := withURLParam(newRequest("POST", "/api/queues/"+queueID+"/items", map[string]any{
+		"items": []map[string]any{{"kind": "prompt", "title": "Flaky item"}},
+	}), "id", queueID)
+	testHandler.CreateWorkQueueItems(w, addReq)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("CreateWorkQueueItems: expected 201, got %d: %s", w.Code, w.Body.String())
+	}
+	var itemsResp struct {
+		Items []map[string]any `json:"items"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &itemsResp)
+	itemID, _ := itemsResp.Items[0]["id"].(string)
+
+	// Retry a pending item -> 400.
+	w = httptest.NewRecorder()
+	retryReq := withURLParams(newRequest("POST", "/api/queues/"+queueID+"/items/"+itemID+"/retry", nil),
+		"id", queueID, "itemId", itemID)
+	testHandler.RetryWorkQueueItem(w, retryReq)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("RetryWorkQueueItem on pending item: expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// Force the item into failed with error/task metadata, then retry -> 204.
+	if _, err := testPool.Exec(context.Background(),
+		`UPDATE work_queue_item SET status = 'failed', error = 'boom', started_at = now(), finished_at = now() WHERE id = $1`,
+		itemID); err != nil {
+		t.Fatalf("mark item failed: %v", err)
+	}
+	w = httptest.NewRecorder()
+	retryReq = withURLParams(newRequest("POST", "/api/queues/"+queueID+"/items/"+itemID+"/retry", nil),
+		"id", queueID, "itemId", itemID)
+	testHandler.RetryWorkQueueItem(w, retryReq)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("RetryWorkQueueItem on failed item: expected 204, got %d: %s", w.Code, w.Body.String())
+	}
+
+	_, items, code := getTestWorkQueue(t, queueID)
+	if code != http.StatusOK || len(items) != 1 {
+		t.Fatalf("GetWorkQueue after retry: got %v (code %d)", items, code)
+	}
+	it := items[0]
+	if it["status"] != "pending" || it["error"] != nil || it["task_id"] != nil || it["started_at"] != nil || it["finished_at"] != nil {
+		t.Fatalf("expected retried item reset to pending with cleared metadata, got %v", it)
+	}
+}

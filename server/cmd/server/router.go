@@ -1164,6 +1164,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Route("/items/{itemId}", func(r chi.Router) {
 						r.Patch("/", h.UpdateWorkQueueItem)
 						r.Delete("/", h.DeleteWorkQueueItem)
+						r.Post("/retry", h.RetryWorkQueueItem)
 					})
 				})
 			})

@@ -1026,6 +1026,7 @@ type WorkQueue struct {
 	CreatedBy        pgtype.UUID        `json:"created_by"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ProjectID        pgtype.UUID        `json:"project_id"`
 }
 
 type WorkQueueItem struct {

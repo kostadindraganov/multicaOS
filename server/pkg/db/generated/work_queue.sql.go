@@ -15,9 +15,10 @@ const createWorkQueue = `-- name: CreateWorkQueue :one
 
 INSERT INTO work_queue (
     workspace_id, name, description, default_agent_id,
-    item_delay_seconds, cron_expression, timezone, next_run_at, created_by
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at
+    item_delay_seconds, cron_expression, timezone, next_run_at, created_by,
+    project_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at, project_id
 `
 
 type CreateWorkQueueParams struct {
@@ -30,6 +31,7 @@ type CreateWorkQueueParams struct {
 	Timezone         pgtype.Text        `json:"timezone"`
 	NextRunAt        pgtype.Timestamptz `json:"next_run_at"`
 	CreatedBy        pgtype.UUID        `json:"created_by"`
+	ProjectID        pgtype.UUID        `json:"project_id"`
 }
 
 // ============================================================
@@ -46,6 +48,7 @@ func (q *Queries) CreateWorkQueue(ctx context.Context, arg CreateWorkQueueParams
 		arg.Timezone,
 		arg.NextRunAt,
 		arg.CreatedBy,
+		arg.ProjectID,
 	)
 	var i WorkQueue
 	err := row.Scan(
@@ -63,6 +66,7 @@ func (q *Queries) CreateWorkQueue(ctx context.Context, arg CreateWorkQueueParams
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }
@@ -200,7 +204,7 @@ func (q *Queries) GetRunningWorkQueueItem(ctx context.Context, queueID pgtype.UU
 }
 
 const getWorkQueue = `-- name: GetWorkQueue :one
-SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at FROM work_queue
+SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at, project_id FROM work_queue
 WHERE id = $1
 `
 
@@ -222,12 +226,13 @@ func (q *Queries) GetWorkQueue(ctx context.Context, id pgtype.UUID) (WorkQueue, 
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }
 
 const getWorkQueueInWorkspace = `-- name: GetWorkQueueInWorkspace :one
-SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at FROM work_queue
+SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at, project_id FROM work_queue
 WHERE id = $1 AND workspace_id = $2
 `
 
@@ -254,6 +259,7 @@ func (q *Queries) GetWorkQueueInWorkspace(ctx context.Context, arg GetWorkQueueI
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }
@@ -353,7 +359,7 @@ func (q *Queries) LastFinishedWorkQueueItem(ctx context.Context, queueID pgtype.
 }
 
 const listRunnableWorkQueues = `-- name: ListRunnableWorkQueues :many
-SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at FROM work_queue
+SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at, project_id FROM work_queue
 WHERE status = 'running'
    OR (status = 'scheduled' AND start_at IS NOT NULL AND start_at <= now())
    OR (
@@ -393,6 +399,7 @@ func (q *Queries) ListRunnableWorkQueues(ctx context.Context) ([]WorkQueue, erro
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}
@@ -453,35 +460,57 @@ func (q *Queries) ListWorkQueueItems(ctx context.Context, arg ListWorkQueueItems
 }
 
 const listWorkQueues = `-- name: ListWorkQueues :many
-SELECT id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at FROM work_queue
-WHERE workspace_id = $1
-ORDER BY created_at DESC
+SELECT work_queue.id, work_queue.workspace_id, work_queue.name, work_queue.description, work_queue.default_agent_id, work_queue.status, work_queue.start_at, work_queue.item_delay_seconds, work_queue.cron_expression, work_queue.timezone, work_queue.next_run_at, work_queue.created_by, work_queue.created_at, work_queue.updated_at, work_queue.project_id,
+       (count(i.id) FILTER (WHERE i.status = 'pending'))::bigint   AS pending_count,
+       (count(i.id) FILTER (WHERE i.status = 'running'))::bigint   AS running_count,
+       (count(i.id) FILTER (WHERE i.status = 'completed'))::bigint AS completed_count,
+       (count(i.id) FILTER (WHERE i.status = 'failed'))::bigint    AS failed_count
+FROM work_queue
+LEFT JOIN work_queue_item i ON i.queue_id = work_queue.id
+WHERE work_queue.workspace_id = $1
+GROUP BY work_queue.id
+ORDER BY work_queue.created_at DESC
 `
 
-func (q *Queries) ListWorkQueues(ctx context.Context, workspaceID pgtype.UUID) ([]WorkQueue, error) {
+type ListWorkQueuesRow struct {
+	WorkQueue      WorkQueue `json:"work_queue"`
+	PendingCount   int64     `json:"pending_count"`
+	RunningCount   int64     `json:"running_count"`
+	CompletedCount int64     `json:"completed_count"`
+	FailedCount    int64     `json:"failed_count"`
+}
+
+// ListWorkQueues returns each queue with derived per-status item counts so
+// the list view renders progress without an N+1 item fetch per queue.
+func (q *Queries) ListWorkQueues(ctx context.Context, workspaceID pgtype.UUID) ([]ListWorkQueuesRow, error) {
 	rows, err := q.db.Query(ctx, listWorkQueues, workspaceID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []WorkQueue{}
+	items := []ListWorkQueuesRow{}
 	for rows.Next() {
-		var i WorkQueue
+		var i ListWorkQueuesRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.WorkspaceID,
-			&i.Name,
-			&i.Description,
-			&i.DefaultAgentID,
-			&i.Status,
-			&i.StartAt,
-			&i.ItemDelaySeconds,
-			&i.CronExpression,
-			&i.Timezone,
-			&i.NextRunAt,
-			&i.CreatedBy,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.WorkQueue.ID,
+			&i.WorkQueue.WorkspaceID,
+			&i.WorkQueue.Name,
+			&i.WorkQueue.Description,
+			&i.WorkQueue.DefaultAgentID,
+			&i.WorkQueue.Status,
+			&i.WorkQueue.StartAt,
+			&i.WorkQueue.ItemDelaySeconds,
+			&i.WorkQueue.CronExpression,
+			&i.WorkQueue.Timezone,
+			&i.WorkQueue.NextRunAt,
+			&i.WorkQueue.CreatedBy,
+			&i.WorkQueue.CreatedAt,
+			&i.WorkQueue.UpdatedAt,
+			&i.WorkQueue.ProjectID,
+			&i.PendingCount,
+			&i.RunningCount,
+			&i.CompletedCount,
+			&i.FailedCount,
 		); err != nil {
 			return nil, err
 		}
@@ -647,10 +676,32 @@ func (q *Queries) NextPendingWorkQueueItem(ctx context.Context, queueID pgtype.U
 	return i, err
 }
 
+const retryWorkQueueItem = `-- name: RetryWorkQueueItem :execrows
+UPDATE work_queue_item SET
+    status = 'pending', error = NULL, task_id = NULL,
+    started_at = NULL, finished_at = NULL, updated_at = now()
+WHERE id = $1 AND workspace_id = $2 AND status = 'failed'
+`
+
+type RetryWorkQueueItemParams struct {
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+// RetryWorkQueueItem re-enqueues a failed item. The status guard makes it a
+// no-op (0 rows) for anything not currently failed.
+func (q *Queries) RetryWorkQueueItem(ctx context.Context, arg RetryWorkQueueItemParams) (int64, error) {
+	result, err := q.db.Exec(ctx, retryWorkQueueItem, arg.ID, arg.WorkspaceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const setWorkQueueStatus = `-- name: SetWorkQueueStatus :one
 UPDATE work_queue SET status = $3, start_at = $4, updated_at = now()
 WHERE id = $1 AND workspace_id = $2
-RETURNING id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at
+RETURNING id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at, project_id
 `
 
 type SetWorkQueueStatusParams struct {
@@ -683,6 +734,7 @@ func (q *Queries) SetWorkQueueStatus(ctx context.Context, arg SetWorkQueueStatus
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }
@@ -692,13 +744,14 @@ UPDATE work_queue SET
     name = COALESCE($3, name),
     description = COALESCE($4, description),
     default_agent_id = CASE WHEN $5::bool THEN $6 ELSE default_agent_id END,
-    item_delay_seconds = COALESCE($7, item_delay_seconds),
-    cron_expression = CASE WHEN $8::bool THEN $9 ELSE cron_expression END,
-    timezone = CASE WHEN $8::bool THEN $10 ELSE timezone END,
-    next_run_at = CASE WHEN $8::bool THEN $11 ELSE next_run_at END,
+    project_id = CASE WHEN $7::bool THEN $8 ELSE project_id END,
+    item_delay_seconds = COALESCE($9, item_delay_seconds),
+    cron_expression = CASE WHEN $10::bool THEN $11 ELSE cron_expression END,
+    timezone = CASE WHEN $10::bool THEN $12 ELSE timezone END,
+    next_run_at = CASE WHEN $10::bool THEN $13 ELSE next_run_at END,
     updated_at = now()
 WHERE id = $1 AND workspace_id = $2
-RETURNING id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at
+RETURNING id, workspace_id, name, description, default_agent_id, status, start_at, item_delay_seconds, cron_expression, timezone, next_run_at, created_by, created_at, updated_at, project_id
 `
 
 type UpdateWorkQueueParams struct {
@@ -708,6 +761,8 @@ type UpdateWorkQueueParams struct {
 	Description      pgtype.Text        `json:"description"`
 	SetDefaultAgent  bool               `json:"set_default_agent"`
 	DefaultAgentID   pgtype.UUID        `json:"default_agent_id"`
+	SetProject       bool               `json:"set_project"`
+	ProjectID        pgtype.UUID        `json:"project_id"`
 	ItemDelaySeconds pgtype.Int4        `json:"item_delay_seconds"`
 	SetCron          bool               `json:"set_cron"`
 	CronExpression   pgtype.Text        `json:"cron_expression"`
@@ -723,6 +778,8 @@ func (q *Queries) UpdateWorkQueue(ctx context.Context, arg UpdateWorkQueueParams
 		arg.Description,
 		arg.SetDefaultAgent,
 		arg.DefaultAgentID,
+		arg.SetProject,
+		arg.ProjectID,
 		arg.ItemDelaySeconds,
 		arg.SetCron,
 		arg.CronExpression,
@@ -745,6 +802,7 @@ func (q *Queries) UpdateWorkQueue(ctx context.Context, arg UpdateWorkQueueParams
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProjectID,
 	)
 	return i, err
 }

@@ -5,8 +5,9 @@
 -- name: CreateWorkQueue :one
 INSERT INTO work_queue (
     workspace_id, name, description, default_agent_id,
-    item_delay_seconds, cron_expression, timezone, next_run_at, created_by
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    item_delay_seconds, cron_expression, timezone, next_run_at, created_by,
+    project_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: GetWorkQueueInWorkspace :one
@@ -17,16 +18,26 @@ WHERE id = $1 AND workspace_id = $2;
 SELECT * FROM work_queue
 WHERE id = $1;
 
+-- ListWorkQueues returns each queue with derived per-status item counts so
+-- the list view renders progress without an N+1 item fetch per queue.
 -- name: ListWorkQueues :many
-SELECT * FROM work_queue
-WHERE workspace_id = $1
-ORDER BY created_at DESC;
+SELECT sqlc.embed(work_queue),
+       (count(i.id) FILTER (WHERE i.status = 'pending'))::bigint   AS pending_count,
+       (count(i.id) FILTER (WHERE i.status = 'running'))::bigint   AS running_count,
+       (count(i.id) FILTER (WHERE i.status = 'completed'))::bigint AS completed_count,
+       (count(i.id) FILTER (WHERE i.status = 'failed'))::bigint    AS failed_count
+FROM work_queue
+LEFT JOIN work_queue_item i ON i.queue_id = work_queue.id
+WHERE work_queue.workspace_id = $1
+GROUP BY work_queue.id
+ORDER BY work_queue.created_at DESC;
 
 -- name: UpdateWorkQueue :one
 UPDATE work_queue SET
     name = COALESCE(sqlc.narg('name'), name),
     description = COALESCE(sqlc.narg('description'), description),
     default_agent_id = CASE WHEN sqlc.arg('set_default_agent')::bool THEN sqlc.narg('default_agent_id') ELSE default_agent_id END,
+    project_id = CASE WHEN sqlc.arg('set_project')::bool THEN sqlc.narg('project_id') ELSE project_id END,
     item_delay_seconds = COALESCE(sqlc.narg('item_delay_seconds'), item_delay_seconds),
     cron_expression = CASE WHEN sqlc.arg('set_cron')::bool THEN sqlc.narg('cron_expression') ELSE cron_expression END,
     timezone = CASE WHEN sqlc.arg('set_cron')::bool THEN sqlc.narg('timezone') ELSE timezone END,
@@ -122,6 +133,14 @@ UPDATE work_queue_item SET
     status = $2, error = sqlc.narg('error'), finished_at = now(), updated_at = now()
 WHERE id = $1 AND status = 'running'
 RETURNING *;
+
+-- RetryWorkQueueItem re-enqueues a failed item. The status guard makes it a
+-- no-op (0 rows) for anything not currently failed.
+-- name: RetryWorkQueueItem :execrows
+UPDATE work_queue_item SET
+    status = 'pending', error = NULL, task_id = NULL,
+    started_at = NULL, finished_at = NULL, updated_at = now()
+WHERE id = $1 AND workspace_id = $2 AND status = 'failed';
 
 -- name: DeleteWorkQueueItem :execrows
 DELETE FROM work_queue_item

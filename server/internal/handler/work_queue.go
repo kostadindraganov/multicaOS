@@ -89,6 +89,14 @@ func (h *Handler) issueExistsInWorkspace(r *http.Request, issueID, workspaceID p
 	return err == nil
 }
 
+func (h *Handler) projectExistsInWorkspace(r *http.Request, projectID, workspaceID pgtype.UUID) bool {
+	_, err := h.Queries.GetProjectInWorkspace(r.Context(), db.GetProjectInWorkspaceParams{
+		ID:          projectID,
+		WorkspaceID: workspaceID,
+	})
+	return err == nil
+}
+
 // publishWorkQueueUpdated fires queue:updated for member-triggered writes
 // that the WorkQueueService doesn't already cover (create/update/delete on
 // the queue itself, and any item mutation).
@@ -123,16 +131,12 @@ func (h *Handler) ListWorkQueues(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]workQueueListEntry, len(queues))
 	for i, q := range queues {
-		counts := map[string]int64{"pending": 0, "running": 0, "completed": 0, "failed": 0}
-		if items, err := h.Queries.ListWorkQueueItems(r.Context(), db.ListWorkQueueItemsParams{
-			QueueID:     q.ID,
-			WorkspaceID: wsUUID,
-		}); err == nil {
-			for _, it := range items {
-				counts[it.Status]++
-			}
-		}
-		resp[i] = workQueueListEntry{WorkQueue: q, ItemCounts: counts}
+		resp[i] = workQueueListEntry{WorkQueue: q.WorkQueue, ItemCounts: map[string]int64{
+			"pending":   q.PendingCount,
+			"running":   q.RunningCount,
+			"completed": q.CompletedCount,
+			"failed":    q.FailedCount,
+		}}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"queues": resp, "total": len(resp)})
 }
@@ -162,6 +166,7 @@ type CreateWorkQueueRequest struct {
 	Name             string  `json:"name"`
 	Description      *string `json:"description"`
 	DefaultAgentID   *string `json:"default_agent_id"`
+	ProjectID        *string `json:"project_id"`
 	ItemDelaySeconds *int32  `json:"item_delay_seconds"`
 	CronExpression   *string `json:"cron_expression"`
 	Timezone         *string `json:"timezone"`
@@ -204,6 +209,18 @@ func (h *Handler) CreateWorkQueue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var projectID pgtype.UUID
+	if req.ProjectID != nil && *req.ProjectID != "" {
+		projectID, ok = parseUUIDOrBadRequest(w, *req.ProjectID, "project_id")
+		if !ok {
+			return
+		}
+		if !h.projectExistsInWorkspace(r, projectID, wsUUID) {
+			writeError(w, http.StatusBadRequest, "project_id must be a valid project in this workspace")
+			return
+		}
+	}
+
 	itemDelay := int32(0)
 	if req.ItemDelaySeconds != nil {
 		itemDelay = *req.ItemDelaySeconds
@@ -231,6 +248,7 @@ func (h *Handler) CreateWorkQueue(w http.ResponseWriter, r *http.Request) {
 		Name:             req.Name,
 		Description:      ptrToText(req.Description),
 		DefaultAgentID:   defaultAgentID,
+		ProjectID:        projectID,
 		ItemDelaySeconds: itemDelay,
 		CronExpression:   cronText,
 		Timezone:         tzText,
@@ -250,6 +268,7 @@ type UpdateWorkQueueRequest struct {
 	Name             *string `json:"name"`
 	Description      *string `json:"description"`
 	DefaultAgentID   *string `json:"default_agent_id"`
+	ProjectID        *string `json:"project_id"`
 	ItemDelaySeconds *int32  `json:"item_delay_seconds"`
 	CronExpression   *string `json:"cron_expression"`
 	Timezone         *string `json:"timezone"`
@@ -306,6 +325,20 @@ func (h *Handler) UpdateWorkQueue(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			params.DefaultAgentID = parsed
+		}
+	}
+	if _, sent := rawFields["project_id"]; sent {
+		params.SetProject = true
+		if req.ProjectID != nil && *req.ProjectID != "" {
+			parsed, pok := parseUUIDOrBadRequest(w, *req.ProjectID, "project_id")
+			if !pok {
+				return
+			}
+			if !h.projectExistsInWorkspace(r, parsed, prev.WorkspaceID) {
+				writeError(w, http.StatusBadRequest, "project_id must be a valid project in this workspace")
+				return
+			}
+			params.ProjectID = parsed
 		}
 	}
 	_, cronSent := rawFields["cron_expression"]
@@ -595,6 +628,44 @@ func (h *Handler) DeleteWorkQueueItem(w http.ResponseWriter, r *http.Request) {
 		// The item existed at load time (status <> running filter excluded
 		// it) — it must be running now.
 		writeError(w, http.StatusConflict, "cannot delete a running item")
+		return
+	}
+
+	h.publishWorkQueueUpdated(r, workspaceID, queue.ID)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// RetryWorkQueueItem re-enqueues a failed item as pending, clearing its error
+// and task linkage. It does not restart an idle queue — the user presses
+// Start again (or a running drain picks the item up on its next step).
+func (h *Handler) RetryWorkQueueItem(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	itemID := chi.URLParam(r, "itemId")
+	workspaceID := h.resolveWorkspaceID(r)
+
+	queue, ok := h.loadWorkQueueInWorkspace(w, r, id, workspaceID)
+	if !ok {
+		return
+	}
+	item, ok := h.loadWorkQueueItemInWorkspace(w, r, itemID, workspaceID)
+	if !ok {
+		return
+	}
+	if item.QueueID != queue.ID {
+		writeError(w, http.StatusNotFound, "work queue item not found")
+		return
+	}
+
+	rows, err := h.Queries.RetryWorkQueueItem(r.Context(), db.RetryWorkQueueItemParams{
+		ID:          item.ID,
+		WorkspaceID: item.WorkspaceID,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to retry work queue item")
+		return
+	}
+	if rows == 0 {
+		writeError(w, http.StatusBadRequest, "item is not failed")
 		return
 	}
 
