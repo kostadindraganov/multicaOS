@@ -1,0 +1,821 @@
+# Instincts generated from https://github.com/kostadindraganov/multicaOS
+# Generated: 2026-07-27T19:52:51.206Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: multicaOS-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: fix, feat, docs, test
+
+## Evidence
+
+- 100 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat(search): add fold/unfold all comments commands to the command palette (#5417), fix(desktop): match canvas left margin to right when sidebar is collapsed (#5430)
+
+---
+id: multicaOS-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Commit Length
+
+## Action
+
+Write moderate-length commit messages (~68 characters)
+
+## Evidence
+
+- Average commit message length: 68 chars
+- Based on 100 commits
+
+---
+id: multicaOS-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Naming Files
+
+## Action
+
+Use kebab-case naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: kebab-case
+
+---
+id: multicaOS-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: multicaOS-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: multicaOS-arch-type-based
+trigger: "when adding new code"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Arch Type Based
+
+## Action
+
+Place code in the appropriate type folder (components/, services/, utils/, etc.)
+
+## Evidence
+
+- Type-based module organization detected
+- Folders: 
+
+---
+id: multicaOS-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Test Framework
+
+## Action
+
+Use vitest as the test framework
+
+## Evidence
+
+- Test framework detected: vitest
+- File pattern: *.test.ts
+
+---
+id: multicaOS-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: multicaOS-test-mocking
+trigger: "when mocking dependencies in tests"
+confidence: 0.75
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Test Mocking
+
+## Action
+
+Use vi.mock for mocking
+
+## Evidence
+
+- Mocking pattern detected: vi.mock
+- Consistent across test files
+
+---
+id: multicaOS-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Test Types
+
+## Action
+
+Write unit, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, e2e
+- Coverage config: no
+
+---
+id: multicaOS-workflow-database-migration
+trigger: "when modifying the database schema or adding tables"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Database Migration
+
+## Action
+
+Follow the database-migration workflow:
+1. Create migration file
+2. Update schema definitions
+3. Generate/update types
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: **/schema.*, migrations/*
+
+---
+id: multicaOS-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~10x per month
+- Files: packages/core/issues/stores/*, packages/views/issues/components/*, packages/views/search/*
+
+---
+id: multicaOS-workflow-refactoring
+trigger: "when refactoring code"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Refactoring
+
+## Action
+
+Follow the refactoring workflow:
+1. Ensure tests pass before refactor
+2. Refactor code structure
+3. Verify tests still pass
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/**/*
+
+---
+id: multicaOS-workflow-add-or-evolve-database-table-or-column
+trigger: "when doing add or evolve database table or column"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Add Or Evolve Database Table Or Column
+
+## Action
+
+Follow the add-or-evolve-database-table-or-column workflow:
+1. Edit or add SQL migration files in server/migrations/ (e.g., .up.sql/.down.sql)
+2. Update SQL query definitions in server/pkg/db/queries/*.sql
+3. Regenerate Go code for queries and models in server/pkg/db/generated/*.go
+4. Update related Go structs or service logic in server/internal/handler/, server/internal/service/, or server/pkg/db/generated/
+5. Add or update tests for new schema or handler logic
+6. Update API schemas/types if exposed (e.g., packages/core/api/schemas.ts, packages/core/types/*.ts)
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: server/migrations/*.sql, server/pkg/db/queries/*.sql, server/pkg/db/generated/*.go
+
+---
+id: multicaOS-workflow-add-or-evolve-api-endpoint-or-crud
+trigger: "when doing add or evolve api endpoint or crud"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Add Or Evolve Api Endpoint Or Crud
+
+## Action
+
+Follow the add-or-evolve-api-endpoint-or-crud workflow:
+1. Add or update handler in server/internal/handler/*.go
+2. Update or add service logic in server/internal/service/*.go
+3. Update router in server/cmd/server/router.go
+4. Update or add CLI command in server/cmd/multica/*.go
+5. Update API client/types in packages/core/api/client.ts and packages/core/types/*.ts
+6. Update or add frontend hooks/queries if needed (e.g., packages/core/*/queries.ts)
+7. Add or update tests for handler, CLI, and client
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: server/internal/handler/*.go, server/internal/service/**/*.go, server/cmd/server/router.go
+
+---
+id: multicaOS-workflow-feature-development-full-stack
+trigger: "when doing feature development full stack"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Feature Development Full Stack
+
+## Action
+
+Follow the feature-development-full-stack workflow:
+1. Backend: Add/modify migrations, handlers, services, and API types
+2. Core: Update types, queries, mutations, stores, and client logic
+3. Frontend: Add/modify React components, hooks, and UI logic
+4. Localization: Update JSON locale files for all supported languages
+5. Testing: Add/modify tests for backend, core, and frontend
+6. Documentation: Update docs and product overview files if user-facing
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: server/migrations/*.sql, server/internal/handler/*.go, server/internal/service/**/*.go
+
+---
+id: multicaOS-workflow-add-or-update-localization
+trigger: "when doing add or update localization"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Add Or Update Localization
+
+## Action
+
+Follow the add-or-update-localization workflow:
+1. Edit or add keys in packages/views/locales/en/*.json
+2. Propagate changes to packages/views/locales/ja/*.json, ko/*.json, zh-Hans/*.json, etc.
+3. Update or add tests for i18n coverage if needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: packages/views/locales/en/*.json, packages/views/locales/ja/*.json, packages/views/locales/ko/*.json
+
+---
+id: multicaOS-workflow-add-or-evolve-frontend-ui-component
+trigger: "when doing add or evolve frontend ui component"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Add Or Evolve Frontend Ui Component
+
+## Action
+
+Follow the add-or-evolve-frontend-ui-component workflow:
+1. Add or modify React component in packages/views/**/components/*.tsx
+2. Update or add associated test in packages/views/**/components/*.test.tsx
+3. Update localization files for new labels/messages
+4. Wire up to store/hooks if stateful
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: packages/views/**/components/*.tsx, packages/views/**/components/*.test.tsx, packages/views/locales/**/*.json
+
+---
+id: multicaOS-workflow-add-or-update-e2e-or-regression-tests
+trigger: "when doing add or update e2e or regression tests"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/kostadindraganov/multicaOS
+---
+
+# MulticaOS Workflow Add Or Update E2e Or Regression Tests
+
+## Action
+
+Follow the add-or-update-e2e-or-regression-tests workflow:
+1. Add or update test files in e2e/*.spec.ts or packages/views/**/test.ts(x)
+2. Update fixtures or test utilities if needed
+3. Verify test coverage for the new/changed behavior
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: e2e/*.spec.ts, packages/views/**/*.test.tsx, server/internal/handler/*_test.go
+
+---
+id: multicaos-instinct-file-naming
+trigger: "When creating a new file"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct File Naming
+
+## Action
+
+Name the file using kebab-case
+
+## Evidence
+
+- Pattern in namingConventions.files: kebab-case
+
+---
+id: multicaos-instinct-function-naming
+trigger: "When defining a function"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Function Naming
+
+## Action
+
+Name the function using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.functions: camelCase
+
+---
+id: multicaos-instinct-class-naming
+trigger: "When defining a class"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Class Naming
+
+## Action
+
+Name the class using PascalCase
+
+## Evidence
+
+- Pattern in namingConventions.classes: PascalCase
+
+---
+id: multicaos-instinct-constant-naming
+trigger: "When defining a constant"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Constant Naming
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern in namingConventions.constants: SCREAMING_SNAKE_CASE
+
+---
+id: multicaos-instinct-relative-imports
+trigger: "When importing modules in TypeScript"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Relative Imports
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in importStyle: relative
+
+---
+id: multicaos-instinct-named-exports
+trigger: "When exporting from a module"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Named Exports
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in exportStyle: named
+
+---
+id: multicaos-instinct-test-file-pattern
+trigger: "When creating a test file"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Test File Pattern
+
+## Action
+
+Name the test file with the pattern *.test.ts
+
+## Evidence
+
+- Pattern in testing.filePattern: *.test.ts
+
+---
+id: multicaos-instinct-vitest-framework
+trigger: "When writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Vitest Framework
+
+## Action
+
+Use the vitest testing framework
+
+## Evidence
+
+- Pattern in testing.framework: vitest
+
+---
+id: multicaos-instinct-mocking-style
+trigger: "When mocking dependencies in tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Mocking Style
+
+## Action
+
+Use vi.mock for mocking
+
+## Evidence
+
+- Pattern in testing.mockingStyle: vi.mock
+
+---
+id: multicaos-instinct-unit-e2e-tests
+trigger: "When planning test coverage"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Unit E2e Tests
+
+## Action
+
+Include both unit and e2e tests
+
+## Evidence
+
+- Pattern in testing.testTypes: unit, e2e
+
+---
+id: multicaos-instinct-conventional-commits
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Conventional Commits
+
+## Action
+
+Use Conventional Commits format with prefixes like feat, fix, docs, test
+
+## Evidence
+
+- Pattern in commits.type: conventional
+- Examples: 'feat(search): ...', 'fix(desktop): ...'
+
+---
+id: multicaos-instinct-commit-length
+trigger: "When composing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Commit Length
+
+## Action
+
+Keep the commit message concise, around 68 characters on average
+
+## Evidence
+
+- Pattern in commits.averageLength: 68
+
+---
+id: multicaos-instinct-add-database-table-or-column
+trigger: "When adding or evolving a database table or column"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Add Database Table Or Column
+
+## Action
+
+Follow the workflow: edit migration files, update queries, regenerate Go code, update Go structs/services, add tests, update API schemas/types
+
+## Evidence
+
+- Workflow: add-or-evolve-database-table-or-column
+- Seen in files: server/migrations/*.sql, packages/core/api/schemas.ts
+
+---
+id: multicaos-instinct-add-api-endpoint
+trigger: "When adding or evolving an API endpoint or CRUD operation"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Add Api Endpoint
+
+## Action
+
+Follow the workflow: update handler, service, router, CLI, API client/types, frontend hooks, and add tests
+
+## Evidence
+
+- Workflow: add-or-evolve-api-endpoint-or-crud
+- Seen in files: server/internal/handler/*.go, packages/core/api/client.ts
+
+---
+id: multicaos-instinct-feature-development-full-stack
+trigger: "When implementing a new user-facing feature across backend, core, frontend, localization, and docs"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Feature Development Full Stack
+
+## Action
+
+Follow the workflow: backend (migrations, handlers), core (types, queries), frontend (components, hooks), localization, testing, documentation
+
+## Evidence
+
+- Workflow: feature-development-full-stack
+- Seen in files: server/migrations/*.sql, packages/views/**/*.tsx
+
+---
+id: multicaos-instinct-localization-update
+trigger: "When adding or updating UI labels/messages"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Localization Update
+
+## Action
+
+Edit en/*.json, propagate to ja/ko/zh-Hans, update i18n tests if needed
+
+## Evidence
+
+- Workflow: add-or-update-localization
+- Seen in files: packages/views/locales/en/*.json
+
+---
+id: multicaos-instinct-frontend-ui-component
+trigger: "When adding or updating a frontend UI component"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Frontend Ui Component
+
+## Action
+
+Modify or add .tsx component, add/update .test.tsx, update localization, wire up to store/hooks if stateful
+
+## Evidence
+
+- Workflow: add-or-evolve-frontend-ui-component
+- Seen in files: packages/views/**/components/*.tsx
+
+---
+id: multicaos-instinct-add-e2e-or-regression-test
+trigger: "When adding a new feature or fixing a bug"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Add E2e Or Regression Test
+
+## Action
+
+Add or update e2e/*.spec.ts or *.test.ts(x), update fixtures/utilities, verify test coverage
+
+## Evidence
+
+- Workflow: add-or-update-e2e-or-regression-tests
+- Seen in files: e2e/*.spec.ts, packages/views/**/*.test.tsx
+
+---
+id: multicaos-instinct-try-catch-error-handling
+trigger: "When handling errors in code"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Try Catch Error Handling
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Pattern in errorHandling.style: try-catch
+
+---
+id: multicaos-instinct-global-error-handler
+trigger: "When implementing error handling at the application level"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: kostadindraganov/multicaOS
+---
+
+# Multicaos Instinct Global Error Handler
+
+## Action
+
+Use a global error handler
+
+## Evidence
+
+- Pattern in errorHandling.globalHandler: true
+
