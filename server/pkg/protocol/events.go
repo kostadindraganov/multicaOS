@@ -44,6 +44,7 @@ const (
 	EventInboxNew           = "inbox:new"
 	EventInboxRead          = "inbox:read"
 	EventInboxArchived      = "inbox:archived"
+	EventInboxUnarchived    = "inbox:unarchived"
 	EventInboxBatchRead     = "inbox:batch-read"
 	EventInboxBatchArchived = "inbox:batch-archived"
 
@@ -95,6 +96,12 @@ const (
 	EventLabelDeleted       = "label:deleted"
 	EventIssueLabelsChanged = "issue_labels:changed"
 
+	// Custom property events. Definitions are archived, never deleted, so
+	// there is no property:deleted — archive arrives as property:updated.
+	EventPropertyCreated        = "property:created"
+	EventPropertyUpdated        = "property:updated"
+	EventIssuePropertiesChanged = "issue_properties:changed"
+
 	// Pin events
 	EventPinCreated   = "pin:created"
 	EventPinDeleted   = "pin:deleted"
@@ -142,6 +149,10 @@ const (
 	EventPullRequestLinked         = "pull_request:linked"
 	EventPullRequestUpdated        = "pull_request:updated"
 	EventPullRequestUnlinked       = "pull_request:unlinked"
+
+	// VCS integration events (Forgejo / Gitea / GitLab)
+	EventVCSConnectionCreated = "vcs_connection:created"
+	EventVCSConnectionDeleted = "vcs_connection:deleted"
 
 	// Lark integration events. `created` covers both first-install
 	// (UNIQUE on (workspace_id, agent_id) means at most one row per

@@ -47,14 +47,58 @@ func writeHeader(b *strings.Builder) {
 // tests assert:
 // "Do NOT end your turn while background tasks", "wait for a future
 // notification/reminder", "run the work synchronously instead", the
-// no-background-and-yield rule, and the no-"standing by" sign-off rule.
+// no-background-and-yield rule, the external-work boundary, and the
+// no-"standing by" sign-off rule.
+//
+// MUL-5223: the external-work boundary alone did not stop agents from
+// blocking on CI. Two holes are closed here. First, the boundary was
+// stated as a concept while the section's only concrete "how to wait"
+// example was a blocking foreground call — and `gh pr checks --watch` is
+// exactly that shape, so watching CI read as compliant. Named tool-shape
+// bans replace the inference. Second, the "unless acceptance criteria
+// require it" escape was being satisfied by the repo's own merge
+// requirements ("CI must pass before merge"), so the section now says
+// branch protection is not the agent's acceptance criterion, and gives
+// the replacement hand-off phrasing so the urge to prove quality lands
+// on local test output plus a PR link instead of on a wait.
+//
+// The ban is scoped, not absolute: an explicitly requested CI result is
+// still reachable, and it names the one executable way to collect it
+// (a single foreground blocking watch inside the same turn). Enabling
+// auto-merge is not a wait and stays allowed — only waiting for it to
+// land is banned.
+//
+// MUL-5274 adds one narrow lifetime exception: a user-requested local
+// development/test service may be handed off after its readiness and cleanup
+// contract are complete. It is not a future result or wakeup. The brief keeps
+// this separate from tests, builds, monitors, and CI polling, which remain
+// run-owned until their result is collected. The brief states only the
+// handoff contract (lifecycle independence, durable logs, cleanup handle);
+// how to detach is the Local Dev Environment skill's concern, not the brief's.
+//
+// Bullet order is deliberate: run-owned rules first, then the persistent
+// service handoff and its negative boundary, then the external-systems / CI
+// cluster, with the "standing by" ban last so it closes over all three. The
+// former boundary sentence "The rules above apply only to work owned by the
+// current run" was dropped in the MUL-5274 review: with the handoff exception
+// inserted above it, "the rules above" would have swept in work that is
+// precisely no longer run-owned. The external-systems bullet carries the
+// boundary on its own ("are not agent-owned background tasks"). Within the CI
+// cluster the exception bullet must stay below the ban bullet — the ban
+// forward-references "the explicit exception below".
 func writeBackgroundTaskSafetySlim(b *strings.Builder) {
 	b.WriteString("## Background Task Safety\n\n")
-	b.WriteString("Multica marks the task terminal the moment your top-level turn exits — any background work still running is orphaned, its result lost, and the final comment you meant to post after it never sends. There is no background-completion wakeup here.\n\n")
-	b.WriteString("- Do NOT end your turn while background tasks, async subagents, background shell commands, or detached tool calls are still running. Never background-and-yield: never end a turn expecting a future notification or wakeup to resume — it will not arrive.\n")
-	b.WriteString("- Do every wait synchronously inside one foreground tool call that blocks to completion (e.g. `gh run watch`, a blocking test command); never split \"start the wait\" and \"collect the result\" across turns.\n")
+	b.WriteString("Multica marks the task terminal the moment your top-level turn exits — any process, tool call, or subagent owned by this run that is still active is orphaned, its result lost, and the final comment you meant to post after it never sends. There is no background-completion wakeup here.\n\n")
+	b.WriteString("- Do NOT end your turn while background tasks or other work that still belongs to the current run is active, including async subagents, background shell commands, and detached tool calls. Never background-and-yield: never end a turn expecting a future notification or wakeup to resume — it will not arrive.\n")
+	b.WriteString("- When a required result from run-owned work must be collected, wait synchronously inside one foreground tool call that blocks to completion (e.g. a blocking test or build command); never split \"start the wait\" and \"collect the result\" across turns.\n")
 	b.WriteString("- If a tool response says to wait for a future notification/reminder, or that it is running in the background so you can keep working, do not rely on that in Multica-managed runs — block on the appropriate wait / output / collect operation before exiting.\n")
 	b.WriteString("- If you can't observe a background task's result, run the work synchronously instead.\n")
+	b.WriteString("- A user explicitly asking for a local development or test service to stay available after the turn is a persistent service handoff, not background-and-yield. Use it only when the running service itself is the requested deliverable, and hand off only once the service's lifecycle no longer depends on this run: stdio redirected to durable logs, an ownership and cleanup handle recorded (for example PID/profile). Then verify readiness before replying, and provide the URL, logs, and stop instructions. Leave no pending result or future wakeup. Without a supervisor, describe survival as best-effort, not guaranteed.\n")
+	b.WriteString("- The persistent-service exception does not cover tests, builds, CI polling, monitors, or any other work whose completion the agent still owes; those remain run-owned, and the CI-specific rules below still apply.\n")
+	b.WriteString("- External systems triggered by a completed action — for example GitHub Actions after a successful push — are not agent-owned background tasks. Do not wait for them by default; report them as pending and finish the handoff.\n")
+	b.WriteString("- Concretely, after a push or a PR create, unless the explicit exception below applies: do NOT run `gh pr checks --watch`, `gh run watch`, or any sleep / retry loop that polls check status. Enabling auto-merge (`gh pr merge --auto`) is fine — it returns immediately; waiting for it to land is not. Take at most ONE non-blocking status snapshot (`gh pr checks <pr>` or `multica issue pull-requests <issue-id>`) and deliver the evidence you already have: \"Local tests pass (`go test ./...` / `pnpm test`); CI running: <PR link>\". A PR whose CI is still in flight is a complete hand-off.\n")
+	b.WriteString("- A repo's merge requirements — \"CI must be green before merge\", required reviews, branch protection — are GitHub's merge gate, NOT your delivery acceptance criteria, and do not license a wait.\n")
+	b.WriteString("- The one exception: when the trigger comment or the issue's acceptance criteria explicitly ask you for the CI result, that result IS the deliverable — wait for it as ONE foreground blocking call (`gh pr checks <pr> --watch`) inside this same turn and report the outcome. Nothing else re-opens this door.\n")
 	b.WriteString("- Never end a turn with a \"standing by\" / \"I'll report back when X finishes\" message — that becomes your final output and the task ends.\n\n")
 }
 
@@ -208,7 +252,7 @@ func writeAvailableCommands(b *strings.Builder) {
 	b.WriteString("- `multica issue metadata list <issue-id> [--output json]` — list KV metadata.\n")
 	b.WriteString("- `multica issue metadata set <issue-id> --key <k> --value <v> [--type string|number|bool]` — pin or overwrite a key.\n")
 	b.WriteString("- `multica issue metadata delete <issue-id> --key <k>` — remove a key.\n")
-	b.WriteString("- `multica repo checkout <url> [--ref <branch-or-sha>]` — git worktree on a dedicated branch.\n\n")
+	b.WriteString("- `multica repo checkout <url> [--ref <branch-or-sha>]` — repository checkout on a dedicated branch.\n\n")
 	b.WriteString("### Squad maintenance\n")
 	b.WriteString("- `multica squad member set-role <squad-id> --member-id <id> --member-type <agent|member> --role <role> [--output json]` — change role in place (use this instead of remove+add).\n\n")
 }
@@ -244,7 +288,7 @@ func writeRepositories(b *strings.Builder, ctx TaskContextForEnv) {
 		return
 	}
 	b.WriteString("## Repositories\n\n")
-	b.WriteString("Available in this workspace — `multica repo checkout <url> [--ref <branch-or-sha>]` to fetch (creates a git worktree on a dedicated branch).\n\n")
+	b.WriteString("Available in this workspace — `multica repo checkout <url> [--ref <branch-or-sha>]` to fetch (creates a repository checkout on a dedicated branch).\n\n")
 	for _, repo := range ctx.Repos {
 		if repo.Description != "" {
 			fmt.Fprintf(b, "- %s — %s\n", repo.URL, repo.Description)
@@ -255,18 +299,20 @@ func writeRepositories(b *strings.Builder, ctx TaskContextForEnv) {
 	b.WriteString("\n")
 }
 
-// writeProjectContext emits the Project Context section when the issue
-// belongs to a project.
+// writeProjectContext emits the Project Context section when the task carries
+// an active project. Project context is independent of the task surface: an
+// issue inherits it from its project, while a chat receives it from the
+// project selected on the chat session.
 func writeProjectContext(b *strings.Builder, ctx TaskContextForEnv) {
 	if ctx.ProjectID == "" && len(ctx.ProjectResources) == 0 {
 		return
 	}
 	b.WriteString("## Project Context\n\n")
 	if ctx.ProjectTitle != "" {
-		fmt.Fprintf(b, "This issue belongs to **%s**.\n\n", ctx.ProjectTitle)
+		fmt.Fprintf(b, "The active project for this task is **%s**.\n\n", ctx.ProjectTitle)
 	}
 	if desc := strings.TrimSpace(ctx.ProjectDescription); desc != "" {
-		b.WriteString("Project description — durable context the project owner set for every task in this project:\n\n")
+		b.WriteString("Project description — durable context the project owner set for work in this project:\n\n")
 		b.WriteString(desc)
 		b.WriteString("\n\n")
 	}
@@ -403,10 +449,35 @@ func writeWorkflowComment(b *strings.Builder, provider string, ctx TaskContextFo
 		b.WriteString(buildCommentReplyInstructionsSlim(provider, ctx.IssueID, ctx.TriggerCommentID))
 	}
 	b.WriteString("8. Before exiting: only if this run produced a fact that clears the high bar (important AND likely to be re-read by future runs on this same issue, e.g. a new PR URL or deploy URL), or you noticed a metadata key from entry that is now stale, pin or clear it via `multica issue metadata set`/`delete`. Most runs write nothing here — that is the expected outcome, not a gap. When in doubt, do not write. See the `## Issue Metadata` section above for the full bar.\n")
-	b.WriteString("9. Do NOT change the issue status unless the comment explicitly asks for it\n\n")
+	if ctx.IsSquadLeader {
+		// The default rule below and the Squad Operating Protocol's
+		// "Own the parent issue status" responsibility would otherwise
+		// contradict each other on the squad's most common shape:
+		// @mention dispatch with no child issues, where the member's
+		// delivery comment never "explicitly asks" for a status change and
+		// no child-done system comment exists to carry that ask. Naming the
+		// protocol section as the exception resolves it in one direction.
+		//
+		// The exception is safe to state unconditionally here because the
+		// grant only exists in the instructions when the server determined
+		// this issue is assigned to this squad (see buildSquadLeaderBriefing);
+		// a guest leader gets the opposite text and this stays a no-op.
+		b.WriteString("9. Do NOT change the issue status unless the comment explicitly asks for it — **or** a section in your instructions explicitly grants you ownership of this issue's status (the Squad Operating Protocol's \"Own the parent issue status\" responsibility). That section only appears when this issue is assigned to your squad; when it is there, treat it as a standing instruction and move the parent to `in_review` on the turn you confirm the overall goal is met, without waiting to be asked. When it is absent, the rule above is absolute.\n\n")
+	} else {
+		b.WriteString("9. Do NOT change the issue status unless the comment explicitly asks for it\n\n")
+	}
 }
 
 // writeWorkflowAssignment emits the assignment-triggered workflow.
+//
+// Ordinary agents own the full status arc for their issue: open with
+// in_progress, deliver with in_review. Squad leaders share the opening
+// in_progress step so the parent leaves todo as soon as coordination
+// starts, but their first assignment turn is only a dispatch — flipping
+// the parent to in_review there would mark unfinished multi-stage work
+// as ready for review. Leaders move the parent to in_review later, when
+// a re-trigger (member update / stage barrier) confirms the overall goal
+// is met; see the Squad Operating Protocol and child-done system comments.
 func writeWorkflowAssignment(b *strings.Builder, ctx TaskContextForEnv) {
 	b.WriteString("You are responsible for managing the issue status throughout your work, unless your Agent Identity forbids issue status changes.\n\n")
 	fmt.Fprintf(b, "1. Run `multica issue get %s --output json` to understand your task\n", ctx.IssueID)
@@ -420,7 +491,11 @@ func writeWorkflowAssignment(b *strings.Builder, ctx TaskContextForEnv) {
 		fmt.Fprintf(b, "6. **Post your final results as a comment — this step is mandatory**: post it with `multica issue comment add %s` using the platform-correct non-inline mode from ## Comment Formatting (never inline `--content`). Your results are only visible to the user if posted via this CLI call; text in your terminal or run logs is NOT delivered.\n", ctx.IssueID)
 	}
 	b.WriteString("7. Before exiting: only if this run produced a fact that clears the high bar (important AND likely to be re-read by future runs on this same issue, e.g. a new PR URL or deploy URL), or you noticed a metadata key from entry that is now stale, pin or clear it via `multica issue metadata set`/`delete`. Most runs write nothing here — that is the expected outcome, not a gap. When in doubt, do not write. See the `## Issue Metadata` section above for the full bar.\n")
-	fmt.Fprintf(b, "8. When done, run `multica issue status %s in_review` unless your Agent Identity forbids issue status changes; if it does, skip this step.\n", ctx.IssueID)
+	if ctx.IsSquadLeader {
+		fmt.Fprintf(b, "8. After this initial dispatch, leave the parent issue `in_progress` — do NOT run `multica issue status %s in_review` or `done` on this turn. Dispatching members is not completion. You will be re-triggered when members post updates or a stage closes; only then, if the overall goal is met, move the parent to `in_review`.\n", ctx.IssueID)
+	} else {
+		fmt.Fprintf(b, "8. When done, run `multica issue status %s in_review` unless your Agent Identity forbids issue status changes; if it does, skip this step.\n", ctx.IssueID)
+	}
 	fmt.Fprintf(b, "9. If blocked, run `multica issue status %s blocked` unless your Agent Identity forbids issue status changes. Post a comment explaining the blocker unless your Agent Identity forbids issue comments.\n\n", ctx.IssueID)
 }
 
@@ -440,9 +515,7 @@ func writeSkills(b *strings.Builder, provider string, ctx TaskContextForEnv) {
 	}
 	b.WriteString("## Skills\n\n")
 	switch provider {
-	case "claude", "codebuddy":
-		b.WriteString("You have the following skills installed (discovered automatically):\n\n")
-	case "codex", "copilot", "opencode", "deveco", "openclaw", "pi", "cursor", "kimi", "kiro", "qoder", "antigravity", "hermes":
+	case "claude", "codebuddy", "codex", "copilot", "opencode", "deveco", "openclaw", "hermes", "pi", "cursor", "kimi", "kiro", "qoder", "antigravity", "qwen":
 		// Hermes discovers these from its per-task HERMES_HOME/skills (seeded by
 		// the daemon), so it needs the same "discovered automatically" framing
 		// as the other native-discovery runtimes rather than a path pointer.
@@ -477,7 +550,12 @@ func writeMentions(b *strings.Builder) {
 func writeAttachments(b *strings.Builder) {
 	b.WriteString("## Attachments\n\n")
 	b.WriteString("Issues and comments may include file attachments (images, documents, etc.).\n")
-	b.WriteString("When a task includes attachment IDs and you need the files, inspect `multica attachment --help` and use the authenticated CLI path. Do not open Multica resource URLs directly.\n\n")
+	b.WriteString("When a task includes attachment IDs and you need the files, inspect `multica attachment --help` and use the authenticated CLI path. Do not open Multica resource URLs directly.\n")
+	// Closes the inbound half of the MUL-4899 loop: an attachment the agent
+	// just downloaded is the most tempting local path to echo back, because it
+	// came from the conversation and *feels* shared. It is not — the download
+	// landed in this run's private workdir.
+	b.WriteString("An attachment you download lands in your own workdir: that local path is a private working copy, not something the reader can open. Never echo it back into a deliverable as a link — re-deliver the file itself if it needs to travel (see `## Output`).\n\n")
 }
 
 // writeAlwaysUseCLI emits the "must go through the multica CLI" guardrail
@@ -487,19 +565,54 @@ func writeAlwaysUseCLI(b *strings.Builder) {
 	b.WriteString("Access Multica platform resources (issues, comments, attachments, files) only through the `multica` CLI — never `curl` / `wget`. For any operation the CLI doesn't cover, post a comment mentioning the workspace owner rather than working around it.\n\n")
 }
 
-// writeOutput emits the kind-specific Output section.
+// writeDeliveryInvariant emits the always-on delivery contract, shared by every
+// task kind.
+//
+// MUL-4899: agents were writing runtime-local paths into deliverables as
+// clickable links (`[screenshot](/Users/agent/work/shot.png)`). Two things were
+// wrong with that and the brief stated neither: the link is dead for every
+// reader (the path exists only on the machine that ran the agent), and on
+// macOS/Linux Desktop clicking it opened a tab at that path and hit a router
+// 404. The Desktop side is fixed separately; this is the source fix — the
+// contract the brief never carried.
+//
+// Deliberately emitted OUTSIDE writeOutput's kind switch: the invariant holds on
+// every surface, and the per-kind line inside the switch only answers "how do I
+// deliver a file HERE". Keeping them apart stops a new task kind from silently
+// inheriting no invariant at all.
+func writeDeliveryInvariant(b *strings.Builder) {
+	b.WriteString("**Runtime-local paths are never deliverables.** Your working directory exists only on the machine running you. Readers do not have it, so a local path in a deliverable is dead for everyone but you.\n\n")
+	b.WriteString("- NEVER write an absolute path or a `file://` URL as a clickable link or an embedded image — not `[screenshot](/Users/you/shot.png)`, not `![chart](file:///tmp/chart.png)`. This is wrong on every surface, including when the file really does exist on your machine right now.\n")
+	b.WriteString("- To reference a code location, use inline code and never a link: `path/to/file.ts:42`.\n")
+	b.WriteString("- To deliver a file you produced, use this surface's mechanism (below). If this surface has no file mechanism, say so in words — never link the path and imply the file was delivered.\n\n")
+}
+
+// writeOutput emits the kind-specific Output section: the always-on delivery
+// invariant plus one per-surface file-delivery policy line per kind.
 func writeOutput(b *strings.Builder, kind taskKind, ctx TaskContextForEnv) {
 	b.WriteString("## Output\n\n")
 	switch kind {
 	case kindAutopilotRunOnly:
-		b.WriteString("This is a run-only autopilot task, so there may be no issue comment to post. Your final assistant output is captured automatically as the autopilot run result. Keep it concise and state the outcome.\n")
+		b.WriteString("This is a run-only autopilot task, so there may be no issue comment to post. Your final assistant output is captured automatically as the autopilot run result. Keep it concise and state the outcome.\n\n")
+		b.WriteString("**Delivering files here:** this surface is text-only — the run result carries no attachments. Describe what you produced; do not link its path.\n")
 	case kindQuickCreate:
 		b.WriteString("This is a quick-create task. There is NO existing issue to comment on. Your final stdout is captured automatically and the platform writes the user's success/failure inbox notification based on whether `multica issue create` succeeded.\n\n")
 		b.WriteString("- Do NOT call `multica issue comment add` — the issue you just created has no conversation context for this run.\n")
 		b.WriteString("- Print exactly one final line: `Created <identifier-or-id>: <title>` after a successful `multica issue create`. Use the created issue's `identifier` from JSON output when available; otherwise use its `id`. Do not assume any workspace issue prefix such as `MUL-`; workspaces can use custom prefixes.\n")
-		b.WriteString("- On CLI failure, exit with the CLI error as the only output. The platform translates that into a `quick_create_failed` inbox item carrying the original prompt for the user.\n")
+		b.WriteString("- On CLI failure, exit with the CLI error as the only output. The platform translates that into a `quick_create_failed` inbox item carrying the original prompt for the user.\n\n")
+		b.WriteString("**Delivering files here:** your stdout is text-only. A file that belongs to the new issue goes on the `multica issue create` call itself via `--attachment <path>`; never put its path in the description or in your stdout line.\n")
 	case kindChat:
-		b.WriteString("This is a chat session. Your reply is delivered directly to the chat window the user is reading.\n")
+		b.WriteString("This is a chat session. Your reply is delivered directly to the chat window the user is reading.\n\n")
+		// Two-layer channel policy (MUL-4899). This is the DELIVERY layer: any
+		// non-empty channel type means the reply leaves Multica for an external
+		// IM platform, where `attachment upload` has nothing to bind to. The
+		// orthogonal HISTORY layer (which read commands exist) is Slack-only and
+		// lives in the per-turn chat prompt — do not collapse the two.
+		if ctx.ChatChannelType != "" {
+			fmt.Fprintf(b, "**Delivering files here:** this %s conversation is text-only — Multica cannot push a file you produced back into it. `multica attachment upload` does NOT apply: it binds to a Multica chat reply, which this is not. Say in words what you produced and where it can be obtained; never upload and then write as though the file arrived, and never link its local path.\n", ChannelDisplayName(ctx.ChatChannelType))
+		} else {
+			b.WriteString("**Delivering files here:** run `multica attachment upload <local-path>` — it binds the file to your reply and it renders as an attachment card. That command is the ONLY way a file reaches the user; a path written into your reply text is not.\n")
+		}
 	default:
 		if ctx.IsSquadLeader {
 			b.WriteString("⚠️ **Final results MUST be delivered via `multica issue comment add`** — unless your outcome is `no_action`. When you evaluate a trigger and decide no action is needed, calling `multica squad activity <issue-id> no_action --reason \"...\"` alone is sufficient; you MUST exit without posting any comment. DO NOT post a comment that announces no_action, acknowledges another agent, or says you are exiting silently — such comments are noise. For all other outcomes (`action`, `failed`), a comment is still mandatory.\n\n")
@@ -507,8 +620,11 @@ func writeOutput(b *strings.Builder, kind taskKind, ctx TaskContextForEnv) {
 			b.WriteString("⚠️ **Final results MUST be delivered via `multica issue comment add`.** The user does NOT see your terminal output, assistant chat text, or run logs — only comments on the issue. A task that finishes without a result comment is invisible to the user, even if the work itself was correct.\n\n")
 		}
 		b.WriteString("**Post exactly ONE comment per run — your final result, before this turn exits.** Do NOT post progress updates, plans, or \"here's what I'm about to do next\" as comments while you work; keep all planning and progress in your own reasoning.\n\n")
-		b.WriteString("Keep comments concise and natural — state the outcome, not the process (good: \"Fixed the login redirect. PR: https://...\"; bad: numbered process logs).\n")
+		b.WriteString("Keep comments concise and natural — state the outcome, not the process (good: \"Fixed the login redirect. PR: https://...\"; bad: numbered process logs).\n\n")
+		b.WriteString("**Delivering files here:** pass `--attachment <path>` to `multica issue comment add` (repeatable). The file uploads and renders on the comment; that is the only way a screenshot or artifact reaches the reader.\n")
 	}
+	b.WriteString("\n")
+	writeDeliveryInvariant(b)
 }
 
 // buildMetaSkillContentSlim is the post-MUL-3560 brief assembler.
@@ -523,7 +639,7 @@ func writeOutput(b *strings.Builder, kind taskKind, ctx TaskContextForEnv) {
 //	Available Commands    |   full  |  full  |   full    |   minimal    | full
 //	Comment Formatting    |    ✓    |   ✓    |     —     |      —       |  —
 //	Repositories          |    △    |   △    |     △     |      —       |  △
-//	Project Context       |    △    |   △    |     —     |      —       |  —
+//	Project Context       |    △    |   △    |     △     |      △       |  △
 //	Issue Metadata        |    ✓    |   ✓    |     —     |      —       |  —
 //	Instruction Precedence|    —    |   ✓    |     —     |      —       |  —
 //	Sub-issue Creation    |    ✓    |   ✓    |     —     |      —       |  —
@@ -563,8 +679,9 @@ func buildMetaSkillContentSlim(provider string, ctx TaskContextForEnv) string {
 		writeRepositories(&b, ctx)
 	}
 
+	writeProjectContext(&b, ctx)
+
 	if kind.hasIssueContext() {
-		writeProjectContext(&b, ctx)
 		writeIssueMetadata(&b)
 	}
 

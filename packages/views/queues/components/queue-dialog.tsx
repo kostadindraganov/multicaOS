@@ -235,6 +235,13 @@ export function QueueDialog(props: QueueDialogProps) {
                 {t(($) => $.dialog.schedule_label)}
               </label>
               <Select
+                items={[
+                  { label: t(($) => $.dialog.schedule_none), value: "none" },
+                  { label: t(($) => $.dialog.schedule_hourly), value: "hourly" },
+                  { label: t(($) => $.dialog.schedule_daily), value: "daily" },
+                  { label: t(($) => $.dialog.schedule_weekly), value: "weekly" },
+                  { label: t(($) => $.dialog.schedule_custom), value: "custom" },
+                ]}
                 value={frequency}
                 onValueChange={(v) => v && setFrequency(v as ScheduleFrequency)}
               >
@@ -256,6 +263,10 @@ export function QueueDialog(props: QueueDialogProps) {
                   {t(($) => $.dialog.schedule_day_label)}
                 </label>
                 <Select
+                  items={WEEKDAY_ORDER.map((d) => ({
+                    label: t(($) => $.dialog.weekdays[WEEKDAY_KEYS[d]]),
+                    value: String(d),
+                  }))}
                   value={String(dayOfWeek)}
                   onValueChange={(v) => v && setDayOfWeek(Number(v))}
                 >
@@ -277,7 +288,14 @@ export function QueueDialog(props: QueueDialogProps) {
                 <label className="text-xs font-medium text-muted-foreground">
                   {t(($) => $.dialog.schedule_time_label)}
                 </label>
-                <Select value={String(hour)} onValueChange={(v) => v && setHour(Number(v))}>
+                <Select
+                  items={Array.from({ length: 24 }, (_, h) => ({
+                    label: `${String(h).padStart(2, "0")}:00`,
+                    value: String(h),
+                  }))}
+                  value={String(hour)}
+                  onValueChange={(v) => v && setHour(Number(v))}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -308,7 +326,11 @@ export function QueueDialog(props: QueueDialogProps) {
                 <label className="text-xs font-medium text-muted-foreground">
                   {t(($) => $.dialog.timezone_label)}
                 </label>
-                <Select value={timezone} onValueChange={(v) => v && setTimezone(v)}>
+                <Select
+                  items={timezoneChoices.map((tz) => ({ label: tz, value: tz }))}
+                  value={timezone}
+                  onValueChange={(v) => v && setTimezone(v)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>

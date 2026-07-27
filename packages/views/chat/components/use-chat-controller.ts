@@ -11,10 +11,13 @@ import { toast } from "sonner";
 import { useWorkspaceId } from "@multica/core/hooks";
 import { useAuthStore } from "@multica/core/auth";
 import { agentListOptions, memberListOptions } from "@multica/core/workspace/queries";
+import { projectListOptions } from "@multica/core/projects/queries";
 import { canAssignAgent } from "@multica/views/issues/components";
 import { api, dispatchReasonCode } from "@multica/core/api";
 import { useAgentPresenceDetail, useWorkspaceAgentAvailability } from "@multica/core/agents";
-import { useFileUpload } from "@multica/core/hooks/use-file-upload";
+// Direct module path, not the `../../editor` barrel: this controller is
+// headless, and the barrel would pull the whole Tiptap tree in behind it.
+import { useEditorUpload } from "../../editor/use-editor-upload";
 import {
   chatSessionsOptions,
   chatMessagesPageOptions,
@@ -26,11 +29,13 @@ import {
 import {
   useCreateChatSession,
   useMarkChatSessionRead,
+  useSetChatSessionProject,
   useSetChatSessionArchived,
 } from "@multica/core/chat/mutations";
 import { useChatStore } from "@multica/core/chat";
 import { removeChatMessageFromCaches } from "@multica/core/realtime";
 import { useChatDraftRestore } from "./use-chat-draft-restore";
+import { useChatProjectContextSupport } from "./use-chat-project-context-support";
 import { createLogger } from "@multica/core/logger";
 import type {
   Agent,
@@ -60,6 +65,73 @@ export function deriveChatTitle(content: string): string {
     .trim();
   if (cleaned.length <= CHAT_TITLE_MAX) return cleaned;
   return cleaned.slice(0, CHAT_TITLE_MAX - 1).trimEnd() + "…";
+}
+
+/**
+ * After a send resolves: is the user still composing to the target they sent
+ * from? Decides whether to scrub the composer and open the sent session, or
+ * treat the send as fire-and-forget (the reply surfaces as unread instead).
+ *
+ * The active session answers this on its own, deliberately. The new-chat
+ * composer is ONE box per workspace (see DRAFT_NEW_SESSION), so moving the
+ * agent picker re-points where the next send goes without moving the view or
+ * the draft slot — that is not "navigating away" (MUL-4864). Counting it as
+ * such would leave a completed send's text sitting in the composer, primed to
+ * be sent a second time to the agent just picked.
+ *
+ * Shared by both send chains — the chat tab's controller and the floating
+ * ChatWindow — so the rule cannot drift between the two surfaces.
+ */
+export function isStillOnComposeTarget(
+  liveActiveSessionId: string | null,
+  sentFromSessionId: string | null,
+): boolean {
+  return liveActiveSessionId === sentFromSessionId;
+}
+
+/**
+ * Decide what a project-context change should do, given the open session.
+ *
+ *  - `awaitSession`: an active session id is set but its row has not loaded
+ *    yet. Bail so a persisted selection resolving before its sessions query
+ *    cannot misfile a project change into the new-chat draft.
+ *  - `detachCurrent`: removing context from the open session — safe in place,
+ *    it only changes what future turns receive.
+ *  - `startFreshChat`: switching to a DIFFERENT project. A fresh chat is
+ *    started so the old project's provider memory / reused workdir cannot
+ *    bleed in. It must stay bound to the agent whose session we are leaving
+ *    (`agentId`): clearing the active session otherwise drops selection back
+ *    to the stored `selectedAgentId`, which can be a stale preference for a
+ *    different agent, sending the lazily-created session to the wrong agent.
+ *  - `setDraftProject`: no open session, so this only adjusts the new-chat
+ *    draft's project.
+ *
+ * Shared by both send chains — the chat tab's controller and the floating
+ * ChatWindow — so the stale-agent rule cannot drift between the two surfaces.
+ */
+export type ProjectContextChange =
+  | { kind: "awaitSession" }
+  | { kind: "detachCurrent"; sessionId: string }
+  | { kind: "startFreshChat"; agentId: string; projectId: string }
+  | { kind: "setDraftProject"; projectId: string | null };
+
+export function planProjectContextChange(input: {
+  targetProjectId: string | null;
+  activeSessionId: string | null;
+  currentSession: { id: string; agent_id: string } | null;
+}): ProjectContextChange {
+  if (input.activeSessionId) {
+    if (!input.currentSession) return { kind: "awaitSession" };
+    if (input.targetProjectId === null) {
+      return { kind: "detachCurrent", sessionId: input.currentSession.id };
+    }
+    return {
+      kind: "startFreshChat",
+      agentId: input.currentSession.agent_id,
+      projectId: input.targetProjectId,
+    };
+  }
+  return { kind: "setDraftProject", projectId: input.targetProjectId };
 }
 
 // True when a session has an in-flight optimistic write — an `optimistic-`
@@ -171,8 +243,10 @@ export function useChatController(opts?: { isActive?: boolean }) {
   const wsId = useWorkspaceId();
   const activeSessionId = useChatStore((s) => s.activeSessionId);
   const selectedAgentId = useChatStore((s) => s.selectedAgentId);
+  const selectedProjectId = useChatStore((s) => s.selectedProjectId);
   const setActiveSession = useChatStore((s) => s.setActiveSession);
   const setSelectedAgentId = useChatStore((s) => s.setSelectedAgentId);
+  const setSelectedProjectId = useChatStore((s) => s.setSelectedProjectId);
   const user = useAuthStore((s) => s.user);
   const { data: agents = [], isSuccess: agentsLoaded } = useQuery(
     agentListOptions(wsId),
@@ -182,6 +256,9 @@ export function useChatController(opts?: { isActive?: boolean }) {
   );
   const { data: sessions = [], isSuccess: sessionsLoaded } = useQuery(
     chatSessionsOptions(wsId),
+  );
+  const { data: projects = [], isSuccess: projectsLoaded } = useQuery(
+    projectListOptions(wsId),
   );
   const {
     data: rawMessagePages,
@@ -232,10 +309,28 @@ export function useChatController(opts?: { isActive?: boolean }) {
     ? sessions.find((s) => s.id === activeSessionId)
     : null;
   const isSessionArchived = currentSession?.status === "archived";
+  const candidateProjectId = currentSession
+    ? currentSession.project_id ?? null
+    : selectedProjectId;
+  const activeProjectId = candidateProjectId &&
+    (!projectsLoaded || projects.some((project) => project.id === candidateProjectId))
+    ? candidateProjectId
+    : null;
+
+  // A project may be deleted on another client while this workspace's next
+  // chat preference is still persisted locally. Normalize it as soon as the
+  // authoritative project list settles so a future send cannot carry a stale
+  // selection.
+  useEffect(() => {
+    if (!projectsLoaded || !selectedProjectId) return;
+    if (projects.some((project) => project.id === selectedProjectId)) return;
+    setSelectedProjectId(null);
+  }, [projectsLoaded, projects, selectedProjectId, setSelectedProjectId]);
 
   const qc = useQueryClient();
   const createSession = useCreateChatSession();
   const markRead = useMarkChatSessionRead();
+  const setSessionProject = useSetChatSessionProject();
   const setArchived = useSetChatSessionArchived();
 
   const currentMember = members.find((m) => m.user_id === user?.id);
@@ -275,6 +370,8 @@ export function useChatController(opts?: { isActive?: boolean }) {
   const agentAvailability = useWorkspaceAgentAvailability();
   const noAgent = agentAvailability === "none";
 
+  const projectContextSupport = useChatProjectContextSupport(wsId, activeAgent);
+
   const presenceDetail = useAgentPresenceDetail(wsId, activeAgent?.id);
   const availability =
     presenceDetail === "loading" ? undefined : presenceDetail.availability;
@@ -313,7 +410,7 @@ export function useChatController(opts?: { isActive?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markRead ref stable
   }, [isActive, appForeground, activeSessionId, currentHasUnread]);
 
-  const { uploadWithToast } = useFileUpload(api);
+  const { uploadWithToast } = useEditorUpload();
 
   const sessionPromiseRef = useRef<Promise<string | null> | null>(null);
   const ensureSession = useCallback(
@@ -339,6 +436,7 @@ export function useChatController(opts?: { isActive?: boolean }) {
           const session = await createSession.mutateAsync({
             agent_id: activeAgent.id,
             title: deriveChatTitle(titleSeed),
+            project_id: activeProjectId,
           });
           return session.id;
         } finally {
@@ -348,7 +446,15 @@ export function useChatController(opts?: { isActive?: boolean }) {
       sessionPromiseRef.current = promise;
       return promise;
     },
-    [activeSessionId, activeAgent, createSession, sessions, sessionsLoaded, qc],
+    [
+      activeSessionId,
+      activeAgent,
+      activeProjectId,
+      createSession,
+      sessions,
+      sessionsLoaded,
+      qc,
+    ],
   );
 
   // Self-heal a dangling `activeSessionId`. Once the sessions list has loaded
@@ -495,10 +601,10 @@ export function useChatController(opts?: { isActive?: boolean }) {
         status: "queued",
         created_at: sentAt,
       });
+      // Cache primed → safe to publish the new active session, but only if the
+      // user hasn't navigated away mid-send. See isStillOnComposeTarget.
       const live = useChatStore.getState();
-      const stillOnSourceSession =
-        live.activeSessionId === activeSessionId &&
-        (activeSessionId !== null || live.selectedAgentId === selectedAgentId);
+      const stillOnSourceSession = isStillOnComposeTarget(live.activeSessionId, activeSessionId);
       if (stillOnSourceSession) {
         setActiveSession(sessionId);
       }
@@ -567,7 +673,6 @@ export function useChatController(opts?: { isActive?: boolean }) {
     },
     [
       activeSessionId,
-      selectedAgentId,
       activeAgent,
       isAgentArchived,
       ensureSession,
@@ -603,9 +708,19 @@ export function useChatController(opts?: { isActive?: boolean }) {
       previousSessionId: activeSessionId,
       previousPendingTask: pendingTaskId,
     });
+    // A fresh chat has no project unless the user explicitly chooses one.
+    // The open session's project is server-owned history, not a default for
+    // the next session.
+    setSelectedProjectId(null);
     setActiveSession(null);
     requestInputFocus();
-  }, [activeSessionId, pendingTaskId, setActiveSession, requestInputFocus]);
+  }, [
+    activeSessionId,
+    pendingTaskId,
+    setSelectedProjectId,
+    setActiveSession,
+    requestInputFocus,
+  ]);
 
   // Start a fresh chat bound to a chosen agent. Unlike handleSelectAgent this
   // does not no-op when the agent is unchanged — "new chat" always clears the
@@ -618,14 +733,21 @@ export function useChatController(opts?: { isActive?: boolean }) {
         previousSessionId: activeSessionId,
       });
       setSelectedAgentId(agent.id);
+      setSelectedProjectId(null);
       setActiveSession(null);
       requestInputFocus();
     },
-    [activeSessionId, setSelectedAgentId, setActiveSession, requestInputFocus],
+    [
+      activeSessionId,
+      setSelectedAgentId,
+      setSelectedProjectId,
+      setActiveSession,
+      requestInputFocus,
+    ],
   );
 
   const handleSelectSession = useCallback(
-    (session: { id: string; agent_id: string }) => {
+    (session: { id: string; agent_id: string; project_id?: string | null }) => {
       // Sessions are bound 1:1 to an agent — picking a session from a
       // different agent implicitly switches the agent too.
       if (activeAgent && session.agent_id !== activeAgent.id) {
@@ -639,6 +761,47 @@ export function useChatController(opts?: { isActive?: boolean }) {
       setActiveSession(session.id);
     },
     [activeAgent, setSelectedAgentId, setActiveSession],
+  );
+
+  const handleProjectChange = useCallback(
+    (projectId: string | null) => {
+      if (projectId === activeProjectId) return;
+      uiLogger.info("selectProjectContext", {
+        from: activeProjectId,
+        to: projectId,
+        previousSessionId: activeSessionId,
+      });
+      const plan = planProjectContextChange({
+        targetProjectId: projectId,
+        activeSessionId,
+        currentSession: currentSession ?? null,
+      });
+      switch (plan.kind) {
+        case "awaitSession":
+          return;
+        case "detachCurrent":
+          setSessionProject.mutate({ sessionId: plan.sessionId, projectId: null });
+          break;
+        case "startFreshChat":
+          setSelectedAgentId(plan.agentId);
+          setSelectedProjectId(plan.projectId);
+          setActiveSession(null);
+          break;
+        case "setDraftProject":
+          setSelectedProjectId(plan.projectId);
+          break;
+      }
+      requestInputFocus();
+    }, [
+      activeProjectId,
+      activeSessionId,
+      currentSession,
+      setSessionProject,
+      setSelectedAgentId,
+      setSelectedProjectId,
+      setActiveSession,
+      requestInputFocus,
+    ],
   );
 
   // Archiving the chat currently in view would otherwise strand the
@@ -678,8 +841,13 @@ export function useChatController(opts?: { isActive?: boolean }) {
     availableAgents,
     agentsSettled,
     sessions,
+    projects,
     activeSessionId,
     selectedAgentId,
+    activeProjectId,
+    projectContextUnsupported: projectContextSupport === false,
+    isProjectUpdating:
+      setSessionProject.isPending || (!!activeSessionId && !currentSession),
     currentSession,
     isSessionArchived,
     isAgentArchived,
@@ -708,6 +876,7 @@ export function useChatController(opts?: { isActive?: boolean }) {
     handleNewChat,
     handleStartNewChat,
     handleSelectSession,
+    handleProjectChange,
     advanceSelectionAfterArchive,
     archiveSession,
     // store setters (for surfaces that sync selection to the URL, etc.)

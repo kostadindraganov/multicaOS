@@ -13,6 +13,9 @@ export type {
   TaskEvidence,
   AgentActivityBucket,
   AgentRunCount,
+  WorkspaceWorkingAgent,
+  WorkspaceWorkingAgentType,
+  WorkspaceWorkingAgentMineRelation,
   TaskFailureReason,
   AgentRuntime,
   RuntimeDevice,
@@ -22,6 +25,7 @@ export type {
   CreateRuntimeProfileRequest,
   UpdateRuntimeProfileRequest,
   CreateAgentRequest,
+  AgentBuilderRuntimeSwitch,
   AgentBuilderSession,
   AgentTemplate,
   AgentTemplateSummary,
@@ -35,6 +39,8 @@ export type {
   Skill,
   SkillSummary,
   AgentSkillSummary,
+  DisabledRuntimeSkill,
+  SetAgentRuntimeSkillEnabledRequest,
   SkillFile,
   CreateSkillRequest,
   UpdateSkillRequest,
@@ -47,9 +53,12 @@ export type {
   DashboardUsageByAgent,
   DashboardAgentRunTime,
   DashboardRunTimeDaily,
+  DashboardFailureDaily,
+  DashboardFailureByAgent,
   RuntimeUpdate,
   RuntimeUpdateStatus,
   RuntimeModel,
+  RuntimeModelServiceTier,
   RuntimeModelThinking,
   RuntimeModelThinkingLevel,
   RuntimeModelListRequest,
@@ -73,6 +82,8 @@ export type { InboxItem, InboxSeverity, InboxItemType, InboxWorkspaceUnread } fr
 export type { NotificationGroupKey, NotificationGroupValue, NotificationPreferences, NotificationPreferenceResponse } from "./notification-preference";
 export type { Comment, CommentType, CommentAuthorType, CommentTriggerPreview, CommentTriggerPreviewAgent, CommentTriggerSource, CommentTriggerOutcome, CommentTriggerStatus, Reaction } from "./comment";
 export type { Label, LabelResourceType, CreateLabelRequest, UpdateLabelRequest, ListLabelsResponse, IssueLabelsResponse, ResourceLabelsResponse } from "./label";
+export type { IssueProperty, IssuePropertyType, IssuePropertyOption, IssuePropertyConfig, IssuePropertyValue, IssuePropertyValues, CreatePropertyRequest, UpdatePropertyRequest, ListPropertiesResponse, IssuePropertiesResponse } from "./property";
+export { ISSUE_PROPERTY_TYPES, isKnownPropertyType } from "./property";
 export type {
   TimelineEntry,
   AssigneeFrequencyEntry,
@@ -121,10 +132,20 @@ export type {
   GitHubMergeableState,
   GitHubPullRequest,
   GitHubPullRequestChecksConclusion,
+  GitHubPullRequestChecksRollup,
+  GitHubPullRequestMergeable,
+  GitHubPullRequestMergeStateStatus,
   GitHubPullRequestState,
   ListGitHubInstallationsResponse,
   GitHubConnectResponse,
 } from "./github";
+export type {
+  VCSProvider,
+  VCSConnection,
+  ListVCSConnectionsResponse,
+  ConnectVCSRequest,
+  ConnectVCSResponse,
+} from "./vcs";
 export type {
   LarkInstallation,
   ListLarkInstallationsResponse,
@@ -163,6 +184,7 @@ export type {
   CreateAutopilotTriggerRequest,
   UpdateAutopilotTriggerRequest,
   ListAutopilotsResponse,
+  CronPreviewResponse,
   GetAutopilotResponse,
   ListAutopilotRunsResponse,
   WebhookDelivery,

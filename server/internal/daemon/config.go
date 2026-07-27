@@ -29,6 +29,12 @@ const (
 	DefaultAgentTimeout                   = 0
 	DefaultCodexSemanticInactivityTimeout = 10 * time.Minute
 	DefaultCodexHandshakeTimeout          = 30 * time.Second
+	// DefaultOpenCodeIdleWatchdog shortens the no-message budget for OpenCode
+	// runs while they are not executing a tool. OpenCode streams text and tool
+	// events incrementally, so a completely silent interval here covers both a
+	// missing first model token and a stalled response stream. The generic
+	// AgentIdleWatchdog remains the global enable/disable switch.
+	DefaultOpenCodeIdleWatchdog = 10 * time.Minute
 	// DefaultAgentIdleWatchdog is the per-task safety net that force-stops a
 	// run when the backend has emitted no message for this long AND its
 	// message queue is empty. Backends like Claude Code can hang indefinitely
@@ -59,7 +65,7 @@ const (
 	DefaultWorkspaceSyncMaxBackoff        = 30 * time.Minute
 	DefaultHealthPort                     = 19514
 	DefaultMaxConcurrentTasks             = 20
-	DefaultGCInterval                     = 1 * time.Hour
+	DefaultGCInterval                     = 2 * time.Hour
 	DefaultGCTTL                          = 24 * time.Hour      // 1 day — AI-coding issues rarely stay open long
 	DefaultGCOrphanTTL                    = 72 * time.Hour      // 3 days — orphans with no meta (crashes, pre-GC leftovers)
 	DefaultGCArtifactTTL                  = 12 * time.Hour      // 12h — drop regenerable artifacts on completed but still-open issues
@@ -85,13 +91,13 @@ type Config struct {
 	CLIVersion                     string                // multica CLI version (e.g. "0.1.13")
 	LaunchedBy                     string                // "desktop" when spawned by the Electron app, empty for standalone
 	Profile                        string                // profile name (empty = default)
-	Agents                         map[string]AgentEntry // keyed by provider: claude, codebuddy, codex, copilot, opencode, openclaw, hermes, pi, cursor, kimi, kiro, antigravity, qoder, traecli
+	Agents                         map[string]AgentEntry // keyed by provider: claude, codebuddy, codex, copilot, opencode, openclaw, hermes, pi, cursor, kimi, kiro, antigravity, qoder, traecli, grok, qwen
 	WorkspacesRoot                 string                // base path for execution envs (default: ~/multica_workspaces)
 	KeepEnvAfterTask               bool                  // preserve env after task for debugging
 	HealthPort                     int                   // local HTTP port for health checks (default: 19514)
 	MaxConcurrentTasks             int                   // max tasks running in parallel (default: 20)
 	GCEnabled                      bool                  // enable periodic workspace garbage collection (default: true)
-	GCInterval                     time.Duration         // how often the GC loop runs (default: 1h)
+	GCInterval                     time.Duration         // how often the GC loop runs (default: 2h)
 	GCTTL                          time.Duration         // clean dirs whose issue is done/cancelled and updated_at < now()-TTL (default: 24h)
 	GCOrphanTTL                    time.Duration         // clean orphan dirs with no meta, or dirs whose issue gc-check returns 404, once they exceed this age (default: 72h). The 404 path uses the same TTL — a scoped-down token can't instantly wipe live workspaces.
 	GCArtifactTTL                  time.Duration         // when a task has been completed for at least this long but its issue is still open, drop regenerable artifacts (default: 12h, set 0 to disable)
@@ -104,11 +110,13 @@ type Config struct {
 	AgentTimeout                   time.Duration
 	CodexSemanticInactivityTimeout time.Duration
 	CodexHandshakeTimeout          time.Duration
+	OpenCodeIdleWatchdog           time.Duration // OpenCode-specific no-message window; 0 falls back to AgentIdleWatchdog and values above it cannot extend the global bound
 	AgentIdleWatchdog              time.Duration // force-stop a run when the backend goes silent this long with an empty queue (0 = disabled)
 	AgentToolWatchdog              time.Duration // force-stop a run when a single tool call stays in flight (silent) this long (0 = disabled); backstop for hung tools now that there is no wall-clock cap
 	ClaudeArgs                     []string
 	CodexArgs                      []string
 	CodebuddyArgs                  []string
+	QwenArgs                       []string
 
 	// ProfileCommandOverrides maps a custom runtime profile_id -> the absolute
 	// executable path to use for that profile on THIS machine (MUL-3284).
@@ -137,6 +145,9 @@ type Overrides struct {
 	RuntimeName                    string
 	Profile                        string // profile name (empty = default)
 	HealthPort                     int    // health check port (0 = use default)
+	// AllowNoAgents is reserved for read-only local configuration probes. Daemon
+	// startup keeps the default false and still refuses to run with no agent CLI.
+	AllowNoAgents bool
 	// DisableAutoUpdate, when true, forces the auto-update poller off. There
 	// is no symmetric "force on" override because the env/default already
 	// resolves to enabled; the flag exists so users can opt out from the CLI.
@@ -326,14 +337,25 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	if e, ok := probe("MULTICA_TRAECLI_PATH", "traecli", "MULTICA_TRAECLI_MODEL"); ok {
 		agents["traecli"] = e
 	}
+	// xAI Grok Build CLI (`grok`), driven over ACP via
+	// `grok agent --always-approve stdio`. MULTICA_GROK_MODEL seeds the
+	// daemon-wide default (e.g. grok-4.5).
+	if e, ok := probe("MULTICA_GROK_PATH", "grok", "MULTICA_GROK_MODEL"); ok {
+		agents["grok"] = e
+	}
+	// Qwen Code (`qwen`) runs headlessly with -p and stream-json. Its native
+	// QWEN.md and .qwen/skills task context is prepared by execenv.
+	if e, ok := probe("MULTICA_QWEN_PATH", "qwen", "MULTICA_QWEN_MODEL"); ok {
+		agents["qwen"] = e
+	}
 	// Omnigent multi-harness orchestrator, driven over its local HTTP+SSE
 	// server API. MULTICA_OMNIGENT_MODEL names a default Omnigent agent
 	// (e.g. "polly" or "claude-native-ui").
 	if e, ok := probe("MULTICA_OMNIGENT_PATH", "omnigent", "MULTICA_OMNIGENT_MODEL"); ok {
 		agents["omnigent"] = e
 	}
-	if len(agents) == 0 {
-		return Config{}, fmt.Errorf("no agent CLI found: install claude, codebuddy, codex, copilot, opencode, deveco, openclaw, hermes, pi, cursor-agent, kimi, kiro-cli, agy, qodercli, traecli, or omnigent and ensure it is on PATH")
+	if len(agents) == 0 && !overrides.AllowNoAgents {
+		return Config{}, fmt.Errorf("no agent CLI found: install claude, codebuddy, codex, copilot, opencode, deveco, openclaw, hermes, pi, cursor-agent, kimi, kiro-cli, agy, qodercli, traecli, grok, qwen, or omnigent and ensure it is on PATH")
 	}
 
 	claudeArgs, err := shellArgsFromEnv("MULTICA_CLAUDE_ARGS")
@@ -345,6 +367,10 @@ func LoadConfig(overrides Overrides) (Config, error) {
 		return Config{}, err
 	}
 	codebuddyArgs, err := shellArgsFromEnv("MULTICA_CODEBUDDY_ARGS")
+	if err != nil {
+		return Config{}, err
+	}
+	qwenArgs, err := shellArgsFromEnv("MULTICA_QWEN_ARGS")
 	if err != nil {
 		return Config{}, err
 	}
@@ -403,6 +429,15 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	// route 0 through durationFromEnv so the operator can opt out without
 	// patching the binary; any positive duration overrides DefaultAgentIdleWatchdog.
 	agentIdleWatchdog, err := durationFromEnv("MULTICA_AGENT_IDLE_WATCHDOG", DefaultAgentIdleWatchdog)
+	if err != nil {
+		return Config{}, err
+	}
+	// MULTICA_OPENCODE_IDLE_WATCHDOG narrows the no-message window for
+	// OpenCode's streamed model responses. Zero removes the provider-specific
+	// override and falls back to MULTICA_AGENT_IDLE_WATCHDOG; positive values
+	// cannot extend the global bound, and the global zero still disables the
+	// whole mechanism.
+	openCodeIdleWatchdog, err := durationFromEnv("MULTICA_OPENCODE_IDLE_WATCHDOG", DefaultOpenCodeIdleWatchdog)
 	if err != nil {
 		return Config{}, err
 	}
@@ -567,11 +602,13 @@ func LoadConfig(overrides Overrides) (Config, error) {
 		AgentTimeout:                   agentTimeout,
 		CodexSemanticInactivityTimeout: codexSemanticInactivityTimeout,
 		CodexHandshakeTimeout:          codexHandshakeTimeout,
+		OpenCodeIdleWatchdog:           openCodeIdleWatchdog,
 		AgentIdleWatchdog:              agentIdleWatchdog,
 		AgentToolWatchdog:              agentToolWatchdog,
 		ClaudeArgs:                     claudeArgs,
 		CodexArgs:                      codexArgs,
 		CodebuddyArgs:                  codebuddyArgs,
+		QwenArgs:                       qwenArgs,
 		ProfileCommandOverrides:        profileCommandOverrides,
 	}, nil
 }
@@ -832,7 +869,7 @@ func isExecutableFile(path string) bool {
 // invocation, instead of paying the cost-per-miss.
 var defaultAgentCommandNames = []string{
 	"claude", "codex", "opencode", "deveco", "openclaw", "hermes",
-	"pi", "cursor-agent", "copilot", "kimi", "kiro-cli", "codebuddy", "agy", "traecli", "omnigent",
+	"pi", "cursor-agent", "copilot", "kimi", "kiro-cli", "codebuddy", "agy", "traecli", "grok", "qwen", "omnigent",
 }
 
 // codexDesktopAppBundlePaths returns candidate macOS app-bundle locations for

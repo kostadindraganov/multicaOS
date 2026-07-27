@@ -4,6 +4,7 @@ import {
   buildRuntimeMachines,
   filterRuntimeMachines,
   runtimeMachineCounts,
+  runtimeRowLabel,
   sharedCustomName,
   splitRuntimeName,
 } from "./runtime-machines";
@@ -51,6 +52,30 @@ describe("runtime machine grouping", () => {
       issueCount: 0,
       providerNames: ["claude", "codex"],
     });
+  });
+
+  it("uses the online daemon CLI version instead of a stale offline report", () => {
+    const machines = buildRuntimeMachines(
+      [
+        makeRuntime({
+          id: "rt-online",
+          provider: "claude",
+          metadata: { cli_version: "0.4.0", launched_by: "desktop" },
+        }),
+        makeRuntime({
+          id: "rt-stale",
+          provider: "copilot",
+          status: "offline",
+          last_seen_at: new Date(NOW - 4 * 24 * 60 * 60_000).toISOString(),
+          metadata: { cli_version: "0.3.17", launched_by: "desktop" },
+        }),
+      ],
+      { now: NOW },
+    );
+
+    expect(machines).toHaveLength(1);
+    expect(machines[0]?.cliVersion).toBe("0.4.0");
+    expect(machines[0]?.launchedBy).toBe("desktop");
   });
 
   it("uses a machine-wide custom name as the machine title, over the local name", () => {
@@ -378,5 +403,36 @@ describe("sharedCustomName", () => {
       ]),
     ).toBeNull();
     expect(sharedCustomName([])).toBeNull();
+  });
+});
+
+describe("runtimeRowLabel", () => {
+  it("falls back to the provider base when no alias is set", () => {
+    expect(
+      runtimeRowLabel(
+        makeRuntime({ name: "Codex (dev.local)", custom_name: null }),
+        "dev.local",
+      ),
+    ).toBe("Codex");
+  });
+
+  it("collapses a machine-level alias (shared with the title) to the base", () => {
+    // A machine rename stamps the same custom_name on every runtime, so the
+    // title already shows it — repeating it per row would be noise.
+    expect(
+      runtimeRowLabel(
+        makeRuntime({ name: "Codex (dev.local)", custom_name: "Dev Box" }),
+        "Dev Box",
+      ),
+    ).toBe("Codex");
+  });
+
+  it("shows a per-runtime alias that differs from the machine title", () => {
+    expect(
+      runtimeRowLabel(
+        makeRuntime({ name: "Codex (dev.local)", custom_name: "just this one" }),
+        "Dev Box",
+      ),
+    ).toBe("just this one");
   });
 });

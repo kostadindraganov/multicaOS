@@ -240,6 +240,10 @@ export function QueuesPage() {
               className="h-8 w-56"
             />
             <Select
+              items={[
+                { label: t(($) => $.page.filter_status_all), value: "all" },
+                ...STATUS_KEYS.map((s) => ({ label: t(($) => $.status[s]), value: s })),
+              ]}
               value={statusFilter}
               onValueChange={(v) => v && setStatusFilter(v as "all" | QueueStatus)}
             >
@@ -255,7 +259,15 @@ export function QueuesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={projectFilter} onValueChange={(v) => v && setProjectFilter(v)}>
+            <Select
+              items={[
+                { label: t(($) => $.page.filter_project_all), value: "all" },
+                { label: t(($) => $.page.filter_project_none), value: "none" },
+                ...projects.map((p) => ({ label: p.title, value: p.id })),
+              ]}
+              value={projectFilter}
+              onValueChange={(v) => v && setProjectFilter(v)}
+            >
               <SelectTrigger
                 size="sm"
                 className="w-44"
